@@ -1,0 +1,202 @@
+[
+  {
+    "name": "Afghanistan",
+    "code": "AF"
+  },
+  {
+    "name": "Albania",
+    "code": "AL"
+  },
+  {
+    "name": "Algeria",
+    "code": "DZ"
+  },
+  {
+    "name": "Andorra",
+    "code": "AD"
+  },
+  {
+    "name": "Angola",
+    "code": "AO"
+  },
+  {
+    "name": "Argentina",
+    "code": "AR"
+  },
+  {
+    "name": "Armenia",
+    "code": "AM"
+  },
+  {
+    "name": "Australia",
+    "code": "AU"
+  },
+  {
+    "name": "Austria",
+    "code": "AT"
+  },
+  {
+    "name": "Azerbaijan",
+    "code": "AZ"
+  },
+  {
+    "name": "Bahamas",
+    "code": "BS"
+  },
+  {
+    "name": "Bahrain",
+    "code": "BH"
+  },
+  {
+    "name": "Bangladesh",
+    "code": "BD"
+  },
+  {
+    "name": "Barbados",
+    "code": "BB"
+  },
+  {
+    "name": "Belarus",
+    "code": "BY"
+  },
+  {
+    "name": "Belgium",
+    "code": "BE"
+  },
+  {
+    "name": "Belize",
+    "code": "BZ"
+  },
+  {
+    "name": "Benin",
+    "code": "BJ"
+  },
+  {
+    "name": "Bhutan",
+    "code": "BT"
+  },
+  {
+    "name": "Bolivia",
+    "code": "BO"
+  },
+  {
+    "name": "Bosnia and Herzegovina",
+    "code": "BA"
+  },
+  {
+    "name": "Botswana",
+    "code": "BW"
+  },
+  {
+    "name": "Brazil",
+    "code": "BR"
+  },
+  {
+    "name": "Brunei",
+    "code": "BN"
+  },
+  {
+    "name": "Bulgaria",
+    "code": "BG"
+  },
+  {
+    "name": "Burkina Faso",
+    "code": "BF"
+  },
+  {
+    "name": "Burundi",
+    "code": "BI"
+  },
+  {
+    "name": "Cambodia",
+    "code": "KH"
+  },
+  {
+    "name": "Cameroon",
+    "code": "CM"
+  },
+  {
+    "name": "Canada",
+    "code": "CA"
+  },
+  {
+    "name": "Cape Verde",
+    "code": "CV"
+  },
+  {
+    "name": "Central African Republic",
+    "code": "CF"
+  },
+  {
+    "name": "Chad",
+    "code": "TD"
+  },
+  {
+    "name": "Chile",
+    "code": "CL"
+  },
+  {
+    "name": "China",
+    "code": "CN"
+  },
+  {
+    "name": "Colombia",
+    "code": "CO"
+  },
+  {
+    "name": "Comoros",
+    "code": "KM"
+  },
+  {
+    "name": "Congo (Brazzaville)",
+    "code": "CG"
+  },
+  {
+    "name": "Congo (Kinshasa)",
+    "code": "CD"
+  },
+  {
+    "name": "Costa Rica",
+    "code": "CR"
+  },
+  {
+    "name": "Croatia",
+    "code": "HR"
+  },
+  {
+    "name": "Cuba",
+    "code": "CU"
+  },
+  {
+    "name": "Cyprus",
+    "code": "CY"
+  },
+  {
+    "name": "Czech Republic",
+    "code": "CZ"
+  },
+  {
+    "name": "Denmark",
+    "code": "DK"
+  },
+  {
+    "name": "Djibouti",
+    "code": "DJ"
+  },
+  {
+    "name": "Dominica",
+    "code": "DM"
+  },
+  {
+    "name": "Dominican Republic",
+    "code": "DO"
+  },
+  {
+    "name": "Ecuador",
+    "code": "EC"
+  },
+  {
+    "name": "Egypt",
+    "code": "EG"
+  }
+]

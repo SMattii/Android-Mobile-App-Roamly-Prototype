@@ -1,0 +1,98 @@
+# Built application files
+*.apk
+*.ap_
+*.aab
+*.aar
+
+# Files for the ART/Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated files
+bin/
+gen/
+out/
+
+# Gradle files
+.gradle/
+build/
+local.properties
+.DS_Store # macOS specific
+.idea/workspace.xml
+.idea/libraries/
+.idea/modules.xml # Potrebbe essere utile includerlo se il progetto è multi-modulo
+.idea/navEditor.xml # Potrebbe essere utile includerlo per la navigazione
+.idea/compiler.xml
+.idea/assetWizardSettings.xml
+.idea/caches/
+.idea/copyright/
+.idea/uiDesigner.xml
+.idea/vcs.xml
+.idea/jarRepositories.xml
+.idea/codeStyles/
+.idea/gradle.xml # Spesso utile includere
+.idea/render.xml
+.idea/statistic.xml
+.idea/deploymentTargetDropDown.xml
+.idea/external_build_system.xml
+.idea/kotlinc.xml
+.idea/misc.xml # Alcuni lo ignorano, altri lo includono - dipende se contiene info specifiche della macchina. Di solito si ignora.
+
+# Keystore files
+*.keystore
+debug.keystore
+
+# External native build files
+.externalNativeBuild/
+
+# Local configuration files (e.g., used by Firebase, Fabric)
+google-services.json # Se non è pubblico e gestisci versioni diverse
+fabric.properties
+
+# Android Studio and IntelliJ IDEA specific files
+.idea/
+*.iml
+.cxx/
+.flutter-plugins
+.flutter-plugins-dependencies
+.gradle-tooling-api-generated-idea-gradle-files/
+
+# Crashlytics/Firebase specific
+crashlytics-build.properties
+
+# Log files
+*.log
+
+# NDK
+.ndk/
+.syms/
+aarch64-linux-android/
+arm-linux-androideabi/
+i686-linux-android/
+x86_64-linux-android/
+
+# Kotlin Multiplatform (KMP) specific
+.gradle-enterprise/
+.kotlin/
+.kotlin-daemon/
+
+# Additional files
+captures/
+profile/
+report/
+tmp/
+*.zip
+*.tar
+*.gz
+*.dmg
+*.iso
+*.jar
+*.so
+*.obj
+*.o
+*.lib
+*.dll
+*.class
+*.exe

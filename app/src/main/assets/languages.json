@@ -1,0 +1,282 @@
+[
+  {
+    "name": "Afrikaans",
+    "code": "af"
+  },
+  {
+    "name": "Shqip",
+    "code": "sq"
+  },
+  {
+    "name": "العربية",
+    "code": "ar"
+  },
+  {
+    "name": "Հայերեն",
+    "code": "hy"
+  },
+  {
+    "name": "Azərbaycanca",
+    "code": "az"
+  },
+  {
+    "name": "বাংলা",
+    "code": "bn"
+  },
+  {
+    "name": "Беларуская",
+    "code": "be"
+  },
+  {
+    "name": "Bosanski",
+    "code": "bs"
+  },
+  {
+    "name": "Български",
+    "code": "bg"
+  },
+  {
+    "name": "Myanmar",
+    "code": "my"
+  },
+  {
+    "name": "ខ្មែរ",
+    "code": "km"
+  },
+  {
+    "name": "中文",
+    "code": "zh"
+  },
+  {
+    "name": "Hrvatski",
+    "code": "hr"
+  },
+  {
+    "name": "Čeština",
+    "code": "cs"
+  },
+  {
+    "name": "Dansk",
+    "code": "da"
+  },
+  {
+    "name": "Nederlands",
+    "code": "nl"
+  },
+  {
+    "name": "English",
+    "code": "en"
+  },
+  {
+    "name": "Eesti",
+    "code": "et"
+  },
+  {
+    "name": "አማርኛ",
+    "code": "am"
+  },
+  {
+    "name": "Suomi",
+    "code": "fi"
+  },
+  {
+    "name": "Français",
+    "code": "fr"
+  },
+  {
+    "name": "ქართული",
+    "code": "ka"
+  },
+  {
+    "name": "Deutsch",
+    "code": "de"
+  },
+  {
+    "name": "Ελληνικά",
+    "code": "el"
+  },
+  {
+    "name": "ગુજરાતી",
+    "code": "gu"
+  },
+  {
+    "name": "עברית",
+    "code": "he"
+  },
+  {
+    "name": "हिन्दी",
+    "code": "hi"
+  },
+  {
+    "name": "Magyar",
+    "code": "hu"
+  },
+  {
+    "name": "Íslenska",
+    "code": "is"
+  },
+  {
+    "name": "Bahasa Indonesia",
+    "code": "id"
+  },
+  {
+    "name": "فارسی",
+    "code": "fa"
+  },
+  {
+    "name": "Gaeilge",
+    "code": "ga"
+  },
+  {
+    "name": "Italiano",
+    "code": "it"
+  },
+  {
+    "name": "日本語",
+    "code": "ja"
+  },
+  {
+    "name": "Қазақша",
+    "code": "kk"
+  },
+  {
+    "name": "한국어",
+    "code": "ko"
+  },
+  {
+    "name": "Кыргызча",
+    "code": "ky"
+  },
+  {
+    "name": "ລາວ",
+    "code": "lo"
+  },
+  {
+    "name": "Latviešu",
+    "code": "lv"
+  },
+  {
+    "name": "Lietuvių",
+    "code": "lt"
+  },
+  {
+    "name": "Македонски",
+    "code": "mk"
+  },
+  {
+    "name": "Bahasa Melayu",
+    "code": "ms"
+  },
+  {
+    "name": "Malti",
+    "code": "mt"
+  },
+  {
+    "name": "Монгол",
+    "code": "mn"
+  },
+  {
+    "name": "नेपाली",
+    "code": "ne"
+  },
+  {
+    "name": "Norsk",
+    "code": "no"
+  },
+  {
+    "name": "پښتو",
+    "code": "ps"
+  },
+  {
+    "name": "Filipino",
+    "code": "fil"
+  },
+  {
+    "name": "Polski",
+    "code": "pl"
+  },
+  {
+    "name": "Português",
+    "code": "pt"
+  },
+  {
+    "name": "Română",
+    "code": "ro"
+  },
+  {
+    "name": "Русский",
+    "code": "ru"
+  },
+  {
+    "name": "Српски",
+    "code": "sr"
+  },
+  {
+    "name": "සිංහල",
+    "code": "si"
+  },
+  {
+    "name": "Slovenčina",
+    "code": "sk"
+  },
+  {
+    "name": "Slovenščina",
+    "code": "sl"
+  },
+  {
+    "name": "Soomaaliga",
+    "code": "so"
+  },
+  {
+    "name": "Español",
+    "code": "es"
+  },
+  {
+    "name": "Kiswahili",
+    "code": "sw"
+  },
+  {
+    "name": "Svenska",
+    "code": "sv"
+  },
+  {
+    "name": "Тоҷикӣ",
+    "code": "tg"
+  },
+  {
+    "name": "తెలుగు",
+    "code": "te"
+  },
+  {
+    "name": "ไทย",
+    "code": "th"
+  },
+  {
+    "name": "Türkçe",
+    "code": "tr"
+  },
+  {
+    "name": "Türkmençe",
+    "code": "tk"
+  },
+  {
+    "name": "Українська",
+    "code": "uk"
+  },
+  {
+    "name": "اردو",
+    "code": "ur"
+  },
+  {
+    "name": "O'zbekcha",
+    "code": "uz"
+  },
+  {
+    "name": "Tiếng Việt",
+    "code": "vi"
+  },
+  {
+    "name": "Cymraeg",
+    "code": "cy"
+  }
+]

@@ -1,5 +1,7 @@
 package com.example.roamly
 
+import android.R.attr.category
+import android.R.attr.country
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -14,6 +16,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.launch
 import io.github.jan.supabase.auth.providers.builtin.Email
+import kotlin.String
 import kotlin.jvm.java
 
 
@@ -100,7 +103,10 @@ class LoginActivity : AppCompatActivity() {
                                 first_name = "",
                                 last_name = "",
                                 profile_image_url = null,
-                                has_logged_before = false
+                                has_logged_before = false,
+                                age = null,
+                                country = null,
+                                category = null
                             )
 
                             val result = SupabaseClientProvider.db["profiles"]

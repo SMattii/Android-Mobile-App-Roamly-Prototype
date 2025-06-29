@@ -3,7 +3,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
         android:allowBackup="true"
@@ -14,6 +14,15 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Roamly">
+        <activity
+            android:name=".MakeProfile4Activity"
+            android:exported="false" />
+        <activity
+            android:name=".MakeProfile3Activity"
+            android:exported="false" />
+        <activity
+            android:name=".MakeProfile2Activity"
+            android:exported="false" />
         <activity
             android:name=".HomeActivity"
             android:exported="false" />

@@ -49,25 +49,26 @@
                 android:fontFamily="@font/roboto_variablefont">
 
                 <!-- Immagine profilo cliccabile -->
-                <ImageView
+                <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/profileImageView"
                     android:layout_width="120dp"
                     android:layout_height="120dp"
                     android:layout_marginBottom="24dp"
-                    android:src="@drawable/ic_person_placeholder"
+                    android:src="@drawable/ic_add_photo"
                     android:scaleType="centerCrop"
                     android:contentDescription="Profile Image"
-                    android:background="@drawable/circle_background"
                     android:clickable="true"
                     android:focusable="true"
-                    android:onClick="selectProfileImage" />
+                    android:onClick="selectProfileImage"
+                    app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.Circle"
+                    app:strokeWidth="2dp"          app:strokeColor="?attr/colorPrimary" />
 
                 <!-- Nome -->
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp"
-                    android:hint="Name">
+                    android:hint="Full Name">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/nameField"
@@ -115,18 +116,21 @@
                         android:padding="12dp" />
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <!-- Categoria -->
                 <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/categoryDropdownLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="24dp"
-                    android:hint="Category">
+                    android:hint="Category"
+                    app:endIconMode="dropdown_menu">
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/categoryField"
+                    <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                        android:id="@+id/categoryDropdown"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="text" />
+                        android:inputType="none"
+                        android:focusable="false"
+                        android:padding="12dp" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- Pulsante Avanti -->

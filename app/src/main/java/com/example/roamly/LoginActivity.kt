@@ -112,12 +112,12 @@ class LoginActivity : AppCompatActivity() {
                             Toast.makeText(this@LoginActivity, "Errore creazione profilo", Toast.LENGTH_SHORT).show()
                         }
 
-                        startActivity(Intent(this@LoginActivity, MakeProfile1_Activity::class.java))
+                        startActivity(Intent(this@LoginActivity, MakeProfileActivity::class.java))
                         finish()
 
                     } else {
                         if (!profile.has_logged_before) {
-                            startActivity(Intent(this@LoginActivity, MakeProfile1_Activity::class.java))
+                            startActivity(Intent(this@LoginActivity, MakeProfileActivity::class.java))
                         } else {
                             startActivity(Intent(this@LoginActivity, HomeActivity::class.java))
                         }

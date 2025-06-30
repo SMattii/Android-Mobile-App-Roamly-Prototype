@@ -12,5 +12,7 @@ data class Profile(
     val has_logged_before: Boolean = false,
     val age: String?,
     val country: String?,
-    val category: String?
+    val category: String?,
+    val vibe: String?,
+    val visible: Boolean = true
 )

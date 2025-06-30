@@ -10,6 +10,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.roamly.adapters.LanguageAdapter
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
@@ -19,11 +20,11 @@ class MakeProfile2Activity : AppCompatActivity() {
 
     private lateinit var languagesDropdown: MaterialAutoCompleteTextView
     private lateinit var selectedLanguagesChipGroup: ChipGroup
-    private lateinit var nextButton: com.google.android.material.button.MaterialButton
+    private lateinit var nextButton: MaterialButton
 
-    private var allPossibleLanguages: List<Language> = listOf() // Assicurati che Language sia nel package roamly
+    private var allPossibleLanguages: List<Language> = listOf()
     private val selectedLanguages: MutableList<Language> = mutableListOf()
-    private lateinit var languageAdapter: LanguageAdapter // Assicurati che LanguageAdapter sia nel package roamly
+    private lateinit var languageAdapter: LanguageAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -140,6 +141,11 @@ class MakeProfile2Activity : AppCompatActivity() {
             }
 
             Toast.makeText(this, "Lingue aggiornate con successo!", Toast.LENGTH_SHORT).show()
+
+            selectedLanguages.clear()
+            selectedLanguagesChipGroup.removeAllViews()
+            updateDropdownList()
+
             val intent = Intent(this@MakeProfile2Activity, MakeProfile3Activity::class.java)
             startActivity(intent)
             finish()

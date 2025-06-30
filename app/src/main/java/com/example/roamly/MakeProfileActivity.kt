@@ -204,15 +204,17 @@ class MakeProfileActivity : AppCompatActivity() {
         val lastName = if (nameParts.size > 1) nameParts[1] else ""
 
         val updatedProfileData = Profile(
-            id = userId, // Questo è l'ID del profilo che stiamo aggiornando
+            id = userId,
             full_name = fullName,
             first_name = firstName,
             last_name = lastName,
-            profile_image_url = uploadedImageUrl, // Può essere null
+            profile_image_url = uploadedImageUrl,
             has_logged_before = false,
             age = age,
             country = country,
-            category = category
+            category = category,
+            vibe = null,
+            visible = true
         )
 
         try {

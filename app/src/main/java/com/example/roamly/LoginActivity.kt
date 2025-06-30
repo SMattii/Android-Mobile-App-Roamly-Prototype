@@ -106,7 +106,9 @@ class LoginActivity : AppCompatActivity() {
                                 has_logged_before = false,
                                 age = null,
                                 country = null,
-                                category = null
+                                category = null,
+                                vibe = null,
+                                visible = true
                             )
 
                             val result = SupabaseClientProvider.db["profiles"]

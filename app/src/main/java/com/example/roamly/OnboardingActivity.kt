@@ -27,11 +27,13 @@ class OnboardingActivity : AppCompatActivity() {
         btnLogin.setOnClickListener {
             val intent = Intent(this, LoginActivity::class.java)
             startActivity(intent)
+            finish()
         }
 
         btnRegister.setOnClickListener {
             val intent = Intent(this, SignupActivity::class.java)
             startActivity(intent)
+            finish()
         }
     }
 }

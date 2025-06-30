@@ -32,6 +32,7 @@ android {
 
         buildConfigField("String", "SUPABASE_URL", "\"${localProps["SUPABASE_URL"]}\"")
         buildConfigField("String", "SUPABASE_KEY", "\"${localProps["SUPABASE_KEY"]}\"")
+        buildConfigField("String", "MAPBOX_TOKEN", "\"${localProps["MAPBOX_PUBLIC_TOKEN"]}\"")
     }
 
     buildFeatures {
@@ -91,4 +92,7 @@ dependencies {
 
     implementation("com.google.code.gson:gson:2.10.1")
 
+    implementation("com.mapbox.maps:android:11.13.1")
+
+    implementation ("com.google.android.gms:play-services-location:21.0.1")
 }

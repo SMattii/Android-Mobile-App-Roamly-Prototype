@@ -22,6 +22,19 @@ import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.graphics.drawable.toBitmap
 
+import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
+import androidx.lifecycle.lifecycleScope
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.target.CustomTarget
+import com.bumptech.glide.request.transition.Transition
+import kotlinx.coroutines.launch
+import com.example.roamly.LocationEntry
+import com.mapbox.maps.plugin.animation.flyTo
+import io.github.jan.supabase.postgrest.from
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
 
 class HomeActivity : ComponentActivity() {
 
@@ -76,13 +89,23 @@ class HomeActivity : ComponentActivity() {
         fusedLocationClient.lastLocation.addOnSuccessListener { location ->
             if (location != null) {
                 val userPoint = Point.fromLngLat(location.longitude, location.latitude)
-                mapView.getMapboxMap().setCamera(
+                mapView.getMapboxMap().flyTo(
                     CameraOptions.Builder()
                         .center(userPoint)
-                        .zoom(14.0)
+                        .zoom(17.0)
                         .build()
                 )
-                showUserAndOthers(userPoint)
+
+                val userId = SupabaseClientProvider.auth.currentUserOrNull()?.id
+                if (userId != null) {
+                    lifecycleScope.launch {
+                        saveLocationToSupabase(userId, location.latitude, location.longitude)
+                        showCurrentUserMarker(userId, userPoint) // usa immagine profilo come marker
+                    }
+                }
+
+                fetchVisibleProfiles() // mostra tutti gli altri utenti
+
             } else {
                 Toast.makeText(this, "Posizione non trovata", Toast.LENGTH_SHORT).show()
             }
@@ -117,5 +140,108 @@ class HomeActivity : ComponentActivity() {
     private fun isLocationEnabled(): Boolean {
         val lm = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         return lm.isProviderEnabled(LocationManager.GPS_PROVIDER) || lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+    }
+
+    private fun addUserMarkerFromUrl(userId: String, imageUrl: String, point: Point) {
+        Glide.with(this)
+            .asBitmap()
+            .load(imageUrl)
+            .circleCrop()
+            .into(object : CustomTarget<Bitmap>() {
+                override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                    mapView.getMapboxMap().getStyle()?.addImage(userId, resource)
+
+                    val annotationManager = mapView.annotations.createPointAnnotationManager()
+                    val options = PointAnnotationOptions()
+                        .withPoint(point)
+                        .withIconImage(userId)
+
+                    annotationManager.create(options)
+                }
+
+                override fun onLoadCleared(placeholder: Drawable?) {
+                    // nessuna azione
+                }
+            })
+    }
+
+    private fun fetchVisibleProfiles() {
+        lifecycleScope.launch {
+            try {
+                val profiles = SupabaseClientProvider.db["profiles"]
+                    .select {
+                        filter { eq("visible", true) }
+                    }
+                    .decodeList<Profile>()
+
+                for (profile in profiles) {
+                    // 🔁 PER ORA usiamo una posizione dummy (da sostituire con lat/lon reali)
+                    if (!profile.profile_image_url.isNullOrBlank()) {
+                        val dummyPoint = Point.fromLngLat(10.0 + Math.random(), 45.0 + Math.random())
+                        addUserMarkerFromUrl(profile.id, profile.profile_image_url, dummyPoint)
+                    }
+                }
+
+            } catch (e: Exception) {
+                Toast.makeText(this@HomeActivity, "Errore Supabase: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    suspend fun saveLocationToSupabase(userId: String, latitude: Double, longitude: Double) {
+        try {
+            val entry = LocationEntry(
+                user_id = userId,
+                latitude = latitude,
+                longitude = longitude
+            )
+
+            withContext(Dispatchers.IO) {
+                SupabaseClientProvider.db.from("locations").upsert(entry) {
+                    filter { eq("user_id", userId) }
+                }
+            }
+
+            println("✅ Posizione salvata con successo!")
+        } catch (e: Exception) {
+            println("❌ Errore durante il salvataggio posizione: ${e.message}")
+        }
+    }
+
+    private fun showCurrentUserMarker(userId: String, userPoint: Point) {
+        lifecycleScope.launch {
+            try {
+                val profile = SupabaseClientProvider.db["profiles"]
+                    .select {
+                        filter { eq("id", userId) }
+                    }
+                    .decodeSingle<Profile>()
+
+                if (!profile.profile_image_url.isNullOrBlank()) {
+                    Glide.with(this@HomeActivity)
+                        .asBitmap()
+                        .load(profile.profile_image_url)
+                        .circleCrop()
+                        .into(object : CustomTarget<Bitmap>() {
+                            override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                                val largeBitmap = Bitmap.createScaledBitmap(resource, 150, 150, false)
+
+                                mapView.getMapboxMap().getStyle()?.addImage("user-marker", largeBitmap)
+
+                                val annotationManager = mapView.annotations.createPointAnnotationManager()
+                                val options = PointAnnotationOptions()
+                                    .withPoint(userPoint)
+                                    .withIconImage("user-marker")
+
+                                annotationManager.create(options)
+                            }
+
+                            override fun onLoadCleared(placeholder: Drawable?) {}
+                        })
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this@HomeActivity, "Errore caricamento immagine profilo: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 }

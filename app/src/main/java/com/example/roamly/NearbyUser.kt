@@ -3,7 +3,7 @@ package com.example.roamly
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class NearbyProfile(
+data class NearbyUser(
     val user_id: String,
     val latitude: Double,
     val longitude: Double,

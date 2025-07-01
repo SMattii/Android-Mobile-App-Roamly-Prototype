@@ -9,6 +9,10 @@ import android.graphics.drawable.Drawable
 import android.location.LocationManager
 import android.os.Bundle
 import android.util.Log
+import android.view.View
+import android.widget.FrameLayout
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -17,6 +21,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.google.android.gms.location.*
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.mapbox.geojson.Point
 import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.MapView
@@ -28,12 +33,43 @@ import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerialName
 
 class HomeActivity : AppCompatActivity() {
+
+    @Serializable
+    data class NearbyUserProfile(
+        val id: String,
+        @SerialName("full_name") val fullName: String,
+        val age: String? = null,
+        val country: String? = null,
+        val category: String? = null,
+        val vibe: String? = null,
+        @SerialName("profile_image_url") val profileImageUrl: String? = null,
+        val languages: List<String> = emptyList(),  // Codici lingua, es: "en", "it"
+        val interests: List<String> = emptyList()   // UUID o nomi delle icone
+    )
+
+    @Serializable
+    data class InterestLinkWithName(
+        val profile_id: String,
+        @SerialName("interests") val interest: Interest
+    )
+
+    @Serializable
+    data class LanguageLink(  // Mapping tra profilo e lingua
+        val profile_id: String,
+        val language_id: String
+    )
+
+    private val userProfilesCache = mutableMapOf<String, NearbyUserProfile>()
+    private var currentShownProfileId: String? = null
 
     private lateinit var mapView: MapView
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
+
     private val LOCATION_PERMISSION_REQUEST_CODE = 1001
     private val userAnnotationManagers = mutableMapOf<String, PointAnnotationManager>()
 
@@ -206,16 +242,26 @@ class HomeActivity : AppCompatActivity() {
                     .select(Columns.raw("user_id, latitude, longitude, profiles(profile_image_url)")) {
                         filter { isIn("user_id", visibleUserIds) }
                     }
-                    .decodeList<NearbyProfile>()
+                    .decodeList<NearbyUser>()
 
                 val currentUserId = SupabaseClientProvider.auth.currentUserOrNull()?.id
+                val nearbyUserIds = mutableListOf<String>()
 
                 for (entry in allLocations) {
                     if (entry.user_id == currentUserId) continue
                     if (haversine(myLat, myLon, entry.latitude, entry.longitude) > 10) continue
                     val imageUrl = entry.profiles?.profile_image_url ?: continue
                     val point = Point.fromLngLat(entry.longitude, entry.latitude)
+
+                    nearbyUserIds.add(entry.user_id)
                     createUserMarker(entry.user_id, imageUrl, point)
+                }
+
+                if (nearbyUserIds.isNotEmpty()) {
+                    val detailedProfiles = fetchNearbyProfilesWithDetails(nearbyUserIds)
+                    userProfilesCache.clear()
+                    userProfilesCache.putAll(detailedProfiles)
+                    Log.d("PROFILES_CACHE", "Cache popolata con ${userProfilesCache.size} profili")
                 }
 
             } catch (e: Exception) {
@@ -240,21 +286,41 @@ class HomeActivity : AppCompatActivity() {
                             style.addImage(imageId, largeBitmap)
                         } catch (_: Exception) {}
 
+                        // Rimuovi il manager precedente se esiste
                         userAnnotationManagers[userId]?.let {
                             it.deleteAll()
                             mapView.annotations.removeAnnotationManager(it)
                         }
 
+                        // Crea nuovo annotation manager
                         val annotationManager = mapView.annotations.createPointAnnotationManager()
+
+                        annotationManager.addClickListener { annotation ->
+                            if (userId == currentShownProfileId) {
+                                removeCallout()
+                                currentShownProfileId = null
+                            } else {
+                                removeCallout()
+                                showUserProfileCallout(userId, annotation.point)
+                                currentShownProfileId = userId
+                            }
+                            true
+                        }
+
+                        // Salva il manager nella mappa
                         userAnnotationManagers[userId] = annotationManager
 
+                        // Crea l'annotation
                         val options = PointAnnotationOptions()
                             .withPoint(point)
                             .withIconImage(imageId)
 
                         try {
-                            annotationManager.create(options)
-                        } catch (_: Exception) {}
+                            val annotation = annotationManager.create(options)
+                            Log.d("MARKER_CREATED", "Marker creato per userId: $userId, annotationId: ${annotation.id}")
+                        } catch (e: Exception) {
+                            Log.e("MARKER_ERROR", "Errore creazione marker: ${e.message}")
+                        }
                     }
                 }
 
@@ -272,4 +338,111 @@ class HomeActivity : AppCompatActivity() {
         val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
         return R * c
     }
+
+    suspend fun fetchNearbyProfilesWithDetails(visibleUserIds: List<String>): Map<String, NearbyUserProfile> {
+        val db = SupabaseClientProvider.db
+
+        // 1. Profili base
+        val profiles = db.from("profiles")
+            .select(Columns.raw("id, full_name, age, country, category, vibe, profile_image_url")) {
+                filter { isIn("id", visibleUserIds) }
+            }
+            .decodeList<NearbyUserProfile>()
+
+        // 2. Interessi
+        val interests = db.from("profile_interests")
+            .select(Columns.raw("profile_id, interests(id, name)")) {
+                filter { isIn("profile_id", visibleUserIds) }
+            }
+            .decodeList<InterestLinkWithName>()
+
+        // 3. Lingue
+        val languages = db.from("profile_languages")
+            .select(Columns.raw("profile_id, language_id")) {
+                filter { isIn("profile_id", visibleUserIds) }
+            }
+            .decodeList<LanguageLink>()
+
+        // 4. Mappa profilo → interessi
+        val interestsMap = interests.groupBy { it.profile_id }
+            .mapValues { it.value.map { link -> link.interest.name } }
+
+        // 5. Mappa profilo → lingue
+        val languagesMap = languages.groupBy { it.profile_id }
+            .mapValues { it.value.map { link -> link.language_id } }
+
+        // 6. Composizione finale
+        return profiles.associateBy { it.id }.mapValues { (_, profile) ->
+            profile.copy(
+                interests = interestsMap[profile.id] ?: emptyList(),
+                languages = languagesMap[profile.id] ?: emptyList()
+            )
+        }
+    }
+
+
+    private fun showUserProfileCallout(userId: String, point: Point) {
+        val profile = userProfilesCache[userId] ?: return
+        val tooltipContainer = findViewById<FrameLayout>(R.id.tooltipContainer)
+
+        // Se è già visibile lo stesso profilo, lo nasconde (toggle)
+        if (currentShownProfileId == userId) {
+            hideCallout()
+            return
+        }
+
+        tooltipContainer.removeAllViews()
+        val view = layoutInflater.inflate(R.layout.marker_callout, tooltipContainer, false)
+
+        // Riempie i dati
+        view.findViewById<TextView>(R.id.txtNameAge).text = "${profile.fullName}, Age: ${profile.age ?: "?"}"
+        view.findViewById<TextView>(R.id.txtCountry).text = profile.country ?: ""
+        view.findViewById<TextView>(R.id.txtCategory).text = profile.category ?: ""
+        view.findViewById<TextView>(R.id.txtVibe).text = profile.vibe ?: ""
+
+        val langContainer = view.findViewById<LinearLayout>(R.id.languagesContainer)
+        langContainer.removeAllViews()
+        profile.languages.forEach { code ->
+            val text = TextView(this).apply {
+                text = code.uppercase()
+                setPadding(8, 4, 8, 4)
+            }
+            langContainer.addView(text)
+        }
+
+        val intContainer = view.findViewById<LinearLayout>(R.id.interestsContainer)
+        intContainer.removeAllViews()
+        profile.interests.forEach { interest ->
+            val text = TextView(this).apply {
+                text = interest
+                setPadding(8, 4, 8, 4)
+            }
+            intContainer.addView(text)
+        }
+
+        // Aggiunge il tooltip e aggiorna l'ID mostrato
+        tooltipContainer.addView(view)
+        currentShownProfileId = userId
+
+        view.post {
+            val screenCoords = mapView.getMapboxMap().pixelForCoordinate(point)
+            view.x = screenCoords.x.toFloat() - view.measuredWidth / 2
+            view.y = screenCoords.y.toFloat() - view.measuredHeight - 20f
+        }
+    }
+
+    // Nasconde il tooltip corrente, se presente
+    private fun hideCallout() {
+        val tooltipContainer = findViewById<FrameLayout>(R.id.tooltipContainer)
+        tooltipContainer.removeAllViews()
+        currentShownProfileId = null
+    }
+
+    // Rimuove forzatamente tutti i tooltip
+    private fun removeCallout() {
+        val tooltipContainer = findViewById<FrameLayout>(R.id.tooltipContainer)
+        tooltipContainer.removeAllViews()
+        currentShownProfileId = null
+    }
+
 }

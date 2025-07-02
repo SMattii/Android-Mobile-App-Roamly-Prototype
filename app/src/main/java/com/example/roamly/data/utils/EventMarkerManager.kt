@@ -111,18 +111,13 @@ object EventAnnotationManager {
             Log.d("MARKER_CLICK", "✅ Marker evento cliccato")
 
             val clickedEventId = annotation.getData()?.asJsonObject?.get("eventId")?.asString
-            Log.d("MARKER_CLICK", "🆔 clickedEventId = $clickedEventId")
+            val wasOpen = clickedEventId == getCurrentShownEventId()
+            val newIdToDisplay = if (wasOpen) null else clickedEventId
 
-            val currentShownEventId = getCurrentShownEventId()
-            Log.d("MARKER_CLICK", "🎯 currentShownEventId = $currentShownEventId")
+            Log.d("MARKER_CLICK", "🆔 clickedEventId = $clickedEventId, wasOpen = $wasOpen → newIdToDisplay = $newIdToDisplay")
 
-            val newIdToDisplay = if (clickedEventId == currentShownEventId) null else clickedEventId
-            Log.d("MARKER_CLICK", "📌 newIdToDisplay = $newIdToDisplay")
-
-            if (clickedEventId != currentShownEventId) {
-                Log.d("MARKER_CLICK", "🔁 Chiudo tooltip precedente")
-                onToggleEventCallout(null)
-            }
+            // ❗️ Chiudi SUBITO tooltip precedente
+            onToggleEventCallout(null)
 
             Log.d("MARKER_CLICK", "🗺️ Eseguo flyTo")
             mapboxMap.flyTo(
@@ -159,7 +154,6 @@ object EventAnnotationManager {
 
                         Log.d("MARKER_CLICK", "📡 Fetch eventi da Supabase")
                         val events = eventRepo.getEvents()
-
                         val thisEvent = events.find { it.id == newIdToDisplay }
                         if (thisEvent == null) {
                             Log.e("MARKER_CLICK", "❌ Evento non trovato per ID $newIdToDisplay")
@@ -218,6 +212,7 @@ object EventAnnotationManager {
                     Log.d("MARKER_CLICK", "⚠️ newIdToDisplay è null, non apro tooltip")
                 }
             }, 700L)
+
             true
         }
 

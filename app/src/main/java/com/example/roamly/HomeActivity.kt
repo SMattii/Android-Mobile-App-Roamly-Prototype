@@ -29,12 +29,11 @@ import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.launch
 import com.google.gson.JsonParser
 import com.mapbox.maps.extension.style.style
-import com.mapbox.common.Cancelable
 import com.example.roamly.data.models.NearbyUserProfile
 import com.example.roamly.data.repository.ProfileRepository
-import com.example.roamly.utils.MapUtils.haversine
-import com.example.roamly.utils.TooltipManager
-import com.example.roamly.utils.MapAnnotationManager
+import com.example.roamly.data.utils.MapUtils.haversine
+import com.example.roamly.data.utils.TooltipManager
+import com.example.roamly.data.utils.MapAnnotationManager
 import com.mapbox.android.gestures.MoveGestureDetector
 import com.mapbox.maps.plugin.gestures.OnMoveListener
 import com.mapbox.maps.plugin.gestures.gestures

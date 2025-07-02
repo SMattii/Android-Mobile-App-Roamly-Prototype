@@ -1,4 +1,4 @@
-package com.example.roamly.utils
+package com.example.roamly.data.utils
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -41,7 +41,7 @@ object MapAnnotationManager {
             .into(object : CustomTarget<Bitmap>() {
                 override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
                     val bitmap = Bitmap.createScaledBitmap(resource, 150, 150, false)
-                    val style = mapView.getMapboxMap().getStyle() ?: return
+                    val style = mapView.mapboxMap.style ?: return
 
                     val imageId = "user-marker-$userId"
                     try {
@@ -75,43 +75,41 @@ object MapAnnotationManager {
                         val clickedUserId = annotation.getData()?.asJsonObject?.get("userId")?.asString
 
                         if (clickedUserId != null) {
-                            // ✅ Ottieni il valore corrente di currentShownProfileId
                             val currentShownProfileId = getCurrentShownProfileId()
 
                             Log.d("MARKER_CLICK", "Marker cliccato per userId=$clickedUserId")
                             Log.d("MARKER_CLICK", "currentShownProfileId attuale = $currentShownProfileId")
 
-                            // ✅ Decidiamo immediatamente quale sarà lo stato finale
                             val newUserIdToDisplay = if (clickedUserId == currentShownProfileId) {
-                                // Se è lo stesso marker, vogliamo chiudere il tooltip
                                 Log.d("MARKER_CLICK", "Tooltip già aperto per $clickedUserId, lo chiudo (toggle).")
-                                null // Indichiamo che non vogliamo mostrare alcun tooltip
+                                null
                             } else {
-                                // Se è un marker diverso, vogliamo aprire il tooltip per questo nuovo utente
                                 Log.d("MARKER_CLICK", "Marker diverso cliccato o nessun tooltip aperto, mostro per $clickedUserId.")
-                                clickedUserId // Indichiamo di mostrare il tooltip per questo ID
+                                clickedUserId
                             }
 
                             Log.d("MARKER_CLICK", "Decisione finale: newUserIdToDisplay = $newUserIdToDisplay")
 
-                            // ✅ Effettua sempre il flyTo, indipendentemente se il tooltip verrà chiuso o aperto.
-                            // La cosa chiave è chiamare onToggleCallout SOLO dopo che il flyTo è COMPLETO.
+                            // 👉 Se stai cambiando utente, chiudi SUBITO il tooltip precedente
+                            if (clickedUserId != currentShownProfileId) {
+                                Log.d("TOOLTIP_ACTION", "Chiudo subito il tooltip precedente (se presente).")
+                                onToggleCallout(null)
+                            }
+
                             mapboxMap.flyTo(
                                 CameraOptions.Builder()
                                     .center(annotation.point)
                                     .zoom(mapboxMap.cameraState.zoom)
                                     .build(),
                                 MapAnimationOptions.mapAnimationOptions {
-                                    duration(700L) // Durata dell'animazione
+                                    duration(500L)
                                 }
                             )
 
-                            // ✅ Usiamo postDelayed ma in modo controllato
-                            // Chiamiamo onToggleCallout solo DOPO che l'animazione è finita
                             mapView.postDelayed({
                                 Log.d("FLY_TO_COMPLETE", "FlyTo completato. Chiamo onToggleCallout con $newUserIdToDisplay")
-                                onToggleCallout(newUserIdToDisplay) // Qui comunichiamo lo stato finale alla HomeActivity
-                            }, 700L) // Stesso tempo dell'animazione
+                                onToggleCallout(newUserIdToDisplay)
+                            }, 700L)
                         }
 
                         true

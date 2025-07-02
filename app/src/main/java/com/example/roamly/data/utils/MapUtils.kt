@@ -1,4 +1,4 @@
-package com.example.roamly.utils
+package com.example.roamly.data.utils
 
 object MapUtils {
 

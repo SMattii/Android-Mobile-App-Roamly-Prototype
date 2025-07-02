@@ -1,7 +1,6 @@
-package com.example.roamly.utils
+package com.example.roamly.data.utils
 
 import android.content.Context
-import android.graphics.drawable.Drawable
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -9,7 +8,6 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import com.bumptech.glide.Glide
 import com.example.roamly.Country
 import com.example.roamly.InterestProvider
 import com.example.roamly.Language
@@ -18,8 +16,6 @@ import com.example.roamly.data.models.NearbyUserProfile
 import com.mapbox.geojson.Point
 import com.mapbox.maps.MapView
 import com.mapbox.maps.MapboxMap
-import com.mapbox.maps.CameraOptions
-import com.mapbox.maps.plugin.animation.MapAnimationOptions
 
 object TooltipManager {
 

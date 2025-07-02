@@ -16,7 +16,7 @@ import com.mapbox.geojson.Point
 import com.mapbox.maps.MapView
 import com.mapbox.maps.MapboxMap
 
-object TooltipManager {
+object UserTooltipManager {
 
     /**
      * Mostra un tooltip sopra il marker selezionato.
@@ -33,7 +33,7 @@ object TooltipManager {
     ) {
         tooltipContainer.removeAllViews()
 
-        val view = LayoutInflater.from(context).inflate(R.layout.marker_callout, tooltipContainer, false)
+        val view = LayoutInflater.from(context).inflate(R.layout.user_tooltip, tooltipContainer, false)
 
         view.findViewById<TextView>(R.id.txtNameAge).text = "${profile.fullName}, ${profile.age ?: "?"}"
 

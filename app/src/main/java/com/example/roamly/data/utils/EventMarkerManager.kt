@@ -3,9 +3,15 @@ package com.example.roamly.data.utils
 import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
+import android.widget.FrameLayout
+import android.widget.Toast
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.lifecycle.lifecycleScope
 import com.example.roamly.R
 import com.example.roamly.data.models.Event
+import com.example.roamly.data.repository.EventRepository
+import com.example.roamly.data.repository.InterestRepository
+import com.example.roamly.data.repository.ProfileRepository
 import com.google.gson.JsonParser
 import com.mapbox.geojson.Point
 import com.mapbox.maps.CameraOptions
@@ -18,6 +24,7 @@ import com.mapbox.maps.plugin.annotation.generated.PointAnnotation
 import com.mapbox.maps.plugin.annotation.generated.PointAnnotationManager
 import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions
 import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
+import kotlinx.coroutines.launch
 
 object EventAnnotationManager {
 
@@ -101,15 +108,23 @@ object EventAnnotationManager {
         }
 
         annotationManager.addClickListener { annotation ->
+            Log.d("MARKER_CLICK", "✅ Marker evento cliccato")
+
             val clickedEventId = annotation.getData()?.asJsonObject?.get("eventId")?.asString
+            Log.d("MARKER_CLICK", "🆔 clickedEventId = $clickedEventId")
+
             val currentShownEventId = getCurrentShownEventId()
+            Log.d("MARKER_CLICK", "🎯 currentShownEventId = $currentShownEventId")
 
             val newIdToDisplay = if (clickedEventId == currentShownEventId) null else clickedEventId
+            Log.d("MARKER_CLICK", "📌 newIdToDisplay = $newIdToDisplay")
 
             if (clickedEventId != currentShownEventId) {
+                Log.d("MARKER_CLICK", "🔁 Chiudo tooltip precedente")
                 onToggleEventCallout(null)
             }
 
+            Log.d("MARKER_CLICK", "🗺️ Eseguo flyTo")
             mapboxMap.flyTo(
                 CameraOptions.Builder()
                     .center(annotation.point)
@@ -121,9 +136,88 @@ object EventAnnotationManager {
             )
 
             mapView.postDelayed({
-                onToggleEventCallout(newIdToDisplay)
-            }, 700L)
+                Log.d("MARKER_CLICK", "⏱️ Entrato in postDelayed (dopo flyTo)")
 
+                if (newIdToDisplay != null) {
+                    val context = mapView.context
+                    val lifecycleOwner = context as? androidx.lifecycle.LifecycleOwner
+                    if (lifecycleOwner == null) {
+                        Log.e("MARKER_CLICK", "❌ lifecycleOwner NULL")
+                        return@postDelayed
+                    }
+
+                    val scope = lifecycleOwner.lifecycleScope
+                    if (scope == null) {
+                        Log.e("MARKER_CLICK", "❌ lifecycleScope NULL")
+                        return@postDelayed
+                    }
+
+                    Log.d("MARKER_CLICK", "🚀 Lancio coroutine")
+                    scope.launch {
+                        val eventRepo = EventRepository()
+                        val profileRepo = ProfileRepository()
+
+                        Log.d("MARKER_CLICK", "📡 Fetch eventi da Supabase")
+                        val events = eventRepo.getEvents()
+
+                        val thisEvent = events.find { it.id == newIdToDisplay }
+                        if (thisEvent == null) {
+                            Log.e("MARKER_CLICK", "❌ Evento non trovato per ID $newIdToDisplay")
+                            return@launch
+                        }
+                        Log.d("MARKER_CLICK", "✅ Evento trovato: ${thisEvent.event_type}")
+
+                        Log.d("MARKER_CLICK", "👥 Fetch partecipanti dell'evento")
+                        val participantIds = eventRepo.getEventParticipants(thisEvent.id!!)
+                        Log.d("MARKER_CLICK", "👤 ID partecipanti = $participantIds")
+
+                        Log.d("MARKER_CLICK", "📄 Fetch profili partecipanti")
+                        val participantProfiles = profileRepo.getProfilesByIds(participantIds)
+                        Log.d("MARKER_CLICK", "📎 Profili trovati: ${participantProfiles.size}")
+
+                        Log.d("MARKER_CLICK", "📚 Carico tutte le lingue e interessi")
+                        val allLanguages = LanguageProvider.loadLanguagesFromAssets(context)
+                        val allInterests = InterestRepository().fetchAllInterests()
+
+                        Log.d("MARKER_CLICK", "📌 onToggleEventCallout con $newIdToDisplay")
+                        onToggleEventCallout(newIdToDisplay)
+
+                        val tooltipContainer = mapView.rootView.findViewById<FrameLayout>(R.id.tooltipContainer)
+                        if (tooltipContainer == null) {
+                            Log.e("MARKER_CLICK", "❌ tooltipContainer non trovato")
+                            return@launch
+                        }
+
+                        Log.d("MARKER_CLICK", "✨ Mostro tooltip evento")
+                        EventTooltipManager.show(
+                            context = context,
+                            mapView = mapView,
+                            mapboxMap = mapboxMap,
+                            tooltipContainer = tooltipContainer,
+                            point = annotation.point,
+                            event = thisEvent,
+                            participants = participantProfiles,
+                            allLanguages = allLanguages,
+                            allInterests = allInterests,
+                            onJoinClick = { joinedEventId ->
+                                Log.d("MARKER_CLICK", "👆 JOIN cliccato su evento $joinedEventId")
+                                SupabaseClientProvider.auth.currentUserOrNull()?.id?.let { uid ->
+                                    scope.launch {
+                                        val ok = eventRepo.addParticipant(joinedEventId, uid)
+                                        if (ok) {
+                                            Toast.makeText(context, "Ti sei unito all'evento!", Toast.LENGTH_SHORT).show()
+                                        } else {
+                                            Toast.makeText(context, "Errore partecipazione", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                }
+                            }
+                        )
+                    }
+                } else {
+                    Log.d("MARKER_CLICK", "⚠️ newIdToDisplay è null, non apro tooltip")
+                }
+            }, 700L)
             true
         }
 

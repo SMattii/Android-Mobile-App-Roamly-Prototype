@@ -8,7 +8,7 @@ import android.widget.ArrayAdapter
 import android.widget.ImageView
 import android.widget.TextView
 import com.example.roamly.R
-import com.example.roamly.Language
+import com.example.roamly.data.models.Language
 
 class LanguageAdapter(
     context: Context,

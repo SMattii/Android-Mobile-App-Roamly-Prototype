@@ -1,6 +1,7 @@
-package com.example.roamly
+package com.example.roamly.data.utils
 
-import android.content.Context
+import com.example.roamly.R
+import com.example.roamly.data.models.Interest
 
 object InterestProvider {
 

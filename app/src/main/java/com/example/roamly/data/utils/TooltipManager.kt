@@ -8,9 +8,8 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import com.example.roamly.Country
-import com.example.roamly.InterestProvider
-import com.example.roamly.Language
+import com.example.roamly.data.models.Country
+import com.example.roamly.data.models.Language
 import com.example.roamly.R
 import com.example.roamly.data.models.NearbyUserProfile
 import com.mapbox.geojson.Point

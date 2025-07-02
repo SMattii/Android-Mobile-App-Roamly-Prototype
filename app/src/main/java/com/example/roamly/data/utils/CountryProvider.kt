@@ -1,6 +1,7 @@
-package com.example.roamly
+package com.example.roamly.data.utils
 
 import android.content.Context
+import com.example.roamly.data.models.Country
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 

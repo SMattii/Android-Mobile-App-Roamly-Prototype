@@ -1,10 +1,12 @@
-package com.example.roamly
+package com.example.roamly.data.utils
 
 import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.IOException
 import android.util.Log
+import com.example.roamly.data.models.LanguageJsonItem
+import com.example.roamly.data.models.Language
 
 object LanguageProvider {
 

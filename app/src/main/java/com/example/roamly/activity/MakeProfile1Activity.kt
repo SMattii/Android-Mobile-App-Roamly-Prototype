@@ -1,9 +1,10 @@
-package com.example.roamly
+package com.example.roamly.activity
 
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Base64
 import android.util.Log
 import android.view.View
 import android.widget.ImageView
@@ -15,12 +16,22 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import com.example.roamly.adapter.CategoryAdapter
+import com.example.roamly.data.models.CategoryItem
+import com.example.roamly.adapter.CountryAdapter
+import com.example.roamly.data.utils.CountryProvider
+import com.example.roamly.data.models.Profile
+import com.example.roamly.R
+import com.example.roamly.data.utils.SupabaseClientProvider
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.slider.Slider
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
-import io.github.jan.supabase.postgrest.from
+import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.launch
 import io.ktor.http.ContentType.Image
+import org.json.JSONObject
+import java.util.Date
 import kotlin.jvm.java
 
 class MakeProfileActivity : AppCompatActivity() {
@@ -31,10 +42,10 @@ class MakeProfileActivity : AppCompatActivity() {
     private lateinit var ageSlider: Slider
     private lateinit var ageValueText: TextView
     private lateinit var countryDropdown: MaterialAutoCompleteTextView
-    private lateinit var countryDropdownLayout: com.google.android.material.textfield.TextInputLayout
+    private lateinit var countryDropdownLayout: TextInputLayout
     private lateinit var categoryDropdown: MaterialAutoCompleteTextView
-    private lateinit var categoryDropdownLayout: com.google.android.material.textfield.TextInputLayout
-    private lateinit var nextButton: com.google.android.material.button.MaterialButton
+    private lateinit var categoryDropdownLayout: TextInputLayout
+    private lateinit var nextButton: MaterialButton
 
     val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         if (uri != null) {
@@ -129,11 +140,11 @@ class MakeProfileActivity : AppCompatActivity() {
                 try {
                     val parts = accessToken.split(".")
                     if (parts.size == 3) {
-                        val payload = String(android.util.Base64.decode(parts[1], android.util.Base64.URL_SAFE))
-                        val json = org.json.JSONObject(payload)
+                        val payload = String(Base64.decode(parts[1], Base64.URL_SAFE))
+                        val json = JSONObject(payload)
                         val exp = json.optLong("exp")
                         if (exp > 0) {
-                            val expirationDate = java.util.Date(exp * 1000)
+                            val expirationDate = Date(exp * 1000)
                             Log.d("SupabaseUploadDebug", "JWT Scadenza: $expirationDate")
                             val currentTime = System.currentTimeMillis()
                             if (expirationDate.time < currentTime) {

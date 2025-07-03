@@ -7,6 +7,7 @@ import android.util.Log
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
+import com.example.roamly.activity.HomeActivity
 import com.mapbox.geojson.Point
 import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.MapView
@@ -77,6 +78,9 @@ object UserAnnotationManager {
 
                                 val newUserIdToDisplay = if (clickedUserId == currentShownProfileId) null else clickedUserId
                                 if (clickedUserId != currentShownProfileId) onToggleCallout(null)
+                                val activity = mapView.context as? HomeActivity
+                                activity?.hideEventCallout()
+
 
                                 mapboxMap.flyTo(
                                     CameraOptions.Builder()

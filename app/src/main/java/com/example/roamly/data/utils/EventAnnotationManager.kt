@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.lifecycle.lifecycleScope
 import com.example.roamly.R
+import com.example.roamly.activity.HomeActivity
 import com.example.roamly.data.models.Event
 import com.example.roamly.data.repository.EventRepository
 import com.example.roamly.data.repository.InterestRepository
@@ -122,9 +123,13 @@ object EventAnnotationManager {
             val newIdToDisplay = if (wasOpen) null else clickedEventId
 
             Log.d("MARKER_CLICK", "🆔 clickedEventId = $clickedEventId, wasOpen = $wasOpen → newIdToDisplay = $newIdToDisplay")
+            val activity = mapView.context as? HomeActivity
+            activity?.hideUserCallout()
 
-            // ❗️ Chiudi SUBITO tooltip precedente
-            onToggleEventCallout(null)
+            if (wasOpen) {
+                activity?.hideEventCallout()
+                return@addClickListener true
+            }
 
             Log.d("MARKER_CLICK", "🗺️ Eseguo flyTo")
             mapboxMap.flyTo(
@@ -236,8 +241,10 @@ object EventAnnotationManager {
                                 scope.launch {
                                     val ok = eventRepo.deleteEvent(eventId)
                                     if (ok) {
-                                        onToggleEventCallout(null)
-                                        removeEventMarker(eventId)
+                                        EventAnnotationManager.removeEventMarker(eventId)
+                                        val activity = context as? HomeActivity
+                                        activity?.hideEventCallout()
+                                        activity?.currentShownEventId = null
                                         Toast.makeText(context, "Evento eliminato", Toast.LENGTH_SHORT).show()
                                     } else {
                                         Toast.makeText(context, "Errore eliminazione", Toast.LENGTH_SHORT).show()
@@ -249,7 +256,7 @@ object EventAnnotationManager {
                 } else {
                     Log.d("MARKER_CLICK", "⚠️ newIdToDisplay è null, non apro tooltip")
                 }
-            }, 700L)
+            }, 100L)
 
             true
         }
@@ -265,6 +272,63 @@ object EventAnnotationManager {
             Log.d("EVENT_MARKER", "Marker evento $eventId rimosso.")
         } else {
             Log.w("EVENT_MARKER", "Nessun marker trovato per evento $eventId")
+        }
+    }
+
+    suspend fun synchronizeEventMarkers(
+        context: Context,
+        mapView: MapView,
+        mapboxMap: MapboxMap,
+        myLat: Double,
+        myLon: Double,
+        getCurrentShownEventId: () -> String?,
+        onToggleEventCallout: (String?) -> Unit
+    ) {
+        try {
+            val eventRepo = EventRepository()
+
+            val allEvents = eventRepo.getEvents()
+            val now = System.currentTimeMillis()
+
+            val validEventIds = mutableListOf<String>()
+
+            for (event in allEvents) {
+                val dist = MapUtils.haversine(myLat, myLon, event.latitude, event.longitude)
+
+                val visibleUntilMillis = try {
+                    event.visible_until?.let {
+                        java.time.Instant.parse(it).toEpochMilli()
+                    } ?: Long.MAX_VALUE
+                } catch (e: Exception) {
+                    Log.w("EVENT_SYNC", "Data visibilità malformata per evento ${event.id}: ${event.visible_until}")
+                    Long.MIN_VALUE // lo consideriamo già scaduto
+                }
+
+                if (dist <= 10 && visibleUntilMillis >= now) {
+                    validEventIds.add(event.id!!)
+                    createEventMarker(
+                        context = context,
+                        mapView = mapView,
+                        mapboxMap = mapboxMap,
+                        event = event,
+                        point = Point.fromLngLat(event.longitude, event.latitude),
+                        getCurrentShownEventId = getCurrentShownEventId,
+                        onToggleEventCallout = onToggleEventCallout
+                    )
+                }
+            }
+
+            // Rimuovi marker non più validi
+            val currentMarkers = eventMarkers.keys.toList()
+            for (eventId in currentMarkers) {
+                if (!validEventIds.contains(eventId)) {
+                    removeEventMarker(eventId)
+                    Log.d("EVENT_SYNC", "Marker evento $eventId rimosso (non più valido)")
+                }
+            }
+
+        } catch (e: Exception) {
+            Log.e("EVENT_SYNC", "Errore sincronizzazione eventi: ${e.message}", e)
         }
     }
 

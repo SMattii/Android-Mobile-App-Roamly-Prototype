@@ -13,6 +13,13 @@
         app:mapbox_cameraTargetLng="0"
         app:mapbox_cameraZoom="17.0" />
 
+    <!-- Container per i tooltip dinamici -->
+    <FrameLayout
+        android:id="@+id/tooltipContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipChildren="false" />
+
     <FrameLayout
         android:id="@+id/profileFragmentContainer"
         android:layout_width="match_parent"
@@ -24,13 +31,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone" />
-
-    <!-- Container per i tooltip dinamici -->
-    <FrameLayout
-        android:id="@+id/tooltipContainer"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:clipChildren="false" />
 
     <!-- FAB per tornare alla propria posizione -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton

@@ -1,12 +1,15 @@
 package com.example.roamly.activity
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.location.LocationManager
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.util.Log
 import android.view.MotionEvent
@@ -32,7 +35,6 @@ import com.example.roamly.data.models.Profile
 import com.example.roamly.R
 import com.example.roamly.data.utils.SupabaseClientProvider
 import com.example.roamly.data.models.NearbyUserProfile
-import com.example.roamly.data.repository.EventRepository
 import com.example.roamly.data.repository.ProfileRepository
 import com.example.roamly.data.utils.EventAnnotationManager
 import com.example.roamly.data.utils.UserAnnotationManager
@@ -71,6 +73,9 @@ class HomeActivity : AppCompatActivity() {
 
     private val profileRepository = ProfileRepository()
 
+    private val eventRefreshHandler = Handler(Looper.getMainLooper())
+    private val eventRefreshInterval: Long = 30_000L
+
     private val userProfilesCache = mutableMapOf<String, NearbyUserProfile>()
     private var currentShownProfileId: String? = null
 
@@ -93,6 +98,7 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var fabHome: FloatingActionButton
     private lateinit var bottomNav: BottomNavigationView
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d("MapDebug", "onCreate chiamato. cameraCenteredOnce = $cameraCenteredOnce")
@@ -117,7 +123,7 @@ class HomeActivity : AppCompatActivity() {
         mapView.gestures.addOnMoveListener(object : OnMoveListener {
             override fun onMoveBegin(detector: MoveGestureDetector) {
                 if (currentShownProfileId != null) {
-                    hideCallout()
+                    hideUserCallout()
                     currentShownProfileId = null
                 }
                 if (currentShownEventId != null) {
@@ -150,7 +156,7 @@ class HomeActivity : AppCompatActivity() {
                 Log.d("FAB_HOME", "ProfileFragment chiuso")
             }
 
-            removeCallout()
+            removeUserCallout()
             centerCameraOnUser()
         }
 
@@ -292,7 +298,27 @@ class HomeActivity : AppCompatActivity() {
 
                 Log.d("DEBUG_NEARBY_CALL", "fetchNearbyVisibleProfiles chiamata")
                 fetchNearbyVisibleProfiles(location.latitude, location.longitude)
-                fetchNearbyEvents(location.latitude, location.longitude)
+
+                lifecycleScope.launch {
+                    EventAnnotationManager.synchronizeEventMarkers(
+                        context = this@HomeActivity,
+                        mapView = mapView,
+                        mapboxMap = mapView.mapboxMap,
+                        myLat = location.latitude,
+                        myLon = location.longitude,
+                        getCurrentShownEventId = { currentShownEventId },
+                        onToggleEventCallout = { newId ->
+                            if (newId == null) {
+                                hideEventCallout()
+                            } else {
+                                removeEventCallout()
+                                currentShownEventId = newId
+                            }
+                        }
+                    )
+                }
+
+                scheduleEventRefresh(location.latitude, location.longitude)
 
                 Log.d("MapDebug", "onLocationResult: prima del check cameraCenteredOnce: $cameraCenteredOnce")
                 if (!cameraCenteredOnce) {
@@ -323,6 +349,7 @@ class HomeActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         fusedLocationClient.removeLocationUpdates(locationCallback)
+        eventRefreshHandler.removeCallbacksAndMessages(null)
         UserAnnotationManager.clearAll()
     }
 
@@ -447,13 +474,13 @@ class HomeActivity : AppCompatActivity() {
                             if (newIdToDisplay == null) {
                                 // Se MapAnnotationManager ha detto di chiudere (newIdToDisplay è null)
                                 Log.d("TOOLTIP_ACTION", "hideCallout chiamato. Rimuovo tooltip e azzero currentShownProfileId.")
-                                hideCallout() // Chiude il tooltip e azzera currentShownProfileId
+                                hideUserCallout() // Chiude il tooltip e azzera currentShownProfileId
                                 currentShownProfileId = null
                                 Log.d("TOOLTIP_FLOW", "Richiesta di chiusura tooltip dal click. currentShownProfileId azzerato.")
                             } else {
                                 // Se MapAnnotationManager ha detto di aprire (newIdToDisplay è un ID)
                                 Log.d("TOOLTIP_ACTION", "removeCallout chiamato. Rimuovo TUTTI i tooltip e azzero currentShownProfileId.")
-                                removeCallout() // Assicura che non ci siano altri tooltip aperti, e azzera currentShownProfileId
+                                removeUserCallout() // Assicura che non ci siano altri tooltip aperti, e azzera currentShownProfileId
                                 currentShownProfileId = newIdToDisplay // Imposta il nuovo ID del profilo da mostrare
                                 Log.d("TOOLTIP_FLOW", "currentShownProfileId impostato a: $currentShownProfileId")
 
@@ -496,48 +523,6 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    private fun fetchNearbyEvents(myLat: Double, myLon: Double) {
-        lifecycleScope.launch {
-            try {
-                val eventRepo = EventRepository()
-                val profileRepo = ProfileRepository()
-
-                val events = eventRepo.getEvents()
-
-                for (event in events) {
-                    val dist = MapUtils.haversine(myLat, myLon, event.latitude, event.longitude)
-                    if (dist > 10) continue  // distanza > 10km? Skippa
-
-                    val participants = eventRepo.getEventParticipants(event.id!!)
-                    Log.d("EVENT_PARTICIPANTS", "Evento ${event.id} ha ${participants.size} partecipanti.")
-
-                    val profiles = profileRepo.getProfilesByIds(participants)
-                    Log.d("EVENT_PARTICIPANTS", "Profili caricati per evento ${event.id}: ${profiles.map { it.id }}")
-
-                    EventAnnotationManager.createEventMarker(
-                        context = this@HomeActivity,
-                        mapView = mapView,
-                        mapboxMap = mapView.mapboxMap,
-                        event = event,
-                        point = Point.fromLngLat(event.longitude, event.latitude),
-                        getCurrentShownEventId = { currentShownEventId },
-                        onToggleEventCallout = { newId ->
-                            if (newId == null) {
-                                hideEventCallout()
-                            } else {
-                                removeEventCallout()
-                                currentShownEventId = newId
-                            }
-                        }
-                    )
-                }
-            } catch (e: Exception) {
-                Log.e("EVENT_FETCH", "Errore nel caricamento eventi: ${e.message}", e)
-                Toast.makeText(this@HomeActivity, "Errore caricamento eventi", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
     private fun cleanupNonNearbyMarkers(currentNearbyIds: List<String>) {
         val currentUserId = SupabaseClientProvider.auth.currentUserOrNull()?.id
         val idsToKeep = mutableSetOf<String>()
@@ -552,7 +537,7 @@ class HomeActivity : AppCompatActivity() {
     }
 
     // Nasconde il tooltip corrente, se presente
-    private fun hideCallout() {
+    fun hideUserCallout() {
         val tooltipContainer = findViewById<FrameLayout>(R.id.tooltipContainer)
         tooltipContainer.removeAllViews()
         currentShownProfileId = null
@@ -560,7 +545,7 @@ class HomeActivity : AppCompatActivity() {
     }
 
     // Rimuove forzatamente tutti i tooltip
-    private fun removeCallout() {
+    fun removeUserCallout() {
         val tooltipContainer = findViewById<FrameLayout>(R.id.tooltipContainer)
         tooltipContainer.removeAllViews()
         currentShownProfileId = null
@@ -568,8 +553,7 @@ class HomeActivity : AppCompatActivity() {
     }
 
     fun hideEventCallout() {
-        val tooltipContainer = findViewById<FrameLayout>(R.id.tooltipContainer)
-        tooltipContainer.removeAllViews()
+        findViewById<FrameLayout>(R.id.tooltipContainer).removeAllViews()
         currentShownEventId = null
         Log.d("EVENT_TOOLTIP", "Tooltip evento nascosto.")
     }
@@ -607,6 +591,30 @@ class HomeActivity : AppCompatActivity() {
             Toast.makeText(this, "Errore nel recupero della posizione", Toast.LENGTH_SHORT).show()
             Log.e("FAB_CENTER", "Errore recupero posizione: ${it.message}", it)
         }
+    }
+
+    private fun scheduleEventRefresh(lat: Double, lon: Double) {
+        eventRefreshHandler.postDelayed({
+            lifecycleScope.launch {
+                EventAnnotationManager.synchronizeEventMarkers(
+                    context = this@HomeActivity,
+                    mapView = mapView,
+                    mapboxMap = mapView.mapboxMap,
+                    myLat = lat,
+                    myLon = lon,
+                    getCurrentShownEventId = { currentShownEventId },
+                    onToggleEventCallout = { newId ->
+                        if (newId == null) {
+                            hideEventCallout()
+                        } else {
+                            removeEventCallout()
+                            currentShownEventId = newId
+                        }
+                    }
+                )
+            }
+            scheduleEventRefresh(lat, lon) // ricorsione per mantenerlo attivo
+        }, eventRefreshInterval)
     }
 
 }

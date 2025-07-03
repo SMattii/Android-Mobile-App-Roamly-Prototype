@@ -32,7 +32,11 @@ object EventTooltipManager {
         participants: List<Profile>,
         allLanguages: List<Language>,
         allInterests: List<Interest>,
-        onJoinClick: ((eventId: String) -> Unit)? = null
+        currentUserId: String, // 👈 aggiunto
+        onJoinClick: ((eventId: String) -> Unit)? = null,
+        onLeaveClick: ((eventId: String) -> Unit)? = null,
+        onEditClick: ((event: Event) -> Unit)? = null,
+        onDeleteClick: ((eventId: String) -> Unit)? = null,
     ) {
         tooltipContainer.removeAllViews()
 
@@ -92,10 +96,38 @@ object EventTooltipManager {
             avatarContainer.addView(img)
         }
 
-        // JOIN button
         val joinBtn = view.findViewById<Button>(R.id.btnJoin)
-        joinBtn.setOnClickListener {
-            onJoinClick?.invoke(event.id ?: return@setOnClickListener)
+        val deleteBtn = view.findViewById<Button>(R.id.btnDelete)
+
+        val isCreator = event.profile_id == currentUserId
+        val isParticipant = participants.any { it.id == currentUserId }
+
+        when {
+            isCreator -> {
+                joinBtn.text = "EDIT"
+                joinBtn.setOnClickListener {
+                    onEditClick?.invoke(event)
+                }
+
+                deleteBtn.visibility = View.VISIBLE
+                deleteBtn.setOnClickListener {
+                    onDeleteClick?.invoke(event.id ?: return@setOnClickListener)
+                }
+            }
+
+            isParticipant -> {
+                joinBtn.text = "LEAVE"
+                joinBtn.setOnClickListener {
+                    onLeaveClick?.invoke(event.id ?: return@setOnClickListener)
+                }
+            }
+
+            else -> {
+                joinBtn.text = "JOIN"
+                joinBtn.setOnClickListener {
+                    onJoinClick?.invoke(event.id ?: return@setOnClickListener)
+                }
+            }
         }
 
         // Posizionamento sulla mappa

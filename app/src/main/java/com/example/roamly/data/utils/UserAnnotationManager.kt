@@ -20,7 +20,7 @@ import com.mapbox.maps.plugin.animation.flyTo
 import com.mapbox.maps.plugin.annotation.annotations
 import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
 
-object MapAnnotationManager {
+object UserAnnotationManager {
 
     private val userAnnotationManagers = mutableMapOf<String, PointAnnotationManager>()
     private val userMarkers = mutableMapOf<String, PointAnnotation>()

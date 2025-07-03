@@ -28,6 +28,9 @@ import kotlinx.coroutines.launch
 
 object EventAnnotationManager {
 
+    private val eventAnnotationManagers = mutableMapOf<String, PointAnnotationManager>()
+    private val eventMarkers = mutableMapOf<String, PointAnnotation>()
+
     fun createEventMarker(
         context: Context,
         mapView: MapView,
@@ -37,7 +40,10 @@ object EventAnnotationManager {
         getCurrentShownEventId: () -> String?,
         onToggleEventCallout: (newEventId: String?) -> Unit
     ): PointAnnotationManager {
-        val annotationManager = mapView.annotations.createPointAnnotationManager()
+
+        val annotationManager = eventAnnotationManagers.getOrPut("global_event_manager") {
+            mapView.annotations.createPointAnnotationManager()
+        }
 
         val iconRes = when (event.event_type.lowercase()) {
             "party" -> R.drawable.ic_event_party
@@ -101,7 +107,8 @@ object EventAnnotationManager {
                 .withData(JsonParser.parseString("{\"eventId\": \"${event.id}\"}").asJsonObject)
 
             try {
-                annotationManager.create(options)
+                val annotation = annotationManager.create(options)
+                eventMarkers[event.id!!] = annotation
             } catch (e: Exception) {
                 Log.e("EVENT_MARKER", "Errore creazione marker evento: ${e.message}")
             }
@@ -183,6 +190,12 @@ object EventAnnotationManager {
                         }
 
                         Log.d("MARKER_CLICK", "✨ Mostro tooltip evento")
+                        val currentUserId = SupabaseClientProvider.auth.currentUserOrNull()?.id
+                        if (currentUserId == null) {
+                            Log.e("MARKER_CLICK", "❌ currentUserId è null, non posso mostrare tooltip")
+                            return@launch
+                        }
+
                         EventTooltipManager.show(
                             context = context,
                             mapView = mapView,
@@ -193,16 +206,41 @@ object EventAnnotationManager {
                             participants = participantProfiles,
                             allLanguages = allLanguages,
                             allInterests = allInterests,
+                            currentUserId = currentUserId,
                             onJoinClick = { joinedEventId ->
-                                Log.d("MARKER_CLICK", "👆 JOIN cliccato su evento $joinedEventId")
-                                SupabaseClientProvider.auth.currentUserOrNull()?.id?.let { uid ->
-                                    scope.launch {
-                                        val ok = eventRepo.addParticipant(joinedEventId, uid)
-                                        if (ok) {
-                                            Toast.makeText(context, "Ti sei unito all'evento!", Toast.LENGTH_SHORT).show()
-                                        } else {
-                                            Toast.makeText(context, "Errore partecipazione", Toast.LENGTH_SHORT).show()
-                                        }
+                                scope.launch {
+                                    val ok = eventRepo.addParticipant(joinedEventId, currentUserId)
+                                    if (ok) {
+                                        Toast.makeText(context, "Ti sei unito all'evento!", Toast.LENGTH_SHORT).show()
+                                        onToggleEventCallout(null)
+                                    } else {
+                                        Toast.makeText(context, "Errore partecipazione", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            },
+                            onLeaveClick = { eventId ->
+                                scope.launch {
+                                    val ok = eventRepo.removeParticipant(eventId, currentUserId)
+                                    if (ok) {
+                                        Toast.makeText(context, "Hai lasciato l’evento", Toast.LENGTH_SHORT).show()
+                                        onToggleEventCallout(null)
+                                    } else {
+                                        Toast.makeText(context, "Errore uscita evento", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            },
+                            onEditClick = { event ->
+                                Toast.makeText(context, "TODO: implementa modifica evento", Toast.LENGTH_SHORT).show()
+                            },
+                            onDeleteClick = { eventId ->
+                                scope.launch {
+                                    val ok = eventRepo.deleteEvent(eventId)
+                                    if (ok) {
+                                        onToggleEventCallout(null)
+                                        removeEventMarker(eventId)
+                                        Toast.makeText(context, "Evento eliminato", Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        Toast.makeText(context, "Errore eliminazione", Toast.LENGTH_SHORT).show()
                                     }
                                 }
                             }
@@ -218,4 +256,16 @@ object EventAnnotationManager {
 
         return annotationManager
     }
+
+    fun removeEventMarker(eventId: String) {
+        val annotation = eventMarkers[eventId]
+        if (annotation != null) {
+            eventAnnotationManagers["global_event_manager"]?.delete(annotation)
+            eventMarkers.remove(eventId)
+            Log.d("EVENT_MARKER", "Marker evento $eventId rimosso.")
+        } else {
+            Log.w("EVENT_MARKER", "Nessun marker trovato per evento $eventId")
+        }
+    }
+
 }

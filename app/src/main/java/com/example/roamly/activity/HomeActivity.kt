@@ -7,8 +7,6 @@ import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.location.LocationManager
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.provider.Settings
 import android.util.Log
 import android.view.MotionEvent
@@ -37,7 +35,7 @@ import com.example.roamly.data.models.NearbyUserProfile
 import com.example.roamly.data.repository.EventRepository
 import com.example.roamly.data.repository.ProfileRepository
 import com.example.roamly.data.utils.EventAnnotationManager
-import com.example.roamly.data.utils.MapAnnotationManager
+import com.example.roamly.data.utils.UserAnnotationManager
 import com.example.roamly.data.utils.MapUtils
 import com.example.roamly.data.utils.UserTooltipManager
 import com.example.roamly.fragment.EventCreationFragment
@@ -75,6 +73,7 @@ class HomeActivity : AppCompatActivity() {
 
     private val userProfilesCache = mutableMapOf<String, NearbyUserProfile>()
     private var currentShownProfileId: String? = null
+
     var currentShownEventId: String? = null
 
     private lateinit var allInterests: List<Interest>
@@ -324,7 +323,7 @@ class HomeActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         fusedLocationClient.removeLocationUpdates(locationCallback)
-        MapAnnotationManager.clearAll()
+        UserAnnotationManager.clearAll()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -433,7 +432,7 @@ class HomeActivity : AppCompatActivity() {
 
                     nearbyUserIdsCurrentlyFetched.add(entry.user_id)
 
-                    MapAnnotationManager.createOrUpdateUserMarker(
+                    UserAnnotationManager.createOrUpdateUserMarker(
                         context = this@HomeActivity,
                         mapView = mapView,
                         mapboxMap = mapView.mapboxMap,
@@ -545,10 +544,10 @@ class HomeActivity : AppCompatActivity() {
         if (currentUserId != null) idsToKeep.add("current_user_manager")
         idsToKeep.addAll(currentNearbyIds)
 
-        val idsToRemove = MapAnnotationManager.getManagedUserIds().filter { it !in idsToKeep }
+        val idsToRemove = UserAnnotationManager.getManagedUserIds().filter { it !in idsToKeep }
 
         for (userId in idsToRemove) {
-            MapAnnotationManager.removeUserMarker(userId)
+            UserAnnotationManager.removeUserMarker(userId)
         }
     }
 

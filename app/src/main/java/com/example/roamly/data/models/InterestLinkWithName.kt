@@ -1,6 +1,5 @@
 package com.example.roamly.data.models
 
-import com.example.roamly.Interest
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

@@ -1,4 +1,4 @@
-package com.example.roamly
+package com.example.roamly.activity
 
 import android.os.Bundle
 import android.util.Log
@@ -11,6 +11,8 @@ import com.google.android.material.textfield.TextInputEditText
 import io.github.jan.supabase.auth.providers.builtin.Email
 import kotlinx.coroutines.launch
 import android.content.Intent
+import com.example.roamly.R
+import com.example.roamly.data.utils.SupabaseClientProvider
 
 class SignupActivity : AppCompatActivity() {
 
@@ -71,7 +73,13 @@ class SignupActivity : AppCompatActivity() {
             val password = passwordField.text.toString()
 
             try {
-                // signup restituisce una AuthSession?
+                // 🔒 Se l'utente è già loggato, effettua il logout
+                SupabaseClientProvider.auth.currentUserOrNull()?.let {
+                    Log.d("Signup", "Utente già loggato (${it.id}), eseguo logout.")
+                    SupabaseClientProvider.auth.signOut()
+                }
+
+                // ✅ Procedi con la registrazione
                 val session = SupabaseClientProvider
                     .auth
                     .signUpWith(Email) {

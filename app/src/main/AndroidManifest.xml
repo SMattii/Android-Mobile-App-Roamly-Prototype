@@ -20,31 +20,31 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Roamly">
         <activity
-            android:name=".HomeActivity"
+            android:name=".activity.HomeActivity"
             android:exported="false" />
         <activity
-            android:name=".MakeProfile4Activity"
+            android:name=".activity.MakeProfile4Activity"
             android:exported="false" />
         <activity
-            android:name=".MakeProfile3Activity"
+            android:name=".activity.MakeProfile3Activity"
             android:exported="false" />
         <activity
-            android:name=".MakeProfile2Activity"
+            android:name=".activity.MakeProfile2Activity"
             android:exported="false" />
         <activity
-            android:name=".MakeProfileActivity"
+            android:name=".activity.MakeProfile1Activity"
             android:exported="false" />
         <activity
-            android:name=".LoginActivity"
+            android:name=".activity.LoginActivity"
             android:exported="false" />
         <activity
-            android:name=".SignupActivity"
+            android:name=".activity.SignupActivity"
             android:exported="false" />
         <activity
-            android:name=".OnboardingActivity"
+            android:name=".activity.OnboardingActivity"
             android:exported="false" />
         <activity
-            android:name=".MainActivity"
+            android:name=".activity.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.App.SplashScreen">
             <intent-filter>

@@ -1,7 +1,5 @@
-package com.example.roamly
+package com.example.roamly.activity
 
-import android.R.attr.category
-import android.R.attr.country
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -12,11 +10,13 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import com.example.roamly.data.models.Profile
+import com.example.roamly.R
+import com.example.roamly.data.utils.SupabaseClientProvider
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.launch
 import io.github.jan.supabase.auth.providers.builtin.Email
-import kotlin.String
 import kotlin.jvm.java
 
 
@@ -120,12 +120,12 @@ class LoginActivity : AppCompatActivity() {
                             Toast.makeText(this@LoginActivity, "Errore creazione profilo", Toast.LENGTH_SHORT).show()
                         }
 
-                        startActivity(Intent(this@LoginActivity, MakeProfileActivity::class.java))
+                        startActivity(Intent(this@LoginActivity, MakeProfile1Activity::class.java))
                         finish()
 
                     } else {
                         if (!profile.has_logged_before) {
-                            startActivity(Intent(this@LoginActivity, MakeProfileActivity::class.java))
+                            startActivity(Intent(this@LoginActivity, MakeProfile1Activity::class.java))
                         } else {
                             startActivity(Intent(this@LoginActivity, HomeActivity::class.java))
                         }

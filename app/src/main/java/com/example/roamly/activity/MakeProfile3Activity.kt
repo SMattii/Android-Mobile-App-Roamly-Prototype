@@ -1,4 +1,4 @@
-package com.example.roamly
+package com.example.roamly.activity
 
 import android.content.Intent
 import android.os.Bundle
@@ -7,8 +7,10 @@ import android.widget.CheckBox
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.example.roamly.data.models.Interest
+import com.example.roamly.R
+import com.example.roamly.data.utils.SupabaseClientProvider
 import com.google.android.material.button.MaterialButton
-import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.launch
 import kotlin.jvm.java // Questo import non è necessario e può essere rimosso, dato che usi ::class.java
 

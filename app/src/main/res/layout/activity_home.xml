@@ -1,8 +1,10 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/mainLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!-- MapView a schermo intero -->
     <com.mapbox.maps.MapView
         android:id="@+id/mapView"
         android:layout_width="match_parent"
@@ -12,9 +14,52 @@
         app:mapbox_cameraZoom="17.0" />
 
     <FrameLayout
+        android:id="@+id/profileFragmentContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
+    <FrameLayout
+        android:id="@+id/eventFragmentContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
+    <!-- Container per i tooltip dinamici -->
+    <FrameLayout
         android:id="@+id/tooltipContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipChildren="false" />
+
+    <!-- FAB per tornare alla propria posizione -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabHome"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="72dp"
+        android:src="@drawable/ic_home"
+        app:backgroundTint="@color/roamly_peach"
+        app:tint="@android:color/white"
+        android:contentDescription="Home" />
+
+    <!-- Bottom navigation con due pulsanti -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigationView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        app:menu="@menu/bottom_nav_menu" />
+
+    <!-- DEVE essere l'ultimo elemento dentro il FrameLayout -->
+    <ImageView
+        android:id="@+id/draggableEventIcon"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:visibility="gone"
+        android:src="@drawable/ic_event_marker"
+        android:contentDescription="Trascina per creare evento"
+        android:translationZ="100dp" /> <!-- FORZA sopra la navbar -->
 
 </FrameLayout>

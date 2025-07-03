@@ -1,4 +1,4 @@
-package com.example.roamly
+package com.example.roamly.data.models
 
 import kotlinx.serialization.Serializable
 

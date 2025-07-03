@@ -1,12 +1,12 @@
 package com.example.roamly.data.repository
 
 import android.util.Log
-import com.example.roamly.SupabaseClientProvider
+import com.example.roamly.data.utils.SupabaseClientProvider
 import com.example.roamly.data.models.InterestLinkWithName
 import com.example.roamly.data.models.LanguageLink
 import com.example.roamly.data.models.NearbyUserProfile
-import com.example.roamly.LocationEntry
-import com.example.roamly.Profile
+import com.example.roamly.data.models.LocationEntry
+import com.example.roamly.data.models.Profile
 import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -58,6 +58,30 @@ class ProfileRepository {
                 interests = interestsMap[profile.id] ?: emptyList(),
                 languages = languagesMap[profile.id] ?: emptyList()
             )
+        }
+    }
+
+    suspend fun getProfilesByIds(ids: List<String>): List<Profile> {
+        if (ids.isEmpty()) {
+            Log.w("SUPABASE_PROFILES", "Nessun ID ricevuto, ritorno lista vuota.")
+            return emptyList()
+        }
+
+        return try {
+            val profiles = SupabaseClientProvider.db
+                .from("profiles")
+                .select {
+                    filter {
+                        Profile::id isIn ids
+                    }
+                }
+                .decodeList<Profile>()
+
+            Log.d("SUPABASE_PROFILES", "Richiesti ${ids.size} profili, ricevuti ${profiles.size}")
+            profiles
+        } catch (e: Exception) {
+            Log.e("SUPABASE_PROFILES", "Errore fetch profili: ${e.message}", e)
+            emptyList()
         }
     }
 }

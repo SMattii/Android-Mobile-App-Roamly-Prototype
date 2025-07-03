@@ -1,7 +1,4 @@
-package com.example.roamly
-
-import android.content.Context
-import androidx.annotation.DrawableRes // Importa questa annotazione per chiarezza
+package com.example.roamly.data.models
 
 data class CategoryItem(
     val name: String,

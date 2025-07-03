@@ -1,4 +1,4 @@
-package com.example.roamly
+package com.example.roamly.activity
 
 import android.content.Intent
 import android.os.Bundle

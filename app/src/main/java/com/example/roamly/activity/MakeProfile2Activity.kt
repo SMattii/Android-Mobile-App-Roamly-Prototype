@@ -1,4 +1,4 @@
-package com.example.roamly
+package com.example.roamly.activity
 
 import android.content.Intent
 import android.os.Bundle
@@ -9,7 +9,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
-import com.example.roamly.adapters.LanguageAdapter
+import com.example.roamly.data.models.Language
+import com.example.roamly.data.utils.LanguageProvider
+import com.example.roamly.data.models.ProfileLanguage
+import com.example.roamly.R
+import com.example.roamly.data.utils.SupabaseClientProvider
+import com.example.roamly.adapter.LanguageAdapter
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup

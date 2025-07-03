@@ -1,4 +1,4 @@
-package com.example.roamly
+package com.example.roamly.activity
 
 import android.content.Intent
 import android.os.Bundle
@@ -8,7 +8,9 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
-import com.example.roamly.SupabaseClientProvider
+import com.example.roamly.data.models.Profile
+import com.example.roamly.R
+import com.example.roamly.data.utils.SupabaseClientProvider
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.materialswitch.MaterialSwitch
 import kotlinx.coroutines.launch

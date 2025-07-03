@@ -34,7 +34,7 @@ import org.json.JSONObject
 import java.util.Date
 import kotlin.jvm.java
 
-class MakeProfileActivity : AppCompatActivity() {
+class MakeProfile1Activity : AppCompatActivity() {
 
     private lateinit var profileImageView: ImageView
     private var uploadedImageUrl: String? = null
@@ -52,13 +52,13 @@ class MakeProfileActivity : AppCompatActivity() {
             profileImageView.setImageURI(uri)
 
             lifecycleScope.launch {
-                val imageUrl = uploadProfileImage(this@MakeProfileActivity, uri)
+                val imageUrl = uploadProfileImage(this@MakeProfile1Activity, uri)
 
                 if (imageUrl != null) {
                     Log.d("SupabaseUpload", "URL immagine profilo: $imageUrl")
                     uploadedImageUrl = imageUrl
                 } else {
-                    Toast.makeText(this@MakeProfileActivity, "Errore durante l'upload", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MakeProfile1Activity, "Errore durante l'upload", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -240,7 +240,7 @@ class MakeProfileActivity : AppCompatActivity() {
 
             Toast.makeText(this, "Profilo aggiornato!", Toast.LENGTH_SHORT).show()
 
-            val intent = Intent(this@MakeProfileActivity, MakeProfile2Activity::class.java)
+            val intent = Intent(this@MakeProfile1Activity, MakeProfile2Activity::class.java)
             startActivity(intent)
             finish()
 

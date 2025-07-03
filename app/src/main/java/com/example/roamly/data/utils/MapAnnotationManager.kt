@@ -22,6 +22,9 @@ import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
 
 object MapAnnotationManager {
 
+    private val userAnnotationManagers = mutableMapOf<String, PointAnnotationManager>()
+    private val userMarkers = mutableMapOf<String, PointAnnotation>()
+
     fun createOrUpdateUserMarker(
         context: Context,
         mapView: MapView,
@@ -29,10 +32,12 @@ object MapAnnotationManager {
         userId: String,
         imageUrl: String,
         point: Point,
-        getCurrentShownProfileId: () -> String?, // ✅ Funzione per ottenere il valore corrente
+        getCurrentShownProfileId: () -> String?,
         onToggleCallout: (newUserId: String?) -> Unit
     ): PointAnnotationManager {
-        val annotationManager = mapView.annotations.createPointAnnotationManager()
+        val annotationManager = userAnnotationManagers.getOrPut(userId) {
+            mapView.annotations.createPointAnnotationManager()
+        }
 
         Glide.with(context)
             .asBitmap()
@@ -47,72 +52,49 @@ object MapAnnotationManager {
                     try {
                         style.addImage(imageId, bitmap)
                     } catch (_: Exception) {
-                        // immagine già aggiunta
+                        // Ignora eccezione se immagine già aggiunta
                     }
 
-                    val existing = annotationManager.annotations.firstOrNull {
-                        it.getData()?.asJsonObject?.get("userId")?.asString == userId
-                    } as? PointAnnotation
-
+                    val existing = userMarkers[userId]
                     if (existing != null) {
                         existing.point = point
                         annotationManager.update(existing)
+                        Log.d("MARKER_UPDATE", "Aggiornato marker per userId=$userId")
                     } else {
                         val options = PointAnnotationOptions()
                             .withPoint(point)
                             .withIconImage(imageId)
-                            .withData(JsonParser.parseString("{'userId': '$userId'}").asJsonObject)
+                            .withData(JsonParser.parseString("{\"userId\": \"$userId\"}").asJsonObject)
 
                         try {
-                            annotationManager.create(options)
+                            val marker = annotationManager.create(options)
+                            userMarkers[userId] = marker
+                            Log.d("MARKER_CREATE", "Creato nuovo marker per userId=$userId")
+
+                            annotationManager.addClickListener { annotation ->
+                                val clickedUserId = annotation.getData()?.asJsonObject?.get("userId")?.asString
+                                val currentShownProfileId = getCurrentShownProfileId()
+
+                                val newUserIdToDisplay = if (clickedUserId == currentShownProfileId) null else clickedUserId
+                                if (clickedUserId != currentShownProfileId) onToggleCallout(null)
+
+                                mapboxMap.flyTo(
+                                    CameraOptions.Builder()
+                                        .center(annotation.point)
+                                        .zoom(mapboxMap.cameraState.zoom)
+                                        .build(),
+                                    MapAnimationOptions.mapAnimationOptions { duration(500L) }
+                                )
+
+                                mapView.postDelayed({
+                                    onToggleCallout(newUserIdToDisplay)
+                                }, 700L)
+
+                                true
+                            }
                         } catch (e: Exception) {
                             Log.e("MARKER_ERROR", "Errore creazione marker: ${e.message}")
                         }
-                    }
-
-                    // ✅ LOGICA CORRETTA DEL CLICK LISTENER
-                    annotationManager.addClickListener { annotation ->
-                        val clickedUserId = annotation.getData()?.asJsonObject?.get("userId")?.asString
-
-                        if (clickedUserId != null) {
-                            val currentShownProfileId = getCurrentShownProfileId()
-
-                            Log.d("MARKER_CLICK", "Marker cliccato per userId=$clickedUserId")
-                            Log.d("MARKER_CLICK", "currentShownProfileId attuale = $currentShownProfileId")
-
-                            val newUserIdToDisplay = if (clickedUserId == currentShownProfileId) {
-                                Log.d("MARKER_CLICK", "Tooltip già aperto per $clickedUserId, lo chiudo (toggle).")
-                                null
-                            } else {
-                                Log.d("MARKER_CLICK", "Marker diverso cliccato o nessun tooltip aperto, mostro per $clickedUserId.")
-                                clickedUserId
-                            }
-
-                            Log.d("MARKER_CLICK", "Decisione finale: newUserIdToDisplay = $newUserIdToDisplay")
-
-                            // 👉 Se stai cambiando utente, chiudi SUBITO il tooltip precedente
-                            if (clickedUserId != currentShownProfileId) {
-                                Log.d("TOOLTIP_ACTION", "Chiudo subito il tooltip precedente (se presente).")
-                                onToggleCallout(null)
-                            }
-
-                            mapboxMap.flyTo(
-                                CameraOptions.Builder()
-                                    .center(annotation.point)
-                                    .zoom(mapboxMap.cameraState.zoom)
-                                    .build(),
-                                MapAnimationOptions.mapAnimationOptions {
-                                    duration(500L)
-                                }
-                            )
-
-                            mapView.postDelayed({
-                                Log.d("FLY_TO_COMPLETE", "FlyTo completato. Chiamo onToggleCallout con $newUserIdToDisplay")
-                                onToggleCallout(newUserIdToDisplay)
-                            }, 700L)
-                        }
-
-                        true
                     }
                 }
 
@@ -121,4 +103,26 @@ object MapAnnotationManager {
 
         return annotationManager
     }
+
+    fun removeUserMarker(userId: String) {
+        userMarkers[userId]?.let { marker ->
+            userAnnotationManagers[userId]?.delete(marker)
+            userMarkers.remove(userId)
+        }
+        userAnnotationManagers[userId]?.let { manager ->
+            manager.deleteAll()
+            userAnnotationManagers.remove(userId)
+        }
+        Log.d("MARKER_REMOVE", "Rimosso marker e manager per userId=$userId")
+    }
+
+    fun clearAll() {
+        userAnnotationManagers.forEach { (_, manager) ->
+            manager.deleteAll()
+        }
+        userAnnotationManagers.clear()
+        userMarkers.clear()
+    }
+
+    fun getManagedUserIds(): List<String> = userAnnotationManagers.keys.toList()
 }

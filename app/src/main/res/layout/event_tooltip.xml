@@ -1,6 +1,82 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent">
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/eventTooltipRoot"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="10dp"
+    android:background="@drawable/callout_background"
+    android:elevation="6dp"
+    android:layout_gravity="center"
+    android:layout_marginBottom="10dp">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- Riga: Tipo evento, Data, Ora -->
+    <TextView
+        android:id="@+id/txtEventType"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Party - 02/07/2025 21:00"
+        android:textStyle="bold"
+        android:textColor="#000000"
+        android:textSize="14sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <!-- Partecipanti -->
+    <TextView
+        android:id="@+id/txtParticipants"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="2/6 partecipanti"
+        android:textSize="12sp"
+        android:textColor="#666666"
+        android:layout_marginTop="2dp" />
+
+    <!-- Età -->
+    <TextView
+        android:id="@+id/txtAgeRange"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Età: 20 - 40"
+        android:textSize="12sp"
+        android:textColor="#666666"
+        android:layout_marginTop="2dp" />
+
+    <!-- Lingue -->
+    <LinearLayout
+        android:id="@+id/languagesContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="4dp" />
+
+    <!-- Interessi -->
+    <LinearLayout
+        android:id="@+id/interestsContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="4dp" />
+
+    <!-- Partecipanti avatar row -->
+    <LinearLayout
+        android:id="@+id/avatarsContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="6dp" />
+
+    <Button
+        android:id="@+id/btnJoin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="JOIN"
+        android:textSize="15dp"
+        android:textAllCaps="true"
+        android:backgroundTint="@color/roamly_red"
+        android:textColor="@android:color/white"
+        android:layout_marginTop="5dp"
+        android:layout_gravity="end"
+        android:elevation="2dp"/>
+
+</LinearLayout>

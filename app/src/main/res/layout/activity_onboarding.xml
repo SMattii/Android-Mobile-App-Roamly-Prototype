@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/roamly_blush"
-    tools:context=".OnboardingActivity">
+    tools:context=".activity.OnboardingActivity">
 
         <ImageView
             android:id="@+id/logo"

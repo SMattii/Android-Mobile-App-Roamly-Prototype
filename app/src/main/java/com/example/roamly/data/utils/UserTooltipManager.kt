@@ -84,10 +84,10 @@ object UserTooltipManager {
         langContainer.removeAllViews()
 
         profile.languages.forEach { code ->
-            val lang = allLanguages.find { it.code == code }
+            val lang = allLanguages.find { it.id == code }
             lang?.let {
                 val image = ImageView(context).apply {
-                    setImageResource(it.flagResId)
+                    setImageResource(it.getFlagResId(context))
                     layoutParams = LinearLayout.LayoutParams(64, 64).apply {
                         setMargins(8, 0, 8, 0)
                     }

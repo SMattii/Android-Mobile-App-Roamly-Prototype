@@ -38,10 +38,16 @@ class LanguageAdapter(
             view = convertView
             holder = view.tag as ViewHolder
         }
-
         holder.languageName.text = language?.name
-        holder.languageFlag.setImageResource(language?.flagResId ?: 0)
 
+        language?.let {
+            val resId = it.getFlagResId(context)
+            if (resId != 0) {
+                holder.languageFlag.setImageResource(resId)
+            } else {
+                holder.languageFlag.setImageResource(R.drawable.ic_flag_default)
+            }
+        } ?: holder.languageFlag.setImageDrawable(null)
         return view
     }
 

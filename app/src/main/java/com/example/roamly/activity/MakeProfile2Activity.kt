@@ -6,15 +6,16 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.roamly.data.models.Language
 import com.example.roamly.data.utils.LanguageProvider
-import com.example.roamly.data.models.ProfileLanguage
 import com.example.roamly.R
 import com.example.roamly.data.utils.SupabaseClientProvider
 import com.example.roamly.adapter.LanguageAdapter
+import com.example.roamly.data.models.LanguageLink
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
@@ -78,7 +79,14 @@ class MakeProfile2Activity : AppCompatActivity() {
     private fun addLanguageChip(language: Language) {
         val chip = Chip(this).apply {
             text = language.name
-            chipIcon = resources.getDrawable(language.flagResId, theme)
+
+            val resId = language.getFlagResId(context)
+            chipIcon = if (resId != 0) {
+                ContextCompat.getDrawable(context, resId)
+            } else {
+                ContextCompat.getDrawable(context, R.drawable.ic_flag_default)
+            }
+
             isCloseIconVisible = true
             isClickable = true
             isCheckable = false
@@ -105,10 +113,10 @@ class MakeProfile2Activity : AppCompatActivity() {
                 .select() {
                     filter { eq("profile_id", userId) }
                 }
-                .decodeList<ProfileLanguage>()
+                .decodeList<LanguageLink>()
 
             val existingLanguages = userLanguageEntries.mapNotNull { entry ->
-                allPossibleLanguages.find { it.code == entry.language_id }
+                allPossibleLanguages.find { it.id == entry.language_id }
             }
 
             existingLanguages.forEach { language ->
@@ -140,7 +148,7 @@ class MakeProfile2Activity : AppCompatActivity() {
 
             if (selectedLanguages.isNotEmpty()) {
                 val entriesToInsert = selectedLanguages.map { language ->
-                    ProfileLanguage(profile_id = userId, language_id = language.code)
+                    LanguageLink(profile_id = userId, language_id = language.id)
                 }
                 SupabaseClientProvider.db.from("profile_languages").insert(entriesToInsert)
             }

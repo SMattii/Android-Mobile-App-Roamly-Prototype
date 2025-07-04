@@ -5,12 +5,11 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.IOException
 import android.util.Log
-import com.example.roamly.data.models.LanguageJsonItem
 import com.example.roamly.data.models.Language
 
 object LanguageProvider {
 
-    private val languageCodeToCountryCodeMap: Map<String, String> = mapOf(
+    internal val languageCodeToCountryCodeMap: Map<String, String> = mapOf(
         "af" to "za", // Afrikaans -> South Africa
         "sq" to "al", // Shqip -> Albania
         "ar" to "sa", // العربية -> Saudi Arabia
@@ -100,21 +99,21 @@ object LanguageProvider {
                 .use { it.readText() }
 
             val gson = Gson()
-            val type = object : TypeToken<List<LanguageJsonItem>>() {}.type
-            val rawLanguages = gson.fromJson<List<LanguageJsonItem>>(jsonString, type)
+            val type = object : TypeToken<List<Language>>() {}.type
+            val rawLanguages = gson.fromJson<List<Language>>(jsonString, type)
 
             for (rawItem in rawLanguages) {
-                val countryCode = languageCodeToCountryCodeMap[rawItem.code]
+                val countryCode = languageCodeToCountryCodeMap[rawItem.id]
 
                 if (countryCode != null) {
                     val flagResId = getFlagResId(context, countryCode)
                     if (flagResId != 0) {
-                        languagesList.add(Language(rawItem.name, rawItem.code, flagResId))
+                        languagesList.add(Language(id = rawItem.id, name = rawItem.name))
                     } else {
-                        Log.w("LanguageProvider", "Flag drawable '${countryCode.lowercase()}.xml' not found for language code: '${rawItem.code}'. This language will be skipped.")
+                        Log.w("LanguageProvider", "Flag drawable '${countryCode.lowercase()}.xml' not found for language code: '${rawItem.id}'. This language will be skipped.")
                     }
                 } else {
-                    Log.w("LanguageProvider", "No country code mapping found for language code: '${rawItem.code}'. This language will be skipped.")
+                    Log.w("LanguageProvider", "No country code mapping found for language code: '${rawItem.id}'. This language will be skipped.")
                 }
             }
         } catch (e: IOException) {

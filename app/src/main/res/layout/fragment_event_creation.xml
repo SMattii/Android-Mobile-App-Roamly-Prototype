@@ -8,6 +8,7 @@
     <LinearLayout
         android:orientation="vertical"
         android:padding="24dp"
+        android:layout_marginTop="48dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
@@ -155,6 +156,7 @@
             android:textSize="18sp"
             android:textColor="@android:color/white"
             android:backgroundTint="@color/roamly_red"
-            app:cornerRadius="15dp" />
+            app:cornerRadius="15dp"
+            android:layout_marginBottom="140dp"/>
     </LinearLayout>
 </ScrollView>

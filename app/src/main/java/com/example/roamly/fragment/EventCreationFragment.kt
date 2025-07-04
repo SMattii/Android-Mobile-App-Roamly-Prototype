@@ -173,7 +173,7 @@ class EventCreationFragment : Fragment() {
                 addChipWithIcon(
                     chipGroup = languagesChipGroup,
                     label = selectedLanguage.name,
-                    iconResId = selectedLanguage.flagResId
+                    iconResId = selectedLanguage.getFlagResId(requireContext())
                 ) {
                     selectedLanguages.remove(selectedLanguage)
                 }
@@ -285,7 +285,7 @@ class EventCreationFragment : Fragment() {
             val maxAge = ageRangeSlider.values.getOrNull(1)?.toInt()
             val maxParticipants = participantsSlider.value.toInt()
             val interests = selectedInterests.map { it.id }
-            val languages = selectedLanguages.map { it.code }
+            val languages = selectedLanguages.map { it.id }
             val vibe = eventType // stesso valore di eventType per ora
 
             // Log dei dati inseriti

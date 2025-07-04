@@ -1,26 +1,27 @@
 package com.example.roamly.data.models
 
+import android.content.Context
+import android.util.Log
+import com.example.roamly.R
+import com.example.roamly.data.utils.LanguageProvider
+import kotlinx.serialization.Serializable
+import com.google.gson.annotations.SerializedName
+
+@Serializable
 data class Language(
-    val name: String,
-    val code: String, // Codice lingua ISO 639-1 (es. "en", "es", "it", "de")
-    val flagResId: Int
+    @SerializedName("code") val id: String,
+    val name: String
 ) {
-    override fun toString(): String {
-        return name
-    }
+    fun getFlagResId(context: Context): Int {
+        val countryCode = LanguageProvider.languageCodeToCountryCodeMap[id]
+        if (countryCode == null) {
+            Log.w("Language", "No country code mapping found for language code: '$id'")
+            return R.drawable.ic_flag_default
+        }
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as Language
-
-        if (code != other.code) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        return code.hashCode()
+        val resId = context.resources.getIdentifier(
+            countryCode.lowercase(), "drawable", context.packageName
+        )
+        return if (resId != 0) resId else R.drawable.ic_flag_default
     }
 }

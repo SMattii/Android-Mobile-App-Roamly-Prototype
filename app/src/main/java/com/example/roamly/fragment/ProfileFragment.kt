@@ -1,30 +1,260 @@
 package com.example.roamly.fragment
 
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.widget.Button
+import android.view.*
+import android.widget.*
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import com.bumptech.glide.Glide
 import com.example.roamly.R
+import com.example.roamly.adapter.InterestAdapter
+import com.example.roamly.adapter.LanguageAdapter
+import com.example.roamly.data.models.*
+import com.example.roamly.data.repository.InterestRepository
+import com.example.roamly.data.repository.ProfileRepository
+import com.example.roamly.data.utils.LanguageProvider
+import com.example.roamly.data.utils.SupabaseClientProvider
+import com.google.android.material.button.MaterialButtonToggleGroup
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
+import com.google.android.material.imageview.ShapeableImageView
+import com.google.android.material.materialswitch.MaterialSwitch
+import com.google.android.material.slider.Slider
+import com.google.android.material.textfield.MaterialAutoCompleteTextView
+import com.google.android.material.textfield.TextInputEditText
+import kotlinx.coroutines.launch
 
 class ProfileFragment : Fragment() {
 
+    private val profileRepository = ProfileRepository()
+    private val interestRepository = InterestRepository()
+
+    private lateinit var profileImageView: ShapeableImageView
+    private lateinit var firstNameField: TextInputEditText
+    private lateinit var lastNameField: TextInputEditText
+    private lateinit var ageSlider: Slider
+    private lateinit var ageValueText: TextView
+    private lateinit var countryDropdown: MaterialAutoCompleteTextView
+    private lateinit var categoryDropdown: MaterialAutoCompleteTextView
+    private lateinit var vibeToggleGroup: MaterialButtonToggleGroup
+    private lateinit var languagesDropdown: MaterialAutoCompleteTextView
+    private lateinit var interestsDropdown: MaterialAutoCompleteTextView
+    private lateinit var selectedLanguagesChipGroup: ChipGroup
+    private lateinit var selectedInterestsChipGroup: ChipGroup
+    private lateinit var visibleSwitch: MaterialSwitch
+    private lateinit var saveButton: Button
+    private lateinit var btnClose: Button
+
+    private lateinit var allLanguages: List<Language>
+    private lateinit var allInterests: List<Interest>
+    private lateinit var languageAdapter: LanguageAdapter
+
+    private val selectedLanguages = mutableListOf<Language>()
+    private val selectedInterests = mutableSetOf<Interest>()
+
+    private var currentUserId: String? = null
+    private var currentProfile: Profile? = null
+
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        return inflater.inflate(R.layout.fragment_profile, container, false)
-    }
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+    ): View = inflater.inflate(R.layout.fragment_profile, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        bindViews(view)
 
-        view.findViewById<Button>(R.id.btnCloseProfile).setOnClickListener {
+        btnClose.setOnClickListener {
             parentFragmentManager.popBackStack()
-            requireActivity().findViewById<View>(R.id.profileFragmentContainer).visibility = View.GONE // <-- AGGIUNGI QUESTO
+            requireActivity().findViewById<View>(R.id.profileFragmentContainer).visibility = View.GONE
+        }
+
+        lifecycleScope.launch {
+            currentUserId = SupabaseClientProvider.auth.currentUserOrNull()?.id
+            if (currentUserId == null) return@launch
+
+            allLanguages = LanguageProvider.loadLanguagesFromAssets(requireContext())
+            allInterests = interestRepository.fetchAllInterests()
+
+            setupLanguageDropdown()
+            setupInterestDropdown()
+
+            loadUserProfileAndPopulate()
+        }
+
+        saveButton.setOnClickListener {
+            saveProfileChanges()
         }
     }
 
+    private fun bindViews(view: View) {
+        profileImageView = view.findViewById(R.id.profileImageView)
+        firstNameField = view.findViewById(R.id.firstNameField)
+        lastNameField = view.findViewById(R.id.lastNameField)
+        ageSlider = view.findViewById(R.id.ageSlider)
+        ageValueText = view.findViewById(R.id.ageValueText)
+        countryDropdown = view.findViewById(R.id.countryDropdown)
+        categoryDropdown = view.findViewById(R.id.categoryDropdown)
+        vibeToggleGroup = view.findViewById(R.id.vibeToggleGroup)
+        languagesDropdown = view.findViewById(R.id.languagesDropdown)
+        interestsDropdown = view.findViewById(R.id.interestsDropdown)
+        selectedLanguagesChipGroup = view.findViewById(R.id.selectedLanguagesChipGroup)
+        selectedInterestsChipGroup = view.findViewById(R.id.selectedInterestsChipGroup)
+        visibleSwitch = view.findViewById(R.id.visibleSwitch)
+        saveButton = view.findViewById(R.id.saveButton)
+        btnClose = view.findViewById(R.id.btnCloseProfile)
+    }
+
+    private fun setupLanguageDropdown() {
+        languageAdapter = LanguageAdapter(requireContext(), allLanguages.toMutableList())
+        languagesDropdown.setAdapter(languageAdapter)
+
+        languagesDropdown.setOnItemClickListener { parent, _, position, _ ->
+            val selectedLanguage = parent.getItemAtPosition(position) as Language
+
+            if (!selectedLanguages.contains(selectedLanguage)) {
+                selectedLanguages.add(selectedLanguage)
+                addLanguageChip(selectedLanguage)
+                updateLanguageDropdown()
+            }
+            languagesDropdown.setText("", false)
+            languagesDropdown.clearFocus()
+        }
+    }
+
+    private fun updateLanguageDropdown() {
+        val remainingLanguages = allLanguages.filterNot { selectedLanguages.contains(it) }
+        languageAdapter.updateLanguages(remainingLanguages)
+    }
+
+    private fun addLanguageChip(language: Language) {
+        val chip = Chip(requireContext()).apply {
+            text = language.name
+            val resId = language.getFlagResId(context)
+            chipIcon = if (resId != 0) {
+                ContextCompat.getDrawable(context, resId)
+            } else {
+                ContextCompat.getDrawable(context, R.drawable.ic_flag_default)
+            }
+            isCloseIconVisible = true
+            isClickable = true
+            isCheckable = false
+            setOnCloseIconClickListener {
+                selectedLanguages.remove(language)
+                selectedLanguagesChipGroup.removeView(this)
+                updateLanguageDropdown()
+            }
+        }
+        selectedLanguagesChipGroup.addView(chip)
+    }
+
+    private fun setupInterestDropdown() {
+        val interestPairs = allInterests.map { it to R.drawable.ic_interest_default }
+        val interestAdapter = InterestAdapter(requireContext(), interestPairs.toMutableList())
+        interestsDropdown.setAdapter(interestAdapter)
+
+        interestsDropdown.setOnItemClickListener { _, _, position, _ ->
+            val (interest, _) = interestPairs[position]
+            if (selectedInterests.add(interest)) {
+                addInterestChip(interest)
+            }
+            interestsDropdown.setText("", false)
+        }
+    }
+
+    private fun addInterestChip(interest: Interest) {
+        val chip = Chip(requireContext()).apply {
+            text = interest.name
+            isCloseIconVisible = true
+            setOnCloseIconClickListener {
+                selectedInterests.remove(interest)
+                selectedInterestsChipGroup.removeView(this)
+            }
+        }
+        selectedInterestsChipGroup.addView(chip)
+    }
+
+    private suspend fun loadUserProfileAndPopulate() {
+        val profileData = profileRepository.getCompleteProfile(currentUserId!!)
+        val profile = profileData?.profile ?: return
+        currentProfile = profile
+
+        firstNameField.setText(profile.first_name ?: "")
+        lastNameField.setText(profile.last_name ?: "")
+
+        val ageInt = profile.age?.trim()?.toIntOrNull()
+        val clampedAge = ageInt?.coerceIn(18, 99) ?: 18
+
+        ageSlider.value = clampedAge.toFloat()
+        ageSlider.isEnabled = false
+        ageValueText.text = "Age: $clampedAge"
+
+        countryDropdown.setText(profile.country ?: "")
+        categoryDropdown.setText(profile.category ?: "")
+        visibleSwitch.isChecked = profile.visible
+
+        when (profile.vibe?.lowercase()) {
+            "chill" -> vibeToggleGroup.check(R.id.vibeChill)
+            "party" -> vibeToggleGroup.check(R.id.vibeParty)
+        }
+
+        if (!profile.profile_image_url.isNullOrBlank()) {
+            Glide.with(this).load(profile.profile_image_url).circleCrop().into(profileImageView)
+        }
+
+        profileData.selectedInterests.forEach {
+            if (selectedInterests.add(it)) {
+                addInterestChip(it)
+            }
+        }
+
+        val languageEntries = SupabaseClientProvider.db.from("profile_languages")
+            .select()
+            .decodeList<LanguageLink>()
+            .filter { it.profile_id == currentUserId }
+
+        val existingLanguages = languageEntries.mapNotNull { entry ->
+            allLanguages.find { it.id == entry.language_id }
+        }
+
+        existingLanguages.forEach {
+            if (!selectedLanguages.contains(it)) {
+                selectedLanguages.add(it)
+                addLanguageChip(it)
+            }
+        }
+
+        updateLanguageDropdown()
+    }
+
+    private fun saveProfileChanges() {
+        val profile = currentProfile?.copy(
+            first_name = firstNameField.text?.toString(),
+            last_name = lastNameField.text?.toString(),
+            age = ageSlider.value.toInt().toString(),
+            vibe = when (vibeToggleGroup.checkedButtonId) {
+                R.id.vibeChill -> "chill"
+                R.id.vibeParty -> "party"
+                else -> null
+            },
+            visible = visibleSwitch.isChecked
+        ) ?: return
+
+        val languageCodes = selectedLanguages.map { it.id }
+        val interestIds = selectedInterests.map { it.id }
+
+        lifecycleScope.launch {
+            val success = profileRepository.saveCompleteProfile(
+                profile = profile,
+                languageIds = languageCodes,
+                interestIds = interestIds
+            )
+
+            Toast.makeText(
+                requireContext(),
+                if (success) "Profilo aggiornato con successo" else "Errore nel salvataggio",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
 }

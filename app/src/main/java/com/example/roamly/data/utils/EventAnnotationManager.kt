@@ -119,15 +119,20 @@ object EventAnnotationManager {
             Log.d("MARKER_CLICK", "✅ Marker evento cliccato")
 
             val clickedEventId = annotation.getData()?.asJsonObject?.get("eventId")?.asString
-            val wasOpen = clickedEventId == getCurrentShownEventId()
+            val currentId = getCurrentShownEventId()
+            val wasOpen = clickedEventId == currentId
             val newIdToDisplay = if (wasOpen) null else clickedEventId
 
             Log.d("MARKER_CLICK", "🆔 clickedEventId = $clickedEventId, wasOpen = $wasOpen → newIdToDisplay = $newIdToDisplay")
+
             val activity = mapView.context as? HomeActivity
             activity?.hideUserCallout()
 
+            // 🔑 MUOVI QUI il toggle prima del flyTo
+            onToggleEventCallout(newIdToDisplay)
+
             if (wasOpen) {
-                activity?.hideEventCallout()
+                Log.d("MARKER_CLICK", "❎ Tooltip evento già aperto, lo chiudo")
                 return@addClickListener true
             }
 

@@ -57,9 +57,9 @@ object EventTooltipManager {
         // Lingue
         val langContainer = view.findViewById<LinearLayout>(R.id.languagesContainer)
         event.languages.forEach { langCode ->
-            val lang = allLanguages.find { it.code == langCode } ?: return@forEach
+            val lang = allLanguages.find { it.id == langCode } ?: return@forEach
             val img = ImageView(context).apply {
-                setImageResource(lang.flagResId)
+                setImageResource(lang.getFlagResId(context))
                 layoutParams = LinearLayout.LayoutParams(48, 32).apply {
                     setMargins(0, 0, 8, 0)
                 }

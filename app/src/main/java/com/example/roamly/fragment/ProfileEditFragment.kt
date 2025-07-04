@@ -1,5 +1,7 @@
 package com.example.roamly.fragment
 
+import android.app.AlertDialog
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -11,6 +13,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.example.roamly.R
+import com.example.roamly.activity.OnboardingActivity
 import com.example.roamly.adapter.InterestAdapter
 import com.example.roamly.adapter.LanguageAdapter
 import com.example.roamly.data.models.*
@@ -48,6 +51,8 @@ class ProfileEditFragment : Fragment() {
     private lateinit var visibleSwitch: MaterialSwitch
     private lateinit var saveButton: Button
     private lateinit var btnClose: Button
+    private lateinit var btnChangePassword: Button
+    private lateinit var btnLogout: Button
 
     private lateinit var allLanguages: List<Language>
     private lateinit var allInterests: List<Interest>
@@ -102,6 +107,58 @@ class ProfileEditFragment : Fragment() {
         saveButton.setOnClickListener {
             saveProfileChanges()
         }
+
+        btnLogout.setOnClickListener {
+            lifecycleScope.launch {
+                try {
+                    SupabaseClientProvider.auth.signOut()
+                    val intent = Intent(requireContext(), OnboardingActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    startActivity(intent)
+                    requireActivity().finish()
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "Errore durante il logout", Toast.LENGTH_SHORT).show()
+                    Log.e("Logout", "❌ Logout fallito: ${e.localizedMessage}")
+                }
+            }
+        }
+
+        btnChangePassword.setOnClickListener {
+            val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_change_password, null)
+            val newPasswordInput = dialogView.findViewById<EditText>(R.id.newPasswordInput)
+            val confirmPasswordInput = dialogView.findViewById<EditText>(R.id.confirmPasswordInput)
+
+            AlertDialog.Builder(requireContext())
+                .setTitle("Change Password")
+                .setView(dialogView)
+                .setPositiveButton("Change") { _, _ ->
+                    val newPassword = newPasswordInput.text.toString()
+                    val confirmPassword = confirmPasswordInput.text.toString()
+
+                    if (newPassword != confirmPassword) {
+                        Toast.makeText(requireContext(), "Passwords do not match", Toast.LENGTH_SHORT).show()
+                        return@setPositiveButton
+                    }
+
+                    if (newPassword.length < 6) {
+                        Toast.makeText(requireContext(), "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
+                        return@setPositiveButton
+                    }
+
+                    lifecycleScope.launch {
+                        try {
+                            SupabaseClientProvider.auth.updateUser {
+                                password = newPassword
+                            }
+                            Toast.makeText(requireContext(), "Password changed successfully", Toast.LENGTH_SHORT).show()
+                        } catch (e: Exception) {
+                            Toast.makeText(requireContext(), "Error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+        }
     }
 
     private fun bindViews(view: View) {
@@ -120,6 +177,8 @@ class ProfileEditFragment : Fragment() {
         visibleSwitch = view.findViewById(R.id.visibleSwitch)
         saveButton = view.findViewById(R.id.saveButton)
         btnClose = view.findViewById(R.id.btnCloseProfile)
+        btnChangePassword = view.findViewById(R.id.btnChangePassword)
+        btnLogout = view.findViewById(R.id.btnLogout)
     }
 
     private fun setupLanguageDropdown() {

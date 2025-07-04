@@ -16,6 +16,7 @@ import com.example.roamly.data.models.Event
 import com.example.roamly.data.models.Interest
 import com.example.roamly.data.models.Language
 import com.example.roamly.data.models.Profile
+import com.example.roamly.fragment.EventEditFragment
 import com.mapbox.geojson.Point
 import com.mapbox.maps.MapView
 import com.mapbox.maps.MapboxMap
@@ -105,8 +106,19 @@ object EventTooltipManager {
         when {
             isCreator -> {
                 joinBtn.text = "EDIT"
+
                 joinBtn.setOnClickListener {
-                    onEditClick?.invoke(event)
+                    val activity = context as? androidx.appcompat.app.AppCompatActivity ?: return@setOnClickListener
+
+                    val fragment = EventEditFragment.newInstance(event)
+
+                    activity.supportFragmentManager.beginTransaction()
+                        .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
+                        .add(R.id.eventFragmentContainer, fragment)
+                        .addToBackStack("EditEventFragment")
+                        .commit()
+
+                    activity.findViewById<FrameLayout>(R.id.eventFragmentContainer)?.visibility = View.VISIBLE
                 }
 
                 deleteBtn.visibility = View.VISIBLE

@@ -134,4 +134,40 @@ class EventRepository {
         }
     }
 
+    suspend fun updateEvent(event: Event): Boolean {
+        return try {
+            withContext(Dispatchers.IO) {
+                // Ricalcola `visible_until` in base a data + ora modificata
+                val formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+
+                // ✅ Pulisce i secondi (es: da "20:00:00" → "20:00")
+                val cleanTime = event.time.take(5)
+
+                val localDateTime = java.time.LocalDateTime.parse("${event.date} $cleanTime", formatter)
+
+                val visibleUntil = localDateTime
+                    .plusHours(1)
+                    .atZone(java.time.ZoneId.systemDefault())
+                    .withZoneSameInstant(java.time.ZoneOffset.UTC)
+                    .toOffsetDateTime()
+                    .toString()
+
+                val updatedEvent = event.copy(visible_until = visibleUntil)
+
+                SupabaseClientProvider.db.from("events")
+                    .update(updatedEvent) {
+                        filter {
+                            eq("id", event.id!!)
+                        }
+                    }
+            }
+            Log.d("SUPABASE_UPDATE_EVENT", "✅ Evento aggiornato con successo")
+            true
+        } catch (e: Exception) {
+            Log.e("SUPABASE_UPDATE_EVENT", "❌ Errore aggiornamento evento: ${e.message}", e)
+            false
+        }
+    }
+
+
 }

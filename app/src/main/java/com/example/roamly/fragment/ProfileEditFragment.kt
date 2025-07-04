@@ -1,8 +1,11 @@
 package com.example.roamly.fragment
 
+import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.widget.*
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -25,7 +28,7 @@ import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.launch
 
-class ProfileFragment : Fragment() {
+class ProfileEditFragment : Fragment() {
 
     private val profileRepository = ProfileRepository()
     private val interestRepository = InterestRepository()
@@ -56,13 +59,27 @@ class ProfileFragment : Fragment() {
     private var currentUserId: String? = null
     private var currentProfile: Profile? = null
 
+    private var selectedImageUri: Uri? = null
+
+    private val imagePickerLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let {
+            selectedImageUri = it
+            profileImageView.setImageURI(it) // preview immediata
+            uploadAndSaveImage(it)
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
-    ): View = inflater.inflate(R.layout.fragment_profile, container, false)
+    ): View = inflater.inflate(R.layout.fragment_edit_profile, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         bindViews(view)
+
+        profileImageView.setOnClickListener {
+            imagePickerLauncher.launch("image/*")
+        }
 
         btnClose.setOnClickListener {
             parentFragmentManager.popBackStack()
@@ -165,7 +182,12 @@ class ProfileFragment : Fragment() {
     private fun addInterestChip(interest: Interest) {
         val chip = Chip(requireContext()).apply {
             text = interest.name
+            val iconResId = getInterestIconResId(interest.name)
+            chipIcon = ContextCompat.getDrawable(context, iconResId)
+            chipIconSize = 48f // opzionale: controlla grandezza icona
             isCloseIconVisible = true
+            isClickable = true
+            isCheckable = false
             setOnCloseIconClickListener {
                 selectedInterests.remove(interest)
                 selectedInterestsChipGroup.removeView(this)
@@ -255,6 +277,68 @@ class ProfileFragment : Fragment() {
                 if (success) "Profilo aggiornato con successo" else "Errore nel salvataggio",
                 Toast.LENGTH_SHORT
             ).show()
+        }
+    }
+
+    private fun uploadAndSaveImage(uri: Uri) {
+        lifecycleScope.launch {
+            val imageBytes = requireContext().contentResolver.openInputStream(uri)?.readBytes() ?: return@launch
+            val userId = SupabaseClientProvider.auth.currentUserOrNull()?.id ?: return@launch
+            val fileName = "${userId}/profile_${System.currentTimeMillis()}.jpg"
+
+            try {
+                val bucket = SupabaseClientProvider.storage["avatars"]
+
+                bucket.upload(path = fileName, data = imageBytes) {
+                    upsert = true
+                    contentType = io.ktor.http.ContentType.Image.JPEG
+                }
+
+                val publicUrl = bucket.publicUrl(fileName)
+
+                if (currentProfile == null) {
+                    currentUserId?.let { userId ->
+                        val profile = profileRepository.getCompleteProfile(userId)?.profile
+                        if (profile != null) {
+                            currentProfile = profile.copy(profile_image_url = publicUrl)
+                            profileRepository.updateProfile(currentProfile!!)
+                        } else {
+                            Log.e("ProfileImageUpload", "❌ Impossibile recuperare il profilo per aggiornare l'immagine.")
+                        }
+                    }
+                } else {
+                    currentProfile = currentProfile!!.copy(profile_image_url = publicUrl)
+                    profileRepository.updateProfile(currentProfile!!)
+                }
+
+                Log.d("ProfileImageUpload", "✅ Aggiornato profilo con nuova immagine: $publicUrl")
+
+                // Ricarica immagine con Glide (senza cache)
+                Glide.with(requireContext())
+                    .load(publicUrl)
+                    .diskCacheStrategy(com.bumptech.glide.load.engine.DiskCacheStrategy.NONE)
+                    .skipMemoryCache(true)
+                    .circleCrop()
+                    .into(profileImageView)
+
+                Toast.makeText(requireContext(), "Immagine aggiornata!", Toast.LENGTH_SHORT).show()
+
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "Errore durante l'upload", Toast.LENGTH_SHORT).show()
+                Log.e("ProfileImageUpload", "Errore upload: ${e.localizedMessage}", e)
+            }
+        }
+    }
+
+    private fun getInterestIconResId(name: String): Int {
+        return when (name.lowercase()) {
+            "food and drinks" -> R.drawable.ic_food
+            "nightlife" -> R.drawable.ic_nightlife
+            "culture" -> R.drawable.ic_culture
+            "nature" -> R.drawable.ic_nature
+            "sport" -> R.drawable.ic_sport
+            "networking" -> R.drawable.ic_networking
+            else -> R.drawable.ic_interest_default
         }
     }
 }

@@ -64,7 +64,7 @@ class EventCreationFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         Log.d(TAG, "onCreateView: inflating layout")
-        return inflater.inflate(R.layout.fragment_event_creation, container, false)
+        return inflater.inflate(R.layout.fragment_create_event, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

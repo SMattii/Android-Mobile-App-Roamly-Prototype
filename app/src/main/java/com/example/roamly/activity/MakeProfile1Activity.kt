@@ -96,7 +96,7 @@ class MakeProfile1Activity : AppCompatActivity() {
         countryDropdown.setAdapter(adapter)
 
         ageSlider.addOnChangeListener { _, value, _ ->
-            ageValueText.text = "Age: ${value.toInt()}"
+            ageValueText.text = "${value.toInt()}"
         }
 
         val categoryItems = listOf(

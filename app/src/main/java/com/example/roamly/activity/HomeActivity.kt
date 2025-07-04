@@ -41,7 +41,7 @@ import com.example.roamly.data.utils.UserAnnotationManager
 import com.example.roamly.data.utils.MapUtils
 import com.example.roamly.data.utils.UserTooltipManager
 import com.example.roamly.fragment.EventCreationFragment
-import com.example.roamly.fragment.ProfileFragment
+import com.example.roamly.fragment.ProfileEditFragment
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -166,7 +166,7 @@ class HomeActivity : AppCompatActivity() {
                     profileFragmentContainer.visibility = View.VISIBLE
                     supportFragmentManager.beginTransaction()
                         .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
-                        .add(R.id.profileFragmentContainer, ProfileFragment())
+                        .add(R.id.profileFragmentContainer, ProfileEditFragment())
                         .addToBackStack("ProfileFragment")
                         .commit()
                     true

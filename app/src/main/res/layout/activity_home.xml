@@ -27,24 +27,18 @@
         android:visibility="gone" />
 
     <FrameLayout
+        android:id="@+id/chatFragmentContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
+    <FrameLayout
         android:id="@+id/eventFragmentContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone" />
 
-    <!-- FAB per tornare alla propria posizione -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabHome"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="72dp"
-        android:src="@drawable/ic_home"
-        app:backgroundTint="@color/roamly_peach"
-        app:tint="@android:color/white"
-        android:contentDescription="Home" />
-
-    <!-- Bottom navigation con due pulsanti -->
+    <!-- Bottom navigation con quattro pulsanti -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigationView"
         android:layout_width="match_parent"

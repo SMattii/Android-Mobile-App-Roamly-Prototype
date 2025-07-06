@@ -8,12 +8,12 @@ import android.widget.ArrayAdapter
 import android.widget.ImageView
 import android.widget.TextView
 import com.example.roamly.R
-import com.example.roamly.data.models.CategoryItem
+import com.example.roamly.data.models.Category
 
 class CategoryAdapter(
     context: Context,
-    private val categories: List<CategoryItem>
-) : ArrayAdapter<CategoryItem>(context, 0, categories) {
+    private val categories: List<Category>
+) : ArrayAdapter<Category>(context, 0, categories) {
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
         return createViewFromItem(categories[position], convertView, parent)
@@ -23,7 +23,7 @@ class CategoryAdapter(
         return createViewFromItem(categories[position], convertView, parent)
     }
 
-    private fun createViewFromItem(item: CategoryItem, convertView: View?, parent: ViewGroup): View {
+    private fun createViewFromItem(item: Category, convertView: View?, parent: ViewGroup): View {
         val view = convertView ?: LayoutInflater.from(context)
             .inflate(R.layout.item_category_dropdown, parent, false)
 

@@ -9,18 +9,30 @@ import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.storage.Storage
 import io.github.jan.supabase.storage.storage
+import io.github.jan.supabase.serializer.KotlinXSerializer
 import io.ktor.client.engine.okhttp.OkHttp
+import kotlinx.serialization.json.Json
 
 object SupabaseClientProvider {
+
+    private val customJson = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+        encodeDefaults = true // 👈 Forza anche i default come `visible = true`
+    }
 
     val supabase: SupabaseClient by lazy {
         createSupabaseClient(
             supabaseUrl = BuildConfig.SUPABASE_URL,
             supabaseKey = BuildConfig.SUPABASE_KEY
         ) {
+            // Imposta il serializer globale per tutto il client
+            defaultSerializer = KotlinXSerializer(customJson)
+
             install(Auth) {
                 autoLoadFromStorage = true
             }
+
             install(Postgrest)
             install(Storage)
 
@@ -28,7 +40,7 @@ object SupabaseClientProvider {
         }
     }
 
-    val auth     get() = supabase.auth
-    val db       get() = supabase.postgrest
-    val storage  get() = supabase.storage
+    val auth get() = supabase.auth
+    val db get() = supabase.postgrest
+    val storage get() = supabase.storage
 }

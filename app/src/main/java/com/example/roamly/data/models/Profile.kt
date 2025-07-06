@@ -14,5 +14,6 @@ data class Profile(
     val country: String?,
     val category: String?,
     val vibe: String?,
+    @kotlinx.serialization.EncodeDefault
     val visible: Boolean = true
 )

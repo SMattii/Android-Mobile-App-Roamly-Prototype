@@ -49,6 +49,8 @@ object EventTooltipManager {
         view.findViewById<TextView>(R.id.txtEventType).text =
             "${event.event_type} - ${event.date} ${event.time}"
 
+        view.findViewById<TextView>(R.id.txtDescription).text = event.desc
+
         view.findViewById<TextView>(R.id.txtParticipants).text =
             "${participants.size}/${event.max_participants ?: "?"} partecipanti"
 

@@ -23,6 +23,8 @@ import com.google.android.material.chip.ChipGroup
 import com.google.android.material.slider.RangeSlider
 import com.google.android.material.slider.Slider
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.launch
 
 class EventEditFragment : Fragment() {
@@ -37,6 +39,7 @@ class EventEditFragment : Fragment() {
     private lateinit var participantsSlider: Slider
     private lateinit var participantsValueText: TextView
     private lateinit var saveEventButton: Button
+    private lateinit var eventDescriptionInput: TextInputEditText
 
     private val selectedLanguages = mutableListOf<Language>()
     private val selectedInterests = mutableListOf<Interest>()
@@ -79,13 +82,13 @@ class EventEditFragment : Fragment() {
 
         lifecycleScope.launch {
             val allLanguages = LanguageProvider.loadLanguagesFromAssets(requireContext())
-            val allInterests = InterestRepository().fetchAllInterests()
+            val allInterests = InterestRepository.fetchAllInterests()
 
             currentEvent = event
             setupDropdowns(allLanguages, allInterests)
             populateFields(event, allLanguages, allInterests)
 
-            val participantIds = EventRepository().getEventParticipants(event.id!!)
+            val participantIds = EventRepository.getEventParticipants(event.id!!)
             val currentParticipantsCount = participantIds.size
 
             participantsSlider.valueFrom = currentParticipantsCount.toFloat()
@@ -114,6 +117,7 @@ class EventEditFragment : Fragment() {
         participantsSlider = view.findViewById(R.id.participantsSlider)
         participantsValueText = view.findViewById(R.id.participantsValueText)
         saveEventButton = view.findViewById(R.id.saveChangesButton)
+        eventDescriptionInput = view.findViewById(R.id.descriptionInput)
     }
 
     private fun setupDropdowns(allLanguages: List<Language>, allInterests: List<Interest>) {
@@ -162,6 +166,9 @@ class EventEditFragment : Fragment() {
     }
 
     private fun populateFields(event: Event, allLanguages: List<Language>, allInterests: List<Interest>) {
+
+        eventDescriptionInput.setText(event.desc)
+
         timeInput.setText(event.time)
         ageRangeSlider.setValues(event.min_age?.toFloat() ?: 18f, event.max_age?.toFloat() ?: 99f)
         ageRangeText.text = "Age range: ${event.min_age} - ${event.max_age}"
@@ -220,6 +227,7 @@ class EventEditFragment : Fragment() {
 
     private fun saveChanges() {
         val updated = currentEvent?.copy(
+            desc = eventDescriptionInput.text?.toString() ?: "",
             time = timeInput.text.toString(),
             min_age = ageRangeSlider.values[0].toInt(),
             max_age = ageRangeSlider.values[1].toInt(),
@@ -229,7 +237,7 @@ class EventEditFragment : Fragment() {
         ) ?: return
 
         lifecycleScope.launch {
-            val success = EventRepository().updateEvent(updated)
+            val success = EventRepository.updateEvent(updated)
             if (success) {
                 val tooltipContainer = requireActivity().findViewById<FrameLayout>(R.id.tooltipContainer)
                 tooltipContainer?.removeAllViews()

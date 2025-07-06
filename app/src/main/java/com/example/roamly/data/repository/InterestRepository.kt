@@ -7,7 +7,7 @@ import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class InterestRepository {
+object InterestRepository {
 
     suspend fun fetchAllInterests(): List<Interest> {
         return try {

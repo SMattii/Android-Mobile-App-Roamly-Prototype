@@ -7,7 +7,7 @@ import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class LanguageRepository {
+object LanguageRepository {
 
     suspend fun fetchAllLanguages(): List<Language> {
         return try {

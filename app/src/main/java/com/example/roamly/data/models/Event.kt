@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Event(
     val id: String? = null,
+    val desc: String,
     val profile_id: String,
     val latitude: Double,
     val longitude: Double,

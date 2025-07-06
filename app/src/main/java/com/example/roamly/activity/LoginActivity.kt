@@ -70,13 +70,15 @@ class LoginActivity : AppCompatActivity() {
         return valid
     }
 
+// Modifica performLogin in LoginActivity
+
     private fun performLogin() {
         val email = emailField.text.toString().trim()
         val password = passwordField.text.toString()
 
         lifecycleScope.launch {
             try {
-                val session = SupabaseClientProvider.auth.signInWith(Email) {
+                SupabaseClientProvider.auth.signInWith(Email) {
                     this.email = email
                     this.password = password
                 }
@@ -124,11 +126,17 @@ class LoginActivity : AppCompatActivity() {
                         finish()
 
                     } else {
-                        if (!profile.has_logged_before) {
-                            startActivity(Intent(this@LoginActivity, MakeProfile1Activity::class.java))
+                        // ✅ Aggiungi flag per indicare che è un nuovo login
+                        val intent = if (!profile.has_logged_before) {
+                            Intent(this@LoginActivity, MakeProfile1Activity::class.java)
                         } else {
-                            startActivity(Intent(this@LoginActivity, HomeActivity::class.java))
+                            Intent(this@LoginActivity, HomeActivity::class.java).apply {
+                                // Aggiungi flag per indicare che è un fresh login
+                                putExtra("is_fresh_login", true)
+                            }
                         }
+
+                        startActivity(intent)
                         finish()
                     }
 

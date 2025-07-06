@@ -13,7 +13,7 @@ import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class ProfileRepository {
+object ProfileRepository {
 
     suspend fun saveLocationToSupabase(userId: String, latitude: Double, longitude: Double) {
         try {

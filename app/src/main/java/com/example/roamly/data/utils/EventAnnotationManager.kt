@@ -94,14 +94,16 @@ object EventAnnotationManager {
         }
 
 
-        val existing = annotationManager.annotations.firstOrNull {
-            it.getData()?.asJsonObject?.get("eventId")?.asString == event.id
-        } as? PointAnnotation
+// 🔧 FIX: Usa la mappa interna invece di cercare nelle annotations
+        val existingAnnotation = eventMarkers[event.id!!]
 
-        if (existing != null) {
-            existing.point = point
-            annotationManager.update(existing)
+        if (existingAnnotation != null) {
+            // Aggiorna marker esistente
+            existingAnnotation.point = point
+            annotationManager.update(existingAnnotation)
+            Log.d("EVENT_MARKER", "Marker evento ${event.id} aggiornato")
         } else {
+            // Crea nuovo marker
             val options = PointAnnotationOptions()
                 .withPoint(point)
                 .withIconImage(imageId)
@@ -109,9 +111,11 @@ object EventAnnotationManager {
 
             try {
                 val annotation = annotationManager.create(options)
-                eventMarkers[event.id!!] = annotation
+                eventMarkers[event.id] = annotation
+                Log.d("EVENT_MARKER", "Nuovo marker evento ${event.id} creato")
             } catch (e: Exception) {
                 Log.e("EVENT_MARKER", "Errore creazione marker evento: ${e.message}")
+                return annotationManager
             }
         }
 
@@ -121,6 +125,7 @@ object EventAnnotationManager {
             val clickedEventId = annotation.getData()?.asJsonObject?.get("eventId")?.asString
             val currentId = getCurrentShownEventId()
             val wasOpen = clickedEventId == currentId
+            Log.d("MARKER_CLICK", "🔍 currentShownEventId = $currentId, clickedEventId = $clickedEventId, wasOpen = $wasOpen")
             val newIdToDisplay = if (wasOpen) null else clickedEventId
 
             Log.d("MARKER_CLICK", "🆔 clickedEventId = $clickedEventId, wasOpen = $wasOpen → newIdToDisplay = $newIdToDisplay")
@@ -166,8 +171,8 @@ object EventAnnotationManager {
 
                     Log.d("MARKER_CLICK", "🚀 Lancio coroutine")
                     scope.launch {
-                        val eventRepo = EventRepository()
-                        val profileRepo = ProfileRepository()
+                        val eventRepo = EventRepository
+                        val profileRepo = ProfileRepository
 
                         Log.d("MARKER_CLICK", "📡 Fetch eventi da Supabase")
                         val events = eventRepo.getEvents()
@@ -188,10 +193,10 @@ object EventAnnotationManager {
 
                         Log.d("MARKER_CLICK", "📚 Carico tutte le lingue e interessi")
                         val allLanguages = LanguageProvider.loadLanguagesFromAssets(context)
-                        val allInterests = InterestRepository().fetchAllInterests()
+                        val allInterests = InterestRepository.fetchAllInterests()
 
-                        Log.d("MARKER_CLICK", "📌 onToggleEventCallout con $newIdToDisplay")
-                        onToggleEventCallout(newIdToDisplay)
+                        //Log.d("MARKER_CLICK", "📌 onToggleEventCallout con $newIdToDisplay")
+                        //onToggleEventCallout(newIdToDisplay)
 
                         val tooltipContainer = mapView.rootView.findViewById<FrameLayout>(R.id.tooltipContainer)
                         if (tooltipContainer == null) {
@@ -289,13 +294,24 @@ object EventAnnotationManager {
         getCurrentShownEventId: () -> String?,
         onToggleEventCallout: (String?) -> Unit
     ) {
-        try {
-            val eventRepo = EventRepository()
+        val style = mapView.mapboxMap.getStyle()
+        if (style == null) {
+            Log.w("EVENT_SYNC", "⚠️ Stile non ancora pronto → skip sincronizzazione")
+            return
+        }
 
+        try {
+            val eventRepo = EventRepository
+            Log.d("EVENT_SYNC", "🚀 Inizio sincronizzazione eventi")
             val allEvents = eventRepo.getEvents()
+            Log.d("EVENT_SYNC", "📥 Ricevuti ${allEvents.size} eventi dal repository")
+
             val now = System.currentTimeMillis()
 
             val validEventIds = mutableListOf<String>()
+
+            Log.d("EVENT_SYNC", "🔍 Eventi trovati dal DB: ${allEvents.size}")
+            Log.d("EVENT_SYNC", "📊 Marker attualmente attivi: ${eventMarkers.size}")
 
             for (event in allEvents) {
                 val dist = MapUtils.haversine(myLat, myLon, event.latitude, event.longitude)
@@ -306,11 +322,15 @@ object EventAnnotationManager {
                     } ?: Long.MAX_VALUE
                 } catch (e: Exception) {
                     Log.w("EVENT_SYNC", "Data visibilità malformata per evento ${event.id}: ${event.visible_until}")
-                    Long.MIN_VALUE // lo consideriamo già scaduto
+                    Long.MIN_VALUE
                 }
+
+                Log.d("EVENT_SYNC", "📍 Evento ${event.id}: dist=$dist km, tipo=${event.event_type}, scaduto=${visibleUntilMillis < now}")
 
                 if (dist <= 10 && visibleUntilMillis >= now) {
                     validEventIds.add(event.id!!)
+                    Log.d("EVENT_SYNC", "✅ Evento ${event.id} valido - creando marker")
+
                     createEventMarker(
                         context = context,
                         mapView = mapView,
@@ -320,8 +340,12 @@ object EventAnnotationManager {
                         getCurrentShownEventId = getCurrentShownEventId,
                         onToggleEventCallout = onToggleEventCallout
                     )
+                } else {
+                    Log.d("EVENT_SYNC", "❌ Evento ${event.id} non valido")
                 }
             }
+
+            Log.d("EVENT_SYNC", "📊 Sincronizzazione completata - Marker attivi: ${eventMarkers.size}")
 
             // Rimuovi marker non più validi
             val currentMarkers = eventMarkers.keys.toList()
@@ -335,6 +359,13 @@ object EventAnnotationManager {
         } catch (e: Exception) {
             Log.e("EVENT_SYNC", "Errore sincronizzazione eventi: ${e.message}", e)
         }
+    }
+
+    fun clearAll() {
+        eventAnnotationManagers.values.forEach { it.deleteAll() }
+        eventAnnotationManagers.clear()
+        eventMarkers.clear()
+        Log.d("EVENT_MARKER", "Tutti i marker e manager evento rimossi.")
     }
 
 }

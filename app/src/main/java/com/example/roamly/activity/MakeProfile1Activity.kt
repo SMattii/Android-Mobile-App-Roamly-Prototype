@@ -17,7 +17,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.roamly.adapter.CategoryAdapter
-import com.example.roamly.data.models.CategoryItem
+import com.example.roamly.data.models.Category
 import com.example.roamly.adapter.CountryAdapter
 import com.example.roamly.data.utils.CountryProvider
 import com.example.roamly.data.models.Profile
@@ -99,23 +99,23 @@ class MakeProfile1Activity : AppCompatActivity() {
             ageValueText.text = "${value.toInt()}"
         }
 
-        val categoryItems = listOf(
-            CategoryItem("Student", R.drawable.ic_category_student),
-            CategoryItem("Traveler", R.drawable.ic_category_traveler),
-            CategoryItem("Nomad", R.drawable.ic_category_nomad),
-            CategoryItem("Other", R.drawable.ic_category_other)
+        val categories = listOf(
+            Category("Student", R.drawable.ic_category_student),
+            Category("Traveler", R.drawable.ic_category_traveler),
+            Category("Nomad", R.drawable.ic_category_nomad),
+            Category("Other", R.drawable.ic_category_other)
         )
 
-        val categoryAdapter = CategoryAdapter(this, categoryItems)
+        val categoryAdapter = CategoryAdapter(this, categories)
 
         categoryDropdown.setAdapter(categoryAdapter)
 
         categoryDropdown.setOnItemClickListener { parent, view, position, id ->
-            val selectedCategoryItem = parent.getItemAtPosition(position) as CategoryItem
-            Log.d("CategoryDropdown", "Selected category: ${selectedCategoryItem.name}")
+            val selectedCategory = parent.getItemAtPosition(position) as Category
+            Log.d("CategoryDropdown", "Selected category: ${selectedCategory.name}")
         }
 
-        categoryDropdown.setText(categoryItems[0].name, false)
+        categoryDropdown.setText(categories[0].name, false)
 
         nextButton.setOnClickListener {
             lifecycleScope.launch {

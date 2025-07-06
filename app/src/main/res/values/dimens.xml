@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Altezza standard della BottomNavigationView -->
+    <dimen name="bottom_nav_height">56dp</dimen>
+
+    <!-- Altre dimensioni che potresti voler aggiungere -->
+    <dimen name="margin_small">8dp</dimen>
+    <dimen name="margin_medium">16dp</dimen>
+    <dimen name="margin_large">24dp</dimen>
+    <dimen name="text_size_title">20sp</dimen>
+</resources>

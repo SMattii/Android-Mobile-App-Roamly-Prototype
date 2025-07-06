@@ -3,12 +3,15 @@ package com.example.roamly.data.repository
 import android.util.Log
 import com.example.roamly.data.utils.SupabaseClientProvider
 import com.example.roamly.data.models.Event
+import com.example.roamly.data.models.EventMessage
+import com.example.roamly.data.models.EventMessageInsert
 import com.example.roamly.data.models.EventParticipant
 import io.github.jan.supabase.postgrest.query.Columns
+import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class EventRepository {
+object EventRepository {
 
     suspend fun createEvent(event: Event): Event? {
         return try {
@@ -169,5 +172,49 @@ class EventRepository {
         }
     }
 
+    suspend fun getMessagesForEvent(eventId: String): List<EventMessage> {
+        return SupabaseClientProvider.db
+            .from("event_messages")
+            .select {
+                filter {
+                    eq("event_id", eventId)
+                }
+                order("created_at", Order.ASCENDING) // ordine crescente
+            }
+            .decodeList<EventMessage>()
+    }
 
+    suspend fun sendMessageToEvent(eventId: String, senderId: String, message: String) {
+        SupabaseClientProvider.db
+            .from("event_messages")
+            .insert(
+                EventMessageInsert(
+                    event_id = eventId,
+                    sender_id = senderId,
+                    message = message
+                )
+            )
+    }
+
+    suspend fun getEventsWithUserParticipation(userId: String): List<Event> {
+        val participations = SupabaseClientProvider.db.from("event_participants")
+            .select {
+                filter { eq("profile_id", userId) }
+            }
+            .decodeList<EventParticipant>()
+
+        if (participations.isEmpty()) {
+            return emptyList()
+        }
+
+        val eventIds = participations.map { it.event_id }
+
+        return SupabaseClientProvider.db.from("events")
+            .select {
+                filter {
+                    Event::id isIn eventIds
+                }
+            }
+            .decodeList<Event>()
+    }
 }

@@ -13,6 +13,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.example.roamly.R
+import com.example.roamly.activity.HomeActivity
 import com.example.roamly.activity.OnboardingActivity
 import com.example.roamly.adapter.InterestAdapter
 import com.example.roamly.adapter.LanguageAdapter
@@ -33,8 +34,8 @@ import kotlinx.coroutines.launch
 
 class ProfileEditFragment : Fragment() {
 
-    private val profileRepository = ProfileRepository()
-    private val interestRepository = InterestRepository()
+    private val profileRepository = ProfileRepository
+    private val interestRepository = InterestRepository
 
     private lateinit var profileImageView: ShapeableImageView
     private lateinit var firstNameField: TextInputEditText
@@ -108,14 +109,26 @@ class ProfileEditFragment : Fragment() {
             saveProfileChanges()
         }
 
+        // Modifica il logout in ProfileEditFragment
+
         btnLogout.setOnClickListener {
             lifecycleScope.launch {
                 try {
+                    // Prima di fare logout, resetta lo stato della mappa se possibile
+                    (requireActivity() as? HomeActivity)?.let { homeActivity ->
+                        // Chiama il metodo di reset se disponibile
+                        homeActivity.resetMapState()
+                    }
+
+                    // Fai logout
                     SupabaseClientProvider.auth.signOut()
+
+                    // Redirect a OnboardingActivity
                     val intent = Intent(requireContext(), OnboardingActivity::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                     startActivity(intent)
                     requireActivity().finish()
+
                 } catch (e: Exception) {
                     Toast.makeText(requireContext(), "Errore durante il logout", Toast.LENGTH_SHORT).show()
                     Log.e("Logout", "❌ Logout fallito: ${e.localizedMessage}")

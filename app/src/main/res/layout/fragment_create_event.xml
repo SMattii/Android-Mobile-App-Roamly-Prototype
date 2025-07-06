@@ -15,7 +15,6 @@
         android:background="@android:color/white"
         android:fontFamily="@font/roboto_variablefont">
 
-        <!-- Titolo -->
         <TextView
             android:text="Create a new event"
             android:textSize="20sp"
@@ -24,6 +23,23 @@
             android:layout_marginBottom="16dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
+
+        <!-- Descrizione evento -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/eventDescription"
+            android:hint="Event description (e.g. Aperitivo con tapas)"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/descriptionInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="3"
+                android:inputType="textMultiLine"
+                android:paddingStart="12dp"
+                android:paddingLeft="12dp" />
+        </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Tipo evento -->
         <com.google.android.material.textfield.TextInputLayout

@@ -1,6 +1,6 @@
 package com.example.roamly.data.models
 
-data class CategoryItem(
+data class Category(
     val name: String,
     val iconResId: Int
 ){

@@ -20,6 +20,7 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
@@ -40,6 +41,7 @@ import com.example.roamly.data.utils.EventAnnotationManager
 import com.example.roamly.data.utils.UserAnnotationManager
 import com.example.roamly.data.utils.MapUtils
 import com.example.roamly.data.utils.UserTooltipManager
+import com.example.roamly.fragment.EventChatListFragment
 import com.example.roamly.fragment.EventCreationFragment
 import com.example.roamly.fragment.ProfileEditFragment
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -71,7 +73,7 @@ import kotlinx.coroutines.launch
 
 class HomeActivity : AppCompatActivity() {
 
-    private val profileRepository = ProfileRepository()
+    private val profileRepository = ProfileRepository
 
     private val eventRefreshHandler = Handler(Looper.getMainLooper())
     private val eventRefreshInterval: Long = 30_000L
@@ -95,12 +97,34 @@ class HomeActivity : AppCompatActivity() {
 
     private val userAnnotationManagers = mutableMapOf<String, PointAnnotationManager>()
 
-    private lateinit var fabHome: FloatingActionButton
     private lateinit var bottomNav: BottomNavigationView
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        Log.d("MapDebug", "onCreate chiamato")
+
+        // Controlla se l'utente è autenticato prima di procedere
+        val currentUser = SupabaseClientProvider.auth.currentUserOrNull()
+        if (currentUser == null) {
+            Log.d("MapDebug", "onCreate: No authenticated user, redirecting to login")
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            return
+        }
+
+        EventAnnotationManager.clearAll()
+        UserAnnotationManager.clearAll()
+
+        setContentView(R.layout.activity_home)
+
+        // Reset stato se è una nuova sessione
+        if (savedInstanceState == null) {
+            cameraCenteredOnce = false
+            Log.d("MapDebug", "onCreate: Fresh start, cameraCenteredOnce reset to false")
+        }
+
         Log.d("MapDebug", "onCreate chiamato. cameraCenteredOnce = $cameraCenteredOnce")
         setContentView(R.layout.activity_home)
 
@@ -140,30 +164,19 @@ class HomeActivity : AppCompatActivity() {
             Log.d("MapDebug", "Stato ripristinato. cameraCenteredOnce = $cameraCenteredOnce")
         }
 
-        fabHome = findViewById<FloatingActionButton>(R.id.fabHome)
         bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigationView)
 
         val draggableEventIcon = findViewById<ImageView>(R.id.draggableEventIcon)
         val profileFragmentContainer = findViewById<FrameLayout>(R.id.profileFragmentContainer)
         val eventFragmentContainer = findViewById<FrameLayout>(R.id.eventFragmentContainer)
-
-        fabHome.setOnClickListener {
-
-            val profileFragment = supportFragmentManager.findFragmentById(R.id.profileFragmentContainer)
-            if (profileFragment != null && profileFragment.isVisible) {
-                supportFragmentManager.popBackStack("ProfileFragment", 0)
-                findViewById<FrameLayout>(R.id.profileFragmentContainer).visibility = View.GONE
-                Log.d("FAB_HOME", "ProfileFragment chiuso")
-            }
-
-            removeUserCallout()
-            centerCameraOnUser()
-        }
+        val chatFragmentContainer = findViewById<FrameLayout>(R.id.chatFragmentContainer)
 
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_profile -> {
                     profileFragmentContainer.visibility = View.VISIBLE
+                    eventFragmentContainer.visibility = View.GONE
+                    chatFragmentContainer.visibility = View.GONE
                     supportFragmentManager.beginTransaction()
                         .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
                         .add(R.id.profileFragmentContainer, ProfileEditFragment())
@@ -171,10 +184,41 @@ class HomeActivity : AppCompatActivity() {
                         .commit()
                     true
                 }
+                R.id.nav_home -> {
+                    // 🔥 Chiudi TUTTI i fragment nello stack (es: profilo, evento, ecc.)
+                    supportFragmentManager.popBackStackImmediate(null,  FragmentManager.POP_BACK_STACK_INCLUSIVE)
+
+                    // 🔥 Nascondi i container dei fragment se visibili
+                    profileFragmentContainer.visibility = View.GONE
+                    eventFragmentContainer.visibility = View.GONE
+                    chatFragmentContainer.visibility = View.GONE
+
+                    // 🔥 Nascondi eventuali tooltip
+                    removeUserCallout()
+                    removeEventCallout()
+
+                    // 🔥 Ricentra la mappa sull’utente
+                    centerCameraOnUser()
+
+                    true
+                }
+
+                R.id.nav_chat -> {
+                    // Mostra il container chat e nascondi gli altri se serve
+                    chatFragmentContainer.visibility = View.VISIBLE
+                    profileFragmentContainer.visibility = View.GONE
+                    eventFragmentContainer.visibility = View.GONE
+
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.chatFragmentContainer, EventChatListFragment()) // ✅ replace
+                        .addToBackStack("EventChatList")
+                        .commit()
+                    true
+                }
+
                 else -> false
             }
         }
-
 
         bottomNav.post {
             val menuView = bottomNav.getChildAt(0) as? ViewGroup ?: return@post
@@ -189,6 +233,8 @@ class HomeActivity : AppCompatActivity() {
                         when (event.actionMasked) {
                             MotionEvent.ACTION_DOWN -> {
                                 // Mostra subito l'icona e posizionala sotto il dito
+                                chatFragmentContainer.visibility = View.GONE
+                                profileFragmentContainer.visibility = View.GONE
                                 draggableEventIcon.visibility = View.VISIBLE
                                 draggableEventIcon.x = event.rawX - draggableEventIcon.width / 2
                                 draggableEventIcon.y = event.rawY - draggableEventIcon.height / 2
@@ -310,6 +356,7 @@ class HomeActivity : AppCompatActivity() {
                         onToggleEventCallout = { newId ->
                             if (newId == null) {
                                 hideEventCallout()
+                                currentShownEventId = null
                             } else {
                                 removeEventCallout()
                                 currentShownEventId = newId
@@ -606,6 +653,7 @@ class HomeActivity : AppCompatActivity() {
                     onToggleEventCallout = { newId ->
                         if (newId == null) {
                             hideEventCallout()
+                            currentShownEventId = null
                         } else {
                             removeEventCallout()
                             currentShownEventId = newId
@@ -615,6 +663,55 @@ class HomeActivity : AppCompatActivity() {
             }
             scheduleEventRefresh(lat, lon) // ricorsione per mantenerlo attivo
         }, eventRefreshInterval)
+    }
+
+    internal fun resetMapState() {
+        Log.d("MapDebug", "resetMapState: Resetting all map state variables")
+
+        // Reset stato camera
+        cameraCenteredOnce = false
+
+        // Pulisci cache profili
+        userProfilesCache.clear()
+
+        // Reset ID mostrati
+        currentShownProfileId = null
+        currentShownEventId = null
+
+        // Rimuovi tutti i tooltip
+        removeUserCallout()
+        removeEventCallout()
+
+        // Pulisci annotation managers
+        UserAnnotationManager.clearAll()
+        userAnnotationManagers.clear()
+
+        // Ferma refresh eventi
+        eventRefreshHandler.removeCallbacksAndMessages(null)
+
+        EventAnnotationManager.clearAll()
+
+        Log.d("MapDebug", "resetMapState: Map state reset completed")
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        val currentUser = SupabaseClientProvider.auth.currentUserOrNull()
+        if (currentUser == null) {
+            Log.d("MapDebug", "onResume: No authenticated user, resetting map state")
+            resetMapState()
+        } else {
+            Log.d("MapDebug", "onResume: User authenticated, checking location")
+
+            // ✅ Previeni desincronizzazione (es. ritorno da Onboarding con stato sporco)
+            EventAnnotationManager.clearAll()
+            UserAnnotationManager.clearAll()
+
+            if (::fusedLocationClient.isInitialized) {
+                checkLocationAndRequest()
+            }
+        }
     }
 
 }

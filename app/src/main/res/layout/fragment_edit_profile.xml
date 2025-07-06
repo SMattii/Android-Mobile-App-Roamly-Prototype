@@ -87,11 +87,16 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Country"
-            android:layout_marginBottom="12dp">
+            android:layout_marginBottom="12dp"
+            app:endIconMode="dropdown_menu">
+
             <com.google.android.material.textfield.MaterialAutoCompleteTextView
                 android:id="@+id/countryDropdown"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:padding="12dp"
+                android:inputType="none"
+                android:focusable="false"
                 android:enabled="false" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -100,11 +105,16 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Category"
-            android:layout_marginBottom="12dp">
+            android:layout_marginBottom="12dp"
+            app:endIconMode="dropdown_menu">
+
             <com.google.android.material.textfield.MaterialAutoCompleteTextView
                 android:id="@+id/categoryDropdown"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:padding="12dp"
+                android:inputType="none"
+                android:focusable="false"
                 android:enabled="false" />
         </com.google.android.material.textfield.TextInputLayout>
 

@@ -30,6 +30,8 @@ import com.google.android.material.timepicker.TimeFormat
 import kotlinx.coroutines.launch
 import com.example.roamly.data.repository.InterestRepository
 import com.example.roamly.data.utils.EventAnnotationManager
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import com.mapbox.geojson.Point
 import com.mapbox.maps.MapView
 import java.time.LocalDate
@@ -52,6 +54,7 @@ class EventCreationFragment : Fragment() {
     private lateinit var participantsSlider: Slider
     private lateinit var participantsValueText: TextView
     private lateinit var createEventButton: Button
+    private lateinit var eventDescriptionInput: TextInputEditText
 
     private lateinit var languageAdapter: LanguageAdapter
     private lateinit var interestAdapter: InterestAdapter
@@ -101,6 +104,7 @@ class EventCreationFragment : Fragment() {
             participantsSlider = view.findViewById(R.id.participantsSlider)
             participantsValueText = view.findViewById(R.id.participantsValueText)
             createEventButton = view.findViewById(R.id.createEventButton)
+            eventDescriptionInput = view.findViewById(R.id.descriptionInput)
             Log.d(TAG, "bindViews: all views successfully bound")
         } catch (e: Exception) {
             Log.e(TAG, "bindViews: error binding views", e)
@@ -131,7 +135,7 @@ class EventCreationFragment : Fragment() {
         lifecycleScope.launch {
             try {
                 // --- Interessi ---
-                val interestRepo = InterestRepository()
+                val interestRepo = InterestRepository
                 val allInterests = interestRepo.fetchAllInterests()
 
                 val interestIconMap = mapOf(
@@ -287,6 +291,7 @@ class EventCreationFragment : Fragment() {
             val interests = selectedInterests.map { it.id }
             val languages = selectedLanguages.map { it.id }
             val vibe = eventType // stesso valore di eventType per ora
+            val eventDescriptionText = eventDescriptionInput.text?.toString() ?: ""
 
             // Log dei dati inseriti
             Log.d(TAG, "Tipo evento: $eventType")
@@ -299,7 +304,8 @@ class EventCreationFragment : Fragment() {
             val generatedId = java.util.UUID.randomUUID().toString()
 
             val event = Event(
-                id = generatedId, // ✅ ID generato manualmente
+                id = generatedId,
+                desc = eventDescriptionText,
                 profile_id = profileId,
                 latitude = latitude,
                 longitude = longitude,
@@ -320,7 +326,7 @@ class EventCreationFragment : Fragment() {
             lifecycleScope.launch {
                 try {
                     Log.d(TAG, "Invio evento a Supabase...")
-                    EventRepository().createEvent(event)
+                    EventRepository.createEvent(event)
                     Log.i(TAG, "Evento creato con successo")
                     Toast.makeText(requireContext(), "Evento creato!", Toast.LENGTH_SHORT).show()
 

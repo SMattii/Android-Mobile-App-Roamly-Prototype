@@ -1,16 +1,23 @@
 package com.example.roamly.adapter
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.roamly.R
 import com.example.roamly.data.models.EventMessage
+import com.example.roamly.data.models.EventMessageWithSender
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
 
 class EventMessageAdapter(
-    private val messages: List<EventMessage>,
-    private val currentUserId: String
+    private val messages: List<EventMessageWithSender>,
+    private val currentUserId: String,
+    private val userColorMap: Map<String, Int>
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
@@ -20,7 +27,7 @@ class EventMessageAdapter(
 
     override fun getItemViewType(position: Int): Int {
         val message = messages[position]
-        return if (message.sender_id == currentUserId) VIEW_TYPE_SENT else VIEW_TYPE_RECEIVED
+        return if (message.sender.id == currentUserId) VIEW_TYPE_SENT else VIEW_TYPE_RECEIVED
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -35,11 +42,13 @@ class EventMessageAdapter(
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        val message = messages[position]
+        val current = messages[position]
+        val showHeader = position == 0 || messages[position - 1].message.sender_id != current.message.sender_id
+
         if (holder is SentViewHolder) {
-            holder.bind(message)
+            holder.bind(current.message)
         } else if (holder is ReceivedViewHolder) {
-            holder.bind(message)
+            holder.bind(current, showHeader, userColorMap[current.message.sender_id] ?: 0xFFE0E0E0.toInt())
         }
     }
 
@@ -47,17 +56,52 @@ class EventMessageAdapter(
 
     class SentViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val messageText: TextView = view.findViewById(R.id.textMessage)
+        private val timeText: TextView = view.findViewById(R.id.timeText)
 
         fun bind(message: EventMessage) {
             messageText.text = message.message
+            messageText.setBackgroundColor(Color.parseColor("#BBDEFB")) // blu chiaro
+            timeText.text = formatTime(message.created_at)
         }
     }
 
     class ReceivedViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val messageText: TextView = view.findViewById(R.id.textMessage)
+        private val senderName: TextView = view.findViewById(R.id.textSenderName)
+        private val senderAvatar: ImageView = view.findViewById(R.id.imageSenderAvatar)
+        private val timeText: TextView = view.findViewById(R.id.timeText)
 
-        fun bind(message: EventMessage) {
+        fun bind(wrapper: EventMessageWithSender, showHeader: Boolean, bubbleColor: Int) {
+            val (message, sender) = wrapper
+
             messageText.text = message.message
+            messageText.setBackgroundColor(bubbleColor)
+            timeText.text = formatTime(message.created_at)
+
+            if (showHeader) {
+                senderName.visibility = View.VISIBLE
+                senderName.text = sender.full_name ?: "Anonimo"
+
+                senderAvatar.visibility = View.VISIBLE
+                Glide.with(senderAvatar.context)
+                    .load(sender.profile_image_url)
+                    .placeholder(android.R.drawable.sym_def_app_icon)
+                    .circleCrop()
+                    .into(senderAvatar)
+            } else {
+                senderName.visibility = View.GONE
+                senderAvatar.visibility = View.INVISIBLE
+            }
         }
+    }
+}
+
+private fun formatTime(isoTimestamp: String): String {
+    return try {
+        val instant = OffsetDateTime.parse(isoTimestamp)
+        val formatter = DateTimeFormatter.ofPattern("HH:mm")
+        instant.toLocalTime().format(formatter)
+    } catch (e: Exception) {
+        "??:??"
     }
 }

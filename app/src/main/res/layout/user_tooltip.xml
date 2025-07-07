@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<!-- Tooltip profilo utente: visualizzato sopra un marker sulla mappa -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
@@ -9,6 +9,7 @@
     android:layout_gravity="center"
     android:layout_marginBottom="10dp">
 
+    <!-- Nome e età dell’utente -->
     <TextView
         android:id="@+id/txtNameAge"
         android:layout_width="wrap_content"
@@ -20,6 +21,7 @@
         android:maxLines="1"
         android:ellipsize="end" />
 
+    <!-- Sezione paese: bandiera + nome -->
     <LinearLayout
         android:id="@+id/countryContainer"
         android:layout_width="wrap_content"
@@ -27,6 +29,7 @@
         android:orientation="horizontal"
         android:layout_marginTop="2dp">
 
+        <!-- Bandiera del paese (inizialmente nascosta) -->
         <ImageView
             android:id="@+id/countryFlag"
             android:layout_width="24dp"
@@ -34,6 +37,7 @@
             android:layout_marginEnd="4dp"
             android:visibility="gone" />
 
+        <!-- Nome del paese -->
         <TextView
             android:id="@+id/countryName"
             android:layout_width="wrap_content"
@@ -45,6 +49,7 @@
             android:ellipsize="end" />
     </LinearLayout>
 
+    <!-- Sezione categoria: icona + nome -->
     <LinearLayout
         android:id="@+id/categoryContainer"
         android:layout_width="wrap_content"
@@ -53,6 +58,7 @@
         android:layout_marginTop="2dp"
         android:gravity="center_vertical">
 
+        <!-- Icona della categoria (es. local, tourist...) -->
         <ImageView
             android:id="@+id/categoryIcon"
             android:layout_width="20dp"
@@ -60,6 +66,7 @@
             android:layout_marginEnd="4dp"
             android:visibility="gone" />
 
+        <!-- Nome della categoria -->
         <TextView
             android:id="@+id/txtCategory"
             android:layout_width="wrap_content"
@@ -71,6 +78,7 @@
             android:ellipsize="end" />
     </LinearLayout>
 
+    <!-- Vibe dell’utente (es. chill, party) -->
     <TextView
         android:id="@+id/txtVibe"
         android:layout_width="wrap_content"
@@ -81,6 +89,7 @@
         android:maxLines="1"
         android:ellipsize="end" />
 
+    <!-- Contenitore lingue (es. bandierine) -->
     <LinearLayout
         android:id="@+id/languagesContainer"
         android:layout_width="wrap_content"
@@ -88,6 +97,7 @@
         android:orientation="horizontal"
         android:layout_marginTop="4dp" />
 
+    <!-- Contenitore interessi (es. icone) -->
     <LinearLayout
         android:id="@+id/interestsContainer"
         android:layout_width="wrap_content"

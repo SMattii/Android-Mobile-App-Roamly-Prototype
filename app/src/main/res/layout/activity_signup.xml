@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Layout principale con ConstraintLayout -->
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
@@ -9,7 +10,7 @@
     android:background="@color/app_background"
     tools:context=".activity.SignupActivity">
 
-  <!-- Form Container -->
+  <!-- Card che contiene il form di registrazione -->
   <com.google.android.material.card.MaterialCardView
       android:id="@+id/formCard"
       android:backgroundTint="@color/white"
@@ -23,8 +24,9 @@
       app:layout_constraintTop_toTopOf="parent"
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintEnd_toEndOf="parent">
+
+    <!-- Contenitore del form -->
     <LinearLayout
-        android:layout_marginTop="0dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -32,7 +34,7 @@
         android:background="@android:color/white"
         android:fontFamily="@font/roboto_variablefont">
 
-      <!-- Email -->
+      <!-- Campo Email -->
       <com.google.android.material.textfield.TextInputLayout
           android:layout_width="match_parent"
           android:layout_height="wrap_content"
@@ -52,7 +54,7 @@
             android:fontFamily="@font/roboto_variablefont"/>
       </com.google.android.material.textfield.TextInputLayout>
 
-      <!-- Password -->
+      <!-- Campo Password -->
       <com.google.android.material.textfield.TextInputLayout
           android:layout_width="match_parent"
           android:layout_height="wrap_content"
@@ -73,7 +75,7 @@
             android:fontFamily="@font/roboto_variablefont"/>
       </com.google.android.material.textfield.TextInputLayout>
 
-      <!-- Confirm Password -->
+      <!-- Campo Conferma Password -->
       <com.google.android.material.textfield.TextInputLayout
           android:layout_width="match_parent"
           android:layout_height="wrap_content"
@@ -94,7 +96,7 @@
             android:fontFamily="@font/roboto_variablefont"/>
       </com.google.android.material.textfield.TextInputLayout>
 
-      <!-- Register Button -->
+      <!-- Bottone Registrati -->
       <com.google.android.material.button.MaterialButton
           android:id="@+id/btnRegister"
           android:layout_width="match_parent"
@@ -108,5 +110,4 @@
           android:fontFamily="@font/roboto_variablefont"/>
     </LinearLayout>
   </com.google.android.material.card.MaterialCardView>
-
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<!-- Layout orizzontale per una categoria selezionabile (icona + nome) -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="48dp"
@@ -6,14 +6,18 @@
     android:gravity="center_vertical"
     android:paddingStart="12dp"
     android:paddingEnd="12dp"
-    android:background="?attr/selectableItemBackground"> <ImageView
-    android:id="@+id/categoryIconImageView"
-    android:layout_width="24dp"
-    android:layout_height="24dp"
-    android:layout_marginEnd="12dp"
-    android:contentDescription="Category Icon"
-    android:scaleType="fitCenter" />
+    android:background="?attr/selectableItemBackground">
 
+    <!-- Icona della categoria (es. turista, locale...) -->
+    <ImageView
+        android:id="@+id/categoryIconImageView"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginEnd="12dp"
+        android:contentDescription="Category Icon"
+        android:scaleType="fitCenter" />
+
+    <!-- Nome della categoria -->
     <TextView
         android:id="@+id/categoryNameTextView"
         android:layout_width="wrap_content"

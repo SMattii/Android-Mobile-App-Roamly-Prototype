@@ -1,12 +1,14 @@
+<!-- Layout della schermata lista chat (es. lista eventi o conversazioni) -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/white">
 
+    <!-- RecyclerView che mostra la lista delle chat/eventi -->
     <androidx.recyclerview.widget.RecyclerView
-        android:layout_marginTop="30dp"
         android:id="@+id/recyclerViewChatList"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:layout_marginTop="30dp" />
 </LinearLayout>

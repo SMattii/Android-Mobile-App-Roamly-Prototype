@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<!-- Layout orizzontale per una lingua selezionabile con bandiera e nome -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="48dp"
@@ -7,6 +7,7 @@
     android:paddingStart="12dp"
     android:paddingEnd="12dp">
 
+    <!-- Immagine della bandiera del paese -->
     <ImageView
         android:id="@+id/flagImageView"
         android:layout_width="24dp"
@@ -15,6 +16,7 @@
         android:contentDescription="Country flag"
         android:scaleType="fitCenter" />
 
+    <!-- Nome del paese o della lingua -->
     <TextView
         android:id="@+id/countryNameTextView"
         android:layout_width="wrap_content"

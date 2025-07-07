@@ -21,8 +21,25 @@ import com.mapbox.geojson.Point
 import com.mapbox.maps.MapView
 import com.mapbox.maps.MapboxMap
 
+/**
+ * Gestisce la visualizzazione del tooltip per gli eventi sulla mappa.
+ *
+ * Il tooltip mostra informazioni dettagliate sull'evento selezionato, tra cui:
+ * - Tipo, data, ora e descrizione dell’evento
+ * - Numero partecipanti e range di età
+ * - Lingue e interessi tramite icone
+ * - Avatar dei partecipanti
+ * - Azioni dinamiche tramite pulsanti (JOIN, LEAVE, EDIT, DELETE)
+ *
+ * Il tooltip viene visualizzato in una posizione calcolata dinamicamente sulla mappa,
+ * e supporta callback per modifiche alla partecipazione o gestione eventi.
+ */
 object EventTooltipManager {
 
+    /**
+     * Mostra un tooltip grafico e interattivo sopra un punto specifico sulla mappa.
+     * Supporta azioni dinamiche in base al ruolo dell’utente (partecipante o creatore).
+     */
     fun show(
         context: Context,
         mapView: MapView,
@@ -39,25 +56,34 @@ object EventTooltipManager {
         onEditClick: ((event: Event) -> Unit)? = null,
         onDeleteClick: ((eventId: String) -> Unit)? = null,
     ) {
+
+        // Rimuove eventuali tooltip esistenti prima di mostrarne uno nuovo
         tooltipContainer.removeAllViews()
 
+        // Calcola la posizione sullo schermo dove posizionare il tooltip (in base al punto mappa)
         val screenCoord = mapboxMap.pixelForCoordinate(point)
         val screenPos = PointF(screenCoord.x.toFloat(), screenCoord.y.toFloat())
+
+        // Infla il layout XML del tooltip evento
         val inflater = LayoutInflater.from(context)
         val view: View = inflater.inflate(R.layout.event_tooltip, tooltipContainer, false)
 
+        // Mostra tipo di evento con data e orario
         view.findViewById<TextView>(R.id.txtEventType).text =
             "${event.event_type} - ${event.date} ${event.time}"
 
+        // Descrizione testuale dell'evento
         view.findViewById<TextView>(R.id.txtDescription).text = event.desc
 
+        // Mostra numero partecipanti attuali su massimo consentito
         view.findViewById<TextView>(R.id.txtParticipants).text =
             "${participants.size}/${event.max_participants ?: "?"} partecipanti"
 
+        // Mostra range di età richiesto per partecipare
         view.findViewById<TextView>(R.id.txtAgeRange).text =
             "Età: ${event.min_age ?: "-"} - ${event.max_age ?: "-"}"
 
-        // Lingue
+        // Aggiunge le bandiere delle lingue selezionate per l’evento
         val langContainer = view.findViewById<LinearLayout>(R.id.languagesContainer)
         event.languages.forEach { langCode ->
             val lang = allLanguages.find { it.id == langCode } ?: return@forEach
@@ -70,7 +96,7 @@ object EventTooltipManager {
             langContainer.addView(img)
         }
 
-        // Interessi
+        // Aggiunge le icone degli interessi associati all’evento
         val intContainer = view.findViewById<LinearLayout>(R.id.interestsContainer)
         event.interests.forEach { interestId ->
             val interest = allInterests.find { it.id == interestId } ?: return@forEach
@@ -84,7 +110,7 @@ object EventTooltipManager {
             intContainer.addView(iconView)
         }
 
-        // Partecipanti
+        // Mostra gli avatar dei partecipanti all’evento
         val avatarContainer = view.findViewById<LinearLayout>(R.id.avatarsContainer)
         participants.forEach { profile ->
             val img = ImageView(context).apply {
@@ -99,13 +125,16 @@ object EventTooltipManager {
             avatarContainer.addView(img)
         }
 
+        // Inizializza pulsanti di azione (Join/Edit e Delete)
         val joinBtn = view.findViewById<Button>(R.id.btnJoin)
         val deleteBtn = view.findViewById<Button>(R.id.btnDelete)
 
+        // Determina se l’utente è creatore o partecipante
         val isCreator = event.profile_id == currentUserId
         val isParticipant = participants.any { it.id == currentUserId }
 
         when {
+            // Se l'utente è il creatore → mostra "EDIT" e pulsante DELETE
             isCreator -> {
                 joinBtn.text = "EDIT"
 
@@ -129,6 +158,7 @@ object EventTooltipManager {
                 }
             }
 
+            // Se l’utente è partecipante → mostra "LEAVE"
             isParticipant -> {
                 joinBtn.text = "LEAVE"
                 joinBtn.setOnClickListener {
@@ -136,6 +166,7 @@ object EventTooltipManager {
                 }
             }
 
+            // Altrimenti → mostra "JOIN"
             else -> {
                 joinBtn.text = "JOIN"
                 joinBtn.setOnClickListener {
@@ -144,12 +175,12 @@ object EventTooltipManager {
             }
         }
 
-        // Posizionamento sulla mappa
+        // Posiziona il tooltip sulla mappa, centrato sopra il marker
         view.x = screenPos.x - view.measuredWidth / 2
         view.y = screenPos.y - view.measuredHeight
         tooltipContainer.addView(view)
 
-        // Assicura che venga misurata e centrata dopo il layout
+        // Ricalcola posizione dopo che il layout è stato misurato
         view.post {
             view.x = screenPos.x - view.width / 2
             view.y = screenPos.y - view.height

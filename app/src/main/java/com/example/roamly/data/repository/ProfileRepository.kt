@@ -13,8 +13,21 @@ import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+/**
+ * Repository per la gestione dei profili utente su Supabase.
+ *
+ * Gestisce il salvataggio della posizione utente, il recupero di profili completi,
+ * e l’aggiornamento di dati di base, lingue, interessi e profilo completo.
+ */
 object ProfileRepository {
 
+    /**
+     * Salva o aggiorna la posizione corrente dell’utente nella tabella `locations`.
+     *
+     * @param userId ID dell’utente.
+     * @param latitude Latitudine corrente.
+     * @param longitude Longitudine corrente.
+     */
     suspend fun saveLocationToSupabase(userId: String, latitude: Double, longitude: Double) {
         try {
             val entry = LocationEntry(user_id = userId, latitude = latitude, longitude = longitude)
@@ -28,6 +41,12 @@ object ProfileRepository {
         }
     }
 
+    /**
+     * Recupera i profili utente visibili nelle vicinanze con dettagli su lingue e interessi.
+     *
+     * @param userIds Lista di ID utente da includere.
+     * @return Mappa di profili completi indicizzati per ID.
+     */
     suspend fun fetchNearbyProfilesWithDetails(userIds: List<String>): Map<String, NearbyUserProfile> {
         val db = SupabaseClientProvider.db
 
@@ -63,6 +82,12 @@ object ProfileRepository {
         }
     }
 
+    /**
+     * Recupera i profili utente corrispondenti agli ID specificati.
+     *
+     * @param ids Lista di ID profilo da recuperare.
+     * @return Lista di profili corrispondenti.
+     */
     suspend fun getProfilesByIds(ids: List<String>): List<Profile> {
         if (ids.isEmpty()) {
             Log.w("SUPABASE_PROFILES", "Nessun ID ricevuto, ritorno lista vuota.")
@@ -87,6 +112,12 @@ object ProfileRepository {
         }
     }
 
+    /**
+     * Recupera un profilo utente completo, incluse le lingue e gli interessi selezionati.
+     *
+     * @param userId ID dell’utente.
+     * @return Oggetto [ProfileComplete] o null se il profilo non esiste.
+     */
     suspend fun getCompleteProfile(userId: String): ProfileComplete? {
         return try {
             withContext(Dispatchers.IO) {
@@ -141,8 +172,12 @@ object ProfileRepository {
         }
     }
 
-    // Aggiorna il profilo base
-    suspend fun updateProfile(profile: Profile): Boolean {
+    /**
+     * Aggiorna il profilo base dell’utente nella tabella `profiles`.
+     *
+     * @param profile Profilo da aggiornare.
+     * @return `true` se l’operazione ha successo, `false` altrimenti.
+     */ suspend fun updateProfile(profile: Profile): Boolean {
         return try {
             withContext(Dispatchers.IO) {
                 SupabaseClientProvider.db.from("profiles")
@@ -158,7 +193,14 @@ object ProfileRepository {
         }
     }
 
-    // Aggiorna le lingue del profilo
+    /**
+     * Aggiorna le lingue associate a un profilo.
+     * Prima elimina quelle esistenti, poi inserisce le nuove.
+     *
+     * @param userId ID del profilo.
+     * @param languageIds Lista dei codici lingua da salvare.
+     * @return `true` se l’operazione ha successo, `false` altrimenti.
+     */
     suspend fun updateProfileLanguages(userId: String, languageIds: List<String>): Boolean {
         return try {
             withContext(Dispatchers.IO) {
@@ -187,7 +229,14 @@ object ProfileRepository {
         }
     }
 
-    // Aggiorna gli interessi del profilo
+    /**
+     * Aggiorna gli interessi associati a un profilo.
+     * Prima elimina quelli esistenti, poi inserisce i nuovi.
+     *
+     * @param userId ID del profilo.
+     * @param interestIds Lista degli ID interesse da salvare.
+     * @return `true` se l’operazione ha successo, `false` altrimenti.
+     */
     suspend fun updateProfileInterests(userId: String, interestIds: List<String>): Boolean {
         return try {
             withContext(Dispatchers.IO) {
@@ -219,7 +268,15 @@ object ProfileRepository {
         }
     }
 
-    // Metodo unificato per salvare tutto
+    /**
+     * Salva l’intero profilo: dati base, lingue e interessi.
+     * Esegue le tre operazioni in sequenza.
+     *
+     * @param profile Profilo da aggiornare.
+     * @param languageIds Lista dei codici lingua da salvare.
+     * @param interestIds Lista degli ID interesse da salvare.
+     * @return `true` se tutte le operazioni hanno successo, `false` in caso di errore.
+     */
     suspend fun saveCompleteProfile(
         profile: Profile,
         languageIds: List<String>,

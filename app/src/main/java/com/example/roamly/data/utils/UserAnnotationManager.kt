@@ -21,11 +21,40 @@ import com.mapbox.maps.plugin.animation.flyTo
 import com.mapbox.maps.plugin.annotation.annotations
 import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
 
+/**
+ * Gestisce i marker utente (PointAnnotation) sulla mappa Mapbox.
+ * Ogni utente visibile viene rappresentato da un marker con immagine profilo circolare.
+ * Il marker può essere aggiornato o cliccato per mostrare/nascondere un tooltip utente.
+ *
+ * Usa una mappa per tenere traccia dei PointAnnotationManager e dei marker per ogni userId.
+ *
+ * Dipende da:
+ * - Glide per il caricamento asincrono delle immagini
+ * - Mapbox Annotation Plugin per la gestione dei marker
+ * - HomeActivity per nascondere il tooltip evento (quando si interagisce con un marker utente)
+ */
 object UserAnnotationManager {
 
+    // Un manager per utente e una mappa per tutti i marker utente
     private val userAnnotationManagers = mutableMapOf<String, PointAnnotationManager>()
     private val userMarkers = mutableMapOf<String, PointAnnotation>()
 
+    /**
+     * Crea o aggiorna un marker per l'utente specificato.
+     *
+     * Se il marker esiste già, aggiorna solo la posizione.
+     * Altrimenti, carica l'immagine profilo e crea un nuovo marker con listener click.
+     *
+     * @param context Il contesto usato per Glide
+     * @param mapView Riferimento alla MapView
+     * @param mapboxMap Istanza attiva della mappa
+     * @param userId ID univoco dell'utente
+     * @param imageUrl URL dell'immagine profilo da usare come icona
+     * @param point Coordinate geografiche del marker
+     * @param getCurrentShownProfileId Lambda per sapere quale profilo è attualmente visibile
+     * @param onToggleCallout Callback che mostra/nasconde il tooltip per il profilo selezionato
+     * @return Il PointAnnotationManager usato per questo utente
+     */
     fun createOrUpdateUserMarker(
         context: Context,
         mapView: MapView,
@@ -108,6 +137,12 @@ object UserAnnotationManager {
         return annotationManager
     }
 
+    /**
+     * Rimuove il marker dell'utente specificato dalla mappa.
+     * Elimina anche il relativo PointAnnotationManager.
+     *
+     * @param userId ID dell’utente da rimuovere dalla mappa
+     */
     fun removeUserMarker(userId: String) {
         userMarkers[userId]?.let { marker ->
             userAnnotationManagers[userId]?.delete(marker)
@@ -120,6 +155,10 @@ object UserAnnotationManager {
         Log.d("MARKER_REMOVE", "Rimosso marker e manager per userId=$userId")
     }
 
+    /**
+     * Rimuove tutti i marker e i relativi manager dalla mappa.
+     * Chiamato quando la mappa viene resettata o aggiornata completamente.
+     */
     fun clearAll() {
         userAnnotationManagers.forEach { (_, manager) ->
             manager.deleteAll()
@@ -128,5 +167,11 @@ object UserAnnotationManager {
         userMarkers.clear()
     }
 
+    /**
+     * Restituisce la lista di userId attualmente gestiti da questo manager.
+     * Utile per debug o sincronizzazione dati/mappa.
+     *
+     * @return Lista di ID utente presenti sulla mappa
+     */
     fun getManagedUserIds(): List<String> = userAnnotationManagers.keys.toList()
 }

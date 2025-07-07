@@ -1,3 +1,4 @@
+<!-- Layout di un messaggio ricevuto nella chat -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -5,7 +6,7 @@
     android:orientation="horizontal"
     android:gravity="start">
 
-    <!-- Avatar visibile solo sul primo messaggio del gruppo -->
+    <!-- Avatar del mittente, visibile solo nel primo messaggio del gruppo -->
     <ImageView
         android:id="@+id/imageSenderAvatar"
         android:layout_width="40dp"
@@ -17,12 +18,13 @@
         android:background="@drawable/avatar_circle_background"
         android:contentDescription="Avatar del mittente" />
 
+    <!-- Contenitore verticale: nome + messaggio + orario -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- Nome mittente, visibile solo sul primo messaggio del gruppo -->
+        <!-- Nome del mittente, mostrato solo nel primo messaggio del gruppo -->
         <TextView
             android:id="@+id/textSenderName"
             android:layout_width="wrap_content"
@@ -34,7 +36,7 @@
             android:textSize="14sp"
             android:layout_marginBottom="2dp"/>
 
-        <!-- Messaggio -->
+        <!-- Testo del messaggio ricevuto -->
         <TextView
             android:id="@+id/textMessage"
             android:layout_width="wrap_content"
@@ -45,6 +47,7 @@
             android:textColor="@android:color/black"
             android:background="@drawable/bg_received_message"/>
 
+        <!-- Orario del messaggio -->
         <TextView
             android:id="@+id/timeText"
             android:layout_width="wrap_content"

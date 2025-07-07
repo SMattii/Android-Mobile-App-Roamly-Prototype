@@ -7,8 +7,21 @@ import java.io.IOException
 import android.util.Log
 import com.example.roamly.data.models.Language
 
+/**
+ * Utility per la gestione delle lingue supportate nell'app.
+ *
+ * Carica le lingue da un file JSON (`languages.json`) situato negli asset e
+ * fornisce una mappatura tra codici lingua (ISO 639-1) e codici Paese (ISO 3166-1 alpha-2),
+ * utilizzata per recuperare le bandiere corrette.
+ */
 object LanguageProvider {
 
+    /**
+     * Mappa tra codici lingua ISO 639-1 e codici Paese ISO 3166-1 alpha-2,
+     * utilizzata per determinare la bandiera corretta per ogni lingua.
+     *
+     * Esempio: "en" → "gb", "it" → "it".
+     */
     internal val languageCodeToCountryCodeMap: Map<String, String> = mapOf(
         "af" to "za", // Afrikaans -> South Africa
         "sq" to "al", // Shqip -> Albania
@@ -82,6 +95,13 @@ object LanguageProvider {
         "cy" to "gb"  // Cymraeg -> United Kingdom (Wales)
     )
 
+    /**
+     * Restituisce l'ID della risorsa drawable corrispondente al codice Paese specificato.
+     *
+     * @param context Contesto Android per accedere alle risorse.
+     * @param countryCode Codice del Paese (ISO 3166-1 alpha-2) in lowercase.
+     * @return ID della risorsa drawable corrispondente, oppure 0 se non trovata.
+     */
     private fun getFlagResId(context: Context, countryCode: String): Int {
         val resourceName = countryCode.lowercase()
         return context.resources.getIdentifier(
@@ -91,6 +111,15 @@ object LanguageProvider {
         )
     }
 
+    /**
+     * Carica l'elenco delle lingue supportate da un file JSON (`languages.json`) situato nella cartella assets.
+     *
+     * Ogni lingua viene validata con una mappatura a un codice Paese e al relativo drawable della bandiera.
+     * Le lingue non mappate correttamente o senza bandiera vengono scartate con warning nei log.
+     *
+     * @param context Contesto Android necessario per accedere agli asset e alle risorse.
+     * @return Lista ordinata di oggetti [Language] con bandiera valida.
+     */
     fun loadLanguagesFromAssets(context: Context): List<Language> {
         val languagesList = mutableListOf<Language>()
         try {

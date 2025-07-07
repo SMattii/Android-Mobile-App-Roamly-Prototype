@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<!-- Layout scrollabile per la schermata profilo -->
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/profileScrollView"
@@ -7,6 +7,7 @@
     android:fillViewport="true"
     android:background="@color/white">
 
+    <!-- Contenitore verticale dei contenuti del profilo -->
     <LinearLayout
         android:id="@+id/profileContentLayout"
         android:layout_width="match_parent"
@@ -15,7 +16,7 @@
         android:padding="24dp"
         android:gravity="center_horizontal">
 
-        <!-- Titolo -->
+        <!-- Titolo schermata -->
         <TextView
             android:id="@+id/profileTitle"
             android:layout_width="wrap_content"
@@ -26,7 +27,7 @@
             android:textColor="@android:color/black"
             android:layout_marginBottom="16dp" />
 
-        <!-- Immagine profilo -->
+        <!-- Immagine del profilo (cliccabile) -->
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/profileImageView"
             android:layout_width="120dp"
@@ -40,7 +41,7 @@
             app:strokeWidth="2dp"
             app:strokeColor="@color/roamly_peach" />
 
-        <!-- First & Last Name -->
+        <!-- Campo: nome -->
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -52,6 +53,7 @@
                 android:layout_height="wrap_content" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Campo: cognome -->
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -63,7 +65,7 @@
                 android:layout_height="wrap_content" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Age -->
+        <!-- Età utente (testo + slider) -->
         <TextView
             android:id="@+id/ageValueText"
             android:layout_width="wrap_content"
@@ -82,14 +84,13 @@
             android:value="18"
             android:layout_marginBottom="24dp" />
 
-        <!-- Country (non modificabile) -->
+        <!-- Campo: paese (non modificabile) -->
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Country"
             android:layout_marginBottom="12dp"
             app:endIconMode="dropdown_menu">
-
             <com.google.android.material.textfield.MaterialAutoCompleteTextView
                 android:id="@+id/countryDropdown"
                 android:layout_width="match_parent"
@@ -100,14 +101,13 @@
                 android:enabled="false" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Category (non modificabile) -->
+        <!-- Campo: categoria (non modificabile) -->
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Category"
             android:layout_marginBottom="12dp"
             app:endIconMode="dropdown_menu">
-
             <com.google.android.material.textfield.MaterialAutoCompleteTextView
                 android:id="@+id/categoryDropdown"
                 android:layout_width="match_parent"
@@ -118,7 +118,7 @@
                 android:enabled="false" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Vibe (Toggle) -->
+        <!-- Toggle per selezionare il tipo di vibe -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -150,7 +150,7 @@
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
-        <!-- Languages -->
+        <!-- Sezione: lingue preferite -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -165,7 +165,6 @@
             android:layout_marginBottom="8dp"
             android:hint="Add Language"
             app:endIconMode="dropdown_menu">
-
             <com.google.android.material.textfield.MaterialAutoCompleteTextView
                 android:id="@+id/languagesDropdown"
                 android:layout_width="match_parent"
@@ -184,7 +183,7 @@
             app:chipSpacingVertical="8dp"
             app:singleLine="false" />
 
-        <!-- Interests -->
+        <!-- Sezione: interessi -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -199,7 +198,6 @@
             android:layout_marginBottom="8dp"
             android:hint="Add Interest"
             app:endIconMode="dropdown_menu">
-
             <com.google.android.material.textfield.MaterialAutoCompleteTextView
                 android:id="@+id/interestsDropdown"
                 android:layout_width="match_parent"
@@ -218,7 +216,7 @@
             app:chipSpacingVertical="8dp"
             app:singleLine="false" />
 
-        <!-- Visibility -->
+        <!-- Switch visibilità profilo -->
         <com.google.android.material.materialswitch.MaterialSwitch
             android:id="@+id/visibleSwitch"
             android:layout_width="wrap_content"
@@ -226,7 +224,7 @@
             android:text="Visible to others"
             android:layout_marginBottom="32dp" />
 
-        <!-- SAVE -->
+        <!-- Bottone salva modifiche -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/saveButton"
             android:layout_width="match_parent"
@@ -238,7 +236,7 @@
             app:cornerRadius="12dp"
             android:layout_marginBottom="12dp" />
 
-        <!-- CLOSE -->
+        <!-- Bottone chiudi profilo -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCloseProfile"
             android:layout_width="match_parent"
@@ -249,7 +247,7 @@
             app:cornerRadius="12dp"
             android:layout_marginBottom="32dp" />
 
-        <!-- Divider -->
+        <!-- Linea divisoria -->
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
@@ -257,7 +255,7 @@
             android:layout_marginTop="24dp"
             android:layout_marginBottom="16dp" />
 
-        <!-- Sezione Gestione Account -->
+        <!-- Titolo sezione gestione account -->
         <TextView
             android:id="@+id/accountSettingsTitle"
             android:layout_width="match_parent"
@@ -268,6 +266,7 @@
             android:textColor="@android:color/black"
             android:layout_marginBottom="12dp" />
 
+        <!-- Bottone cambio password -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnChangePassword"
             android:layout_width="match_parent"
@@ -276,6 +275,7 @@
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_marginBottom="8dp" />
 
+        <!-- Bottone logout -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLogout"
             android:layout_width="match_parent"

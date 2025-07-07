@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<!-- Layout principale a schermo intero con sfondo personalizzato -->
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:background="@color/app_background">
 
-    <!-- Titolo -->
+    <!-- Titolo della schermata posizionato in alto -->
     <TextView
         android:id="@+id/titleText3"
         android:layout_width="wrap_content"
@@ -21,7 +21,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Card con contenuto -->
+    <!-- Card contenente il blocco scrollabile con tutti gli interessi -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/profileCard3"
         android:layout_width="0dp"
@@ -36,10 +36,12 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintVertical_bias="0.3">
 
+        <!-- ScrollView per rendere il contenuto scrollabile se eccede lo schermo -->
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
+            <!-- Contenitore verticale per tutte le righe di interessi -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -49,7 +51,7 @@
                 android:background="@android:color/white"
                 android:fontFamily="@font/roboto_variablefont">
 
-                <!-- RIGA: Food and Drinks -->
+                <!-- Interesse: Food and Drinks -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -59,6 +61,7 @@
                     android:backgroundTint="@android:color/white"
                     app:cardCornerRadius="12dp">
 
+                    <!-- Riga orizzontale con checkbox, icona e testo -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -88,7 +91,8 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- RIGA: Nightlife -->
+                <!-- Interesse: Nightlife -->
+                <!-- Stessa struttura dei precedenti -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -127,7 +131,7 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- RIGA: Culture -->
+                <!-- Interesse: Culture -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -166,7 +170,7 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- RIGA: Nature -->
+                <!-- Interesse: Nature -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -205,7 +209,7 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- RIGA: Sport -->
+                <!-- Interesse: Sport -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -244,7 +248,7 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- RIGA: Networking -->
+                <!-- Interesse: Networking -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -283,7 +287,7 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Pulsante Next -->
+                <!-- Pulsante per confermare la selezione e procedere -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/nextButton3"
                     android:layout_width="match_parent"
@@ -293,7 +297,6 @@
                     android:textColor="@android:color/white"
                     android:backgroundTint="@color/roamly_red"
                     app:cornerRadius="30dp" />
-
             </LinearLayout>
         </ScrollView>
     </com.google.android.material.card.MaterialCardView>

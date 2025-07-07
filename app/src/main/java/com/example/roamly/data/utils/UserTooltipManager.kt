@@ -16,10 +16,23 @@ import com.mapbox.geojson.Point
 import com.mapbox.maps.MapView
 import com.mapbox.maps.MapboxMap
 
+/**
+ * Manager responsabile della visualizzazione del tooltip profilo utente
+ * sopra un marker nella mappa.
+ */
 object UserTooltipManager {
 
     /**
-     * Mostra un tooltip sopra il marker selezionato.
+     * Mostra un tooltip sopra il marker selezionato contenente i dati del profilo utente.
+     *
+     * @param context Contesto Android per accedere a risorse e inflater.
+     * @param mapView Vista della mappa su cui si sovrappone il tooltip.
+     * @param mapboxMap Istanza della mappa per ottenere coordinate schermo.
+     * @param tooltipContainer FrameLayout sovrapposto alla mappa per contenere il tooltip.
+     * @param point Coordinate geografiche del marker utente cliccato.
+     * @param profile Dati profilo dell’utente selezionato.
+     * @param allCountries Lista completa dei Paesi (per nome e codice bandiera).
+     * @param allLanguages Lista completa delle lingue supportate (per visualizzare bandiere).
      */
     fun show(
         context: Context,
@@ -31,24 +44,31 @@ object UserTooltipManager {
         allCountries: List<Country>,
         allLanguages: List<Language>
     ) {
+
+        // Rimuove eventuali tooltip già visibili
         tooltipContainer.removeAllViews()
 
+        // Crea la view del tooltip a partire dal layout XML
         val view = LayoutInflater.from(context).inflate(R.layout.user_tooltip, tooltipContainer, false)
 
+        // Imposta nome e età (usa "?" se età non disponibile)
         view.findViewById<TextView>(R.id.txtNameAge).text = "${profile.fullName}, ${profile.age ?: "?"}"
 
         Log.d("TOOLTIP_SHOW", "Mostro tooltip per ${profile.fullName} (${profile.id}) in posizione ${point.latitude()}, ${point.longitude()}")
 
+        // Gestione bandiera e nome del Paese
         val countryFlag = view.findViewById<ImageView>(R.id.countryFlag)
         val countryName = view.findViewById<TextView>(R.id.countryName)
 
         profile.country?.let { countryNameFromProfile ->
+            // Cerca il paese nella lista e ne recupera il codice ISO
             val country = allCountries.find { it.name.equals(countryNameFromProfile, ignoreCase = true) }
             val countryCodeLower = country?.code?.lowercase()
             val resId = countryCodeLower?.let {
                 context.resources.getIdentifier(it, "drawable", context.packageName)
             } ?: 0
 
+            // Se bandiera disponibile, la mostra, altrimenti nasconde l’immagine
             if (resId != 0) {
                 countryFlag.setImageResource(resId)
                 countryFlag.visibility = View.VISIBLE
@@ -56,15 +76,19 @@ object UserTooltipManager {
                 countryFlag.visibility = View.GONE
             }
 
+            // Mostra il nome del paese, se trovato
             countryName.text = country?.name ?: countryNameFromProfile
         } ?: run {
+            // Nessun paese: nasconde elementi
             countryFlag.visibility = View.GONE
             countryName.text = ""
         }
 
+        // Gestione categoria: testo e icona dinamica
         val categoryIcon = view.findViewById<ImageView>(R.id.categoryIcon)
         val categoryText = view.findViewById<TextView>(R.id.txtCategory)
 
+        // Mostra icona della categoria, se disponibile
         val category = profile.category?.lowercase()
         categoryText.text = profile.category ?: ""
         val catResId = category?.let {
@@ -78,11 +102,14 @@ object UserTooltipManager {
             categoryIcon.visibility = View.GONE
         }
 
+        // Mostra la vibe dell’utente (es. "Chill", "Party")
         view.findViewById<TextView>(R.id.txtVibe).text = profile.vibe ?: ""
 
+        // Container per bandiere delle lingue
         val langContainer = view.findViewById<LinearLayout>(R.id.languagesContainer)
         langContainer.removeAllViews()
 
+        // Per ogni lingua, aggiunge la rispettiva bandiera al layout
         profile.languages.forEach { code ->
             val lang = allLanguages.find { it.id == code }
             lang?.let {
@@ -96,9 +123,11 @@ object UserTooltipManager {
             }
         }
 
+        // Container per icone degli interessi
         val intContainer = view.findViewById<LinearLayout>(R.id.interestsContainer)
         intContainer.removeAllViews()
 
+        // Per ogni interesse, mostra la relativa icona
         profile.interests.forEach { name ->
             val resId = InterestProvider.getIconResIdFor(name)
             if (resId != null) {
@@ -112,8 +141,10 @@ object UserTooltipManager {
             }
         }
 
+        // Aggiunge il tooltip alla vista contenitore
         tooltipContainer.addView(view)
 
+        // Posiziona il tooltip in base alle coordinate del marker cliccato
         view.post {
             val screenCoords = mapboxMap.pixelForCoordinate(point)
             view.x = screenCoords.x.toFloat() - view.measuredWidth / 2

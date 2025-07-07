@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- MapView a schermo intero -->
+    <!-- Mappa a schermo intero (Mapbox MapView) -->
     <com.mapbox.maps.MapView
         android:id="@+id/mapView"
         android:layout_width="match_parent"
@@ -13,32 +13,35 @@
         app:mapbox_cameraTargetLng="0"
         app:mapbox_cameraZoom="17.0" />
 
-    <!-- Container per i tooltip dinamici -->
+    <!-- Contenitore per i tooltip dinamici (es. profili, eventi) -->
     <FrameLayout
         android:id="@+id/tooltipContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipChildren="false" />
 
+    <!-- Contenitore visibile solo quando viene aperto il profilo -->
     <FrameLayout
         android:id="@+id/profileFragmentContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone" />
 
+    <!-- Contenitore visibile solo durante la chat evento -->
     <FrameLayout
         android:id="@+id/chatFragmentContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone" />
 
+    <!-- Contenitore visibile solo in modifica o creazione evento -->
     <FrameLayout
         android:id="@+id/eventFragmentContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone" />
 
-    <!-- Bottom navigation con quattro pulsanti -->
+    <!-- Navigazione inferiore (menu a 4 icone) -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigationView"
         android:layout_width="match_parent"
@@ -46,7 +49,7 @@
         android:layout_gravity="bottom"
         app:menu="@menu/bottom_nav_menu" />
 
-    <!-- DEVE essere l'ultimo elemento dentro il FrameLayout -->
+    <!-- Icona trascinabile per creare un evento (sopra tutto) -->
     <ImageView
         android:id="@+id/draggableEventIcon"
         android:layout_width="64dp"
@@ -54,6 +57,6 @@
         android:visibility="gone"
         android:src="@drawable/ic_event_marker"
         android:contentDescription="Trascina per creare evento"
-        android:translationZ="100dp" /> <!-- FORZA sopra la navbar -->
+        android:translationZ="100dp" />
 
 </FrameLayout>

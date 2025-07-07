@@ -7,8 +7,18 @@ import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+/**
+ * Repository per la gestione degli interessi utente.
+ *
+ * Fornisce metodi per recuperare gli interessi disponibili dalla tabella `interests` su Supabase.
+ */
 object InterestRepository {
 
+    /**
+     * Recupera tutti gli interessi disponibili dal database Supabase.
+     *
+     * @return Lista di oggetti [Interest], oppure vuota in caso di errore.
+     */
     suspend fun fetchAllInterests(): List<Interest> {
         return try {
             withContext(Dispatchers.IO) {

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<!-- Tooltip evento: mostrato sopra il marker evento nella mappa -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/eventTooltipRoot"
     android:layout_width="wrap_content"
@@ -10,7 +10,7 @@
     android:layout_gravity="center"
     android:layout_marginBottom="10dp">
 
-    <!-- Riga: Tipo evento, Data, Ora -->
+    <!-- Riga con tipo evento + data e ora -->
     <TextView
         android:id="@+id/txtEventType"
         android:layout_width="wrap_content"
@@ -22,6 +22,7 @@
         android:maxLines="1"
         android:ellipsize="end" />
 
+    <!-- Descrizione breve dell'evento -->
     <TextView
         android:id="@+id/txtDescription"
         android:layout_width="wrap_content"
@@ -31,7 +32,7 @@
         android:textColor="#666666"
         android:layout_marginTop="2dp" />
 
-    <!-- Partecipanti -->
+    <!-- Testo partecipanti es: 2/6 partecipanti -->
     <TextView
         android:id="@+id/txtParticipants"
         android:layout_width="wrap_content"
@@ -41,7 +42,7 @@
         android:textColor="#666666"
         android:layout_marginTop="2dp" />
 
-    <!-- Età -->
+    <!-- Range età dei partecipanti -->
     <TextView
         android:id="@+id/txtAgeRange"
         android:layout_width="wrap_content"
@@ -51,7 +52,7 @@
         android:textColor="#666666"
         android:layout_marginTop="2dp" />
 
-    <!-- Lingue -->
+    <!-- Container per le lingue (es. bandierine) -->
     <LinearLayout
         android:id="@+id/languagesContainer"
         android:layout_width="wrap_content"
@@ -59,7 +60,7 @@
         android:orientation="horizontal"
         android:layout_marginTop="4dp" />
 
-    <!-- Interessi -->
+    <!-- Container per gli interessi (icone) -->
     <LinearLayout
         android:id="@+id/interestsContainer"
         android:layout_width="wrap_content"
@@ -67,7 +68,7 @@
         android:orientation="horizontal"
         android:layout_marginTop="4dp" />
 
-    <!-- Partecipanti avatar row -->
+    <!-- Avatar dei partecipanti -->
     <LinearLayout
         android:id="@+id/avatarsContainer"
         android:layout_width="wrap_content"
@@ -75,6 +76,7 @@
         android:orientation="horizontal"
         android:layout_marginTop="6dp" />
 
+    <!-- Pulsanti dinamici: JOIN, DELETE, ecc. -->
     <LinearLayout
         android:id="@+id/buttonsContainer"
         android:layout_width="wrap_content"
@@ -83,6 +85,7 @@
         android:layout_marginTop="5dp"
         android:layout_gravity="end">
 
+        <!-- Pulsante per unirsi all'evento -->
         <Button
             android:id="@+id/btnJoin"
             android:layout_width="wrap_content"
@@ -92,8 +95,9 @@
             android:textAllCaps="true"
             android:backgroundTint="@color/roamly_red"
             android:textColor="@android:color/white"
-            android:elevation="2dp"/>
+            android:elevation="2dp" />
 
+        <!-- Pulsante per eliminare l'evento (visibile solo per il creatore) -->
         <Button
             android:id="@+id/btnDelete"
             android:layout_width="wrap_content"
@@ -105,8 +109,6 @@
             android:textColor="@android:color/white"
             android:elevation="2dp"
             android:visibility="gone"
-            android:layout_marginStart="10dp"/>
+            android:layout_marginStart="10dp" />
     </LinearLayout>
-
-
 </LinearLayout>

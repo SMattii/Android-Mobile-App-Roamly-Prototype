@@ -1,3 +1,4 @@
+<!-- Layout di una riga evento mostrata nella lista chat (es. anteprima evento in chat) -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -6,6 +7,7 @@
     android:paddingHorizontal="16dp"
     android:background="@android:color/white">
 
+    <!-- Riga con descrizione evento e icona tipo evento -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -13,12 +15,14 @@
         android:gravity="center_vertical"
         android:paddingBottom="4dp">
 
+        <!-- Contenitore verticale per nome e data/ora evento -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:orientation="vertical">
 
+            <!-- Nome o descrizione dell'evento -->
             <TextView
                 android:id="@+id/txt_event_desc"
                 android:layout_width="wrap_content"
@@ -28,6 +32,7 @@
                 android:textColor="@android:color/black"
                 android:textStyle="bold" />
 
+            <!-- Data e ora dell'evento -->
             <TextView
                 android:id="@+id/txt_event_datetime"
                 android:layout_width="wrap_content"
@@ -37,6 +42,7 @@
                 android:textColor="#777777" />
         </LinearLayout>
 
+        <!-- Icona che rappresenta il tipo di evento -->
         <ImageView
             android:id="@+id/img_event_type"
             android:layout_width="32dp"
@@ -46,6 +52,7 @@
             android:src="@drawable/ic_chat" />
     </LinearLayout>
 
+    <!-- Riga separatrice tra eventi -->
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"

@@ -1,10 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
+<!-- Layout scrollabile per la schermata di creazione nuovo evento -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/app_background">
 
+    <!-- Contenitore verticale principale -->
     <LinearLayout
         android:orientation="vertical"
         android:padding="24dp"
@@ -15,6 +16,7 @@
         android:background="@android:color/white"
         android:fontFamily="@font/roboto_variablefont">
 
+        <!-- Titolo schermata -->
         <TextView
             android:text="Create a new event"
             android:textSize="20sp"
@@ -24,7 +26,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
-        <!-- Descrizione evento -->
+        <!-- Campo descrizione evento -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/eventDescription"
             android:hint="Event description (e.g. Aperitivo con tapas)"
@@ -41,7 +43,7 @@
                 android:paddingLeft="12dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Tipo evento -->
+        <!-- Tipo evento (chill, party...) -->
         <com.google.android.material.textfield.TextInputLayout
             android:hint="Event type (Chill, Party...)"
             app:endIconMode="dropdown_menu"
@@ -56,7 +58,7 @@
                 android:paddingLeft="12dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Interessi -->
+        <!-- Campo per aggiungere interessi -->
         <com.google.android.material.textfield.TextInputLayout
             android:hint="Add Interests"
             app:endIconMode="dropdown_menu"
@@ -71,6 +73,7 @@
                 android:paddingLeft="12dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- ChipGroup per mostrare gli interessi selezionati -->
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/interestsChipGroup"
             android:layout_width="match_parent"
@@ -80,7 +83,7 @@
             app:chipSpacingVertical="8dp"
             app:singleLine="false" />
 
-        <!-- Lingue -->
+        <!-- Campo per aggiungere lingue preferite -->
         <com.google.android.material.textfield.TextInputLayout
             android:hint="Preferred Languages"
             app:endIconMode="dropdown_menu"
@@ -95,6 +98,7 @@
                 android:paddingLeft="12dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- ChipGroup per lingue selezionate -->
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/languagesChipGroup"
             android:layout_width="match_parent"
@@ -104,7 +108,7 @@
             app:chipSpacingVertical="8dp"
             app:singleLine="false" />
 
-        <!-- Range Età -->
+        <!-- Etichetta per visualizzare range età -->
         <TextView
             android:id="@+id/ageRangeText"
             android:text="Age range: 25 - 35"
@@ -113,6 +117,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp" />
 
+        <!-- Slider per selezionare il range di età -->
         <com.google.android.material.slider.RangeSlider
             android:id="@+id/ageRangeSlider"
             android:layout_width="match_parent"
@@ -123,7 +128,7 @@
             app:values="@array/default_age_range"
             android:layout_marginBottom="16dp" />
 
-        <!-- Data -->
+        <!-- Campo per selezionare la data dell’evento -->
         <com.google.android.material.textfield.TextInputLayout
             android:hint="Date"
             app:endIconMode="dropdown_menu"
@@ -138,7 +143,7 @@
                 android:paddingLeft="12dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Orario -->
+        <!-- Campo per selezionare orario evento -->
         <com.google.android.material.textfield.TextInputLayout
             android:hint="Time (HH:mm)"
             android:layout_width="match_parent"
@@ -154,7 +159,7 @@
                 android:paddingLeft="12dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Numero partecipanti -->
+        <!-- Etichetta numero partecipanti -->
         <TextView
             android:id="@+id/participantsValueText"
             android:text="Participants: 2"
@@ -163,6 +168,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp" />
 
+        <!-- Slider per selezionare numero massimo partecipanti -->
         <com.google.android.material.slider.Slider
             android:id="@+id/participantsSlider"
             android:layout_width="match_parent"
@@ -173,7 +179,7 @@
             android:value="2"
             android:layout_marginBottom="24dp" />
 
-        <!-- Bottone Crea -->
+        <!-- Bottone per creare l’evento -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/createEventButton"
             android:layout_width="match_parent"

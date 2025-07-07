@@ -11,11 +11,25 @@ import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+/**
+ * Repository centralizzato per la gestione degli eventi su Supabase.
+ *
+ * Include operazioni CRUD per eventi, partecipazioni, e messaggi di chat evento.
+ * Tutte le chiamate sono sospese e ottimizzate per essere eseguite su Dispatchers.IO.
+ */
 object EventRepository {
 
+    /**
+     * Crea un nuovo evento su Supabase con calcolo automatico del campo `visible_until`.
+     * Registra anche il creatore come primo partecipante.
+     *
+     * @param event Oggetto evento da creare.
+     * @return Evento creato con ID assegnato da Supabase, oppure null in caso di errore.
+     */
     suspend fun createEvent(event: Event): Event? {
         return try {
             withContext(Dispatchers.IO) {
+
                 // 1. Calcola visible_until a partire da date + time
                 val formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
                 val localDateTime = java.time.LocalDateTime.parse("${event.date} ${event.time}", formatter)
@@ -56,6 +70,12 @@ object EventRepository {
         }
     }
 
+    /**
+     * Elimina un evento esistente in base al suo ID.
+     *
+     * @param eventId ID dell'evento da cancellare.
+     * @return `true` se l'eliminazione ha avuto successo, `false` in caso di errore.
+     */
     suspend fun deleteEvent(eventId: String): Boolean {
         return try {
             withContext(Dispatchers.IO) {
@@ -70,6 +90,11 @@ object EventRepository {
         }
     }
 
+    /**
+     * Recupera tutti gli eventi ancora visibili (dove `visible_until` è maggiore dell'orario corrente).
+     *
+     * @return Lista di eventi visibili, oppure vuota in caso di errore.
+     */
     suspend fun getEvents(): List<Event> {
         return try {
             withContext(Dispatchers.IO) {
@@ -89,6 +114,13 @@ object EventRepository {
         }
     }
 
+    /**
+     * Aggiunge un utente come partecipante a un evento.
+     *
+     * @param eventId ID dell'evento.
+     * @param profileId ID del profilo dell'utente partecipante.
+     * @return `true` se l'aggiunta ha avuto successo, `false` in caso di errore.
+     */
     suspend fun addParticipant(eventId: String, profileId: String): Boolean {
         return try {
             withContext(Dispatchers.IO) {
@@ -102,6 +134,13 @@ object EventRepository {
         }
     }
 
+    /**
+     * Rimuove un utente dalla lista dei partecipanti di un evento.
+     *
+     * @param eventId ID dell'evento.
+     * @param profileId ID del profilo da rimuovere.
+     * @return `true` se la rimozione ha avuto successo, `false` in caso di errore.
+     */
     suspend fun removeParticipant(eventId: String, profileId: String): Boolean {
         return try {
             withContext(Dispatchers.IO) {
@@ -119,9 +158,15 @@ object EventRepository {
         }
     }
 
+    /**
+     * Recupera la lista di ID utente che partecipano a un dato evento.
+     *
+     * @param eventId ID dell'evento.
+     * @return Lista di ID dei partecipanti, oppure vuota in caso di errore o ID non valido.
+     */
     suspend fun getEventParticipants(eventId: String?): List<String> {
         if (eventId.isNullOrBlank()) {
-            Log.e("SUPABASE_GET_PARTICIPANTS", "❌ ID evento nullo o vuoto")
+            Log.e("SUPABASE_GET_PARTICIPANTS", "ID evento nullo o vuoto")
             return emptyList()
         }
         return try {
@@ -137,13 +182,20 @@ object EventRepository {
         }
     }
 
+    /**
+     * Aggiorna un evento su Supabase, ricalcolando il campo `visible_until`
+     * in base a data e orario aggiornati.
+     *
+     * @param event Evento aggiornato da salvare.
+     * @return `true` se l’aggiornamento ha avuto successo, `false` in caso di errore.
+     */
     suspend fun updateEvent(event: Event): Boolean {
         return try {
             withContext(Dispatchers.IO) {
                 // Ricalcola `visible_until` in base a data + ora modificata
                 val formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 
-                // ✅ Pulisce i secondi (es: da "20:00:00" → "20:00")
+                // Pulisce i secondi (es: da "20:00:00" → "20:00")
                 val cleanTime = event.time.take(5)
 
                 val localDateTime = java.time.LocalDateTime.parse("${event.date} $cleanTime", formatter)
@@ -164,14 +216,20 @@ object EventRepository {
                         }
                     }
             }
-            Log.d("SUPABASE_UPDATE_EVENT", "✅ Evento aggiornato con successo")
+            Log.d("SUPABASE_UPDATE_EVENT", "Evento aggiornato con successo")
             true
         } catch (e: Exception) {
-            Log.e("SUPABASE_UPDATE_EVENT", "❌ Errore aggiornamento evento: ${e.message}", e)
+            Log.e("SUPABASE_UPDATE_EVENT", "Errore aggiornamento evento: ${e.message}", e)
             false
         }
     }
 
+    /**
+     * Recupera tutti i messaggi della chat associata a un evento, ordinati cronologicamente.
+     *
+     * @param eventId ID dell'evento.
+     * @return Lista di messaggi associati all'evento.
+     */
     suspend fun getMessagesForEvent(eventId: String): List<EventMessage> {
         return SupabaseClientProvider.db
             .from("event_messages")
@@ -184,6 +242,13 @@ object EventRepository {
             .decodeList<EventMessage>()
     }
 
+    /**
+     * Invia un nuovo messaggio nella chat dell’evento.
+     *
+     * @param eventId ID dell'evento.
+     * @param senderId ID dell’utente che invia il messaggio.
+     * @param message Contenuto testuale del messaggio.
+     */
     suspend fun sendMessageToEvent(eventId: String, senderId: String, message: String) {
         SupabaseClientProvider.db
             .from("event_messages")
@@ -196,6 +261,12 @@ object EventRepository {
             )
     }
 
+    /**
+     * Recupera tutti gli eventi a cui un dato utente partecipa.
+     *
+     * @param userId ID del profilo utente.
+     * @return Lista di eventi a cui l’utente partecipa.
+     */
     suspend fun getEventsWithUserParticipation(userId: String): List<Event> {
         val participations = SupabaseClientProvider.db.from("event_participants")
             .select {

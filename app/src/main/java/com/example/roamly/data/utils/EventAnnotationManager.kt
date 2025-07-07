@@ -27,11 +27,31 @@ import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions
 import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
 import kotlinx.coroutines.launch
 
+/**
+ * Oggetto singleton che gestisce la creazione, aggiornamento, visualizzazione e rimozione
+ * dei marker relativi agli eventi sulla mappa Mapbox.
+ *
+ * Utilizza un unico PointAnnotationManager condiviso ("global_event_manager") per gestire
+ * tutti i marker evento attivi.
+ *
+ * Fornisce anche la logica per mostrare tooltip, join/leave eventi, e sincronizzare la mappa.
+ */
 object EventAnnotationManager {
 
-    private val eventAnnotationManagers = mutableMapOf<String, PointAnnotationManager>()
+    private lateinit var eventAnnotationManager: PointAnnotationManager
     private val eventMarkers = mutableMapOf<String, PointAnnotation>()
 
+    // Inizializza il PointAnnotationManager se non è già stato inizializzato
+    fun initManagerIfNeeded(mapView: MapView) {
+        if (!::eventAnnotationManager.isInitialized) {
+            eventAnnotationManager = mapView.annotations.createPointAnnotationManager()
+        }
+    }
+
+    /**
+     * Crea o aggiorna un marker evento sulla mappa, e imposta un listener per gestire il click.
+     * Il marker viene disegnato dinamicamente in base al tipo di evento.
+     */
     fun createEventMarker(
         context: Context,
         mapView: MapView,
@@ -42,10 +62,9 @@ object EventAnnotationManager {
         onToggleEventCallout: (newEventId: String?) -> Unit
     ): PointAnnotationManager {
 
-        val annotationManager = eventAnnotationManagers.getOrPut("global_event_manager") {
-            mapView.annotations.createPointAnnotationManager()
-        }
+        initManagerIfNeeded(mapView)
 
+        // Determina l'icona da usare in base al tipo di evento
         val iconRes = when (event.event_type.lowercase()) {
             "party" -> R.drawable.ic_event_party
             "chill" -> R.drawable.ic_event_chill
@@ -55,22 +74,22 @@ object EventAnnotationManager {
         val iconDrawable = AppCompatResources.getDrawable(context, iconRes)
         if (iconDrawable == null) {
             Log.e("EVENT_MARKER", "Drawable null per icona: $iconRes")
-            return annotationManager
+            return eventAnnotationManager
         }
 
-        // Imposta dimensione totale del marker
+        // Disegna un marker personalizzato: cerchio nero con bordo bianco e icona al centro
         val size = 150
         val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
         val canvas = android.graphics.Canvas(bitmap)
 
-        // 1. Disegna il bordo nero (più grande)
+        // Bordo nero esterno
         val borderPaint = android.graphics.Paint().apply {
             color = android.graphics.Color.BLACK
             isAntiAlias = true
         }
         canvas.drawCircle(size / 2f, size / 2f, size / 2f, borderPaint)
 
-        // 2. Disegna il cerchio bianco sopra (più piccolo)
+        // Cerchio bianco interno
         val whitePaint = android.graphics.Paint().apply {
             color = android.graphics.Color.WHITE
             isAntiAlias = true
@@ -78,15 +97,15 @@ object EventAnnotationManager {
         canvas.drawCircle(size / 2f, size / 2f, size / 2f - 4f, whitePaint)
 
 
-        // 2. Disegna l'icona sopra, centrata con padding
-        iconDrawable.setBounds(30, 30, size - 30, size - 30) // padding = 30px
+        // Disegna l'icona centrata
+        iconDrawable.setBounds(30, 30, size - 30, size - 30)
         iconDrawable.draw(canvas)
 
-        val scaledBitmap = bitmap // non serve ridimensionare, è già 150x150
-
+        val scaledBitmap = bitmap
 
         val imageId = "event-icon-${event.event_type.lowercase()}"
         try {
+            // Aggiunge l'immagine al layer della mappa se non è già presente
             mapView.mapboxMap.style?.addImage(imageId, scaledBitmap)
             Log.d("EVENT_MARKER", "Icona aggiunta per tipo evento: ${event.event_type}")
         } catch (e: Exception) {
@@ -94,13 +113,13 @@ object EventAnnotationManager {
         }
 
 
-// 🔧 FIX: Usa la mappa interna invece di cercare nelle annotations
+        // Verifica se il marker esiste già → aggiorna oppure crea nuovo
         val existingAnnotation = eventMarkers[event.id!!]
 
         if (existingAnnotation != null) {
             // Aggiorna marker esistente
             existingAnnotation.point = point
-            annotationManager.update(existingAnnotation)
+            eventAnnotationManager.update(existingAnnotation)
             Log.d("EVENT_MARKER", "Marker evento ${event.id} aggiornato")
         } else {
             // Crea nuovo marker
@@ -110,38 +129,41 @@ object EventAnnotationManager {
                 .withData(JsonParser.parseString("{\"eventId\": \"${event.id}\"}").asJsonObject)
 
             try {
-                val annotation = annotationManager.create(options)
+                val annotation = eventAnnotationManager.create(options)
                 eventMarkers[event.id] = annotation
                 Log.d("EVENT_MARKER", "Nuovo marker evento ${event.id} creato")
             } catch (e: Exception) {
                 Log.e("EVENT_MARKER", "Errore creazione marker evento: ${e.message}")
-                return annotationManager
+                return eventAnnotationManager
             }
         }
 
-        annotationManager.addClickListener { annotation ->
-            Log.d("MARKER_CLICK", "✅ Marker evento cliccato")
-
+        // Listener al click sul marker evento
+        eventAnnotationManager.addClickListener { annotation ->
+            Log.d("MARKER_CLICK", "Marker evento cliccato")
+            // Controlla se il marker cliccato è già aperto
             val clickedEventId = annotation.getData()?.asJsonObject?.get("eventId")?.asString
             val currentId = getCurrentShownEventId()
             val wasOpen = clickedEventId == currentId
-            Log.d("MARKER_CLICK", "🔍 currentShownEventId = $currentId, clickedEventId = $clickedEventId, wasOpen = $wasOpen")
+            Log.d("MARKER_CLICK", "currentShownEventId = $currentId, clickedEventId = $clickedEventId, wasOpen = $wasOpen")
             val newIdToDisplay = if (wasOpen) null else clickedEventId
 
-            Log.d("MARKER_CLICK", "🆔 clickedEventId = $clickedEventId, wasOpen = $wasOpen → newIdToDisplay = $newIdToDisplay")
+            Log.d("MARKER_CLICK", "clickedEventId = $clickedEventId, wasOpen = $wasOpen → newIdToDisplay = $newIdToDisplay")
 
+            // Nasconde eventuale tooltip utente aperto
             val activity = mapView.context as? HomeActivity
             activity?.hideUserCallout()
 
-            // 🔑 MUOVI QUI il toggle prima del flyTo
+            // Chiama il toggle per aprire/chiudere il tooltip evento
             onToggleEventCallout(newIdToDisplay)
 
             if (wasOpen) {
-                Log.d("MARKER_CLICK", "❎ Tooltip evento già aperto, lo chiudo")
+                Log.d("MARKER_CLICK", "Tooltip evento già aperto, chiudo")
                 return@addClickListener true
             }
 
-            Log.d("MARKER_CLICK", "🗺️ Eseguo flyTo")
+            // Sposta la mappa sul marker cliccato
+            Log.d("MARKER_CLICK", "🗺Eseguo flyTo")
             mapboxMap.flyTo(
                 CameraOptions.Builder()
                     .center(annotation.point)
@@ -152,65 +174,65 @@ object EventAnnotationManager {
                 }
             )
 
+            // Dopo breve delay → carica dati e mostra tooltip
             mapView.postDelayed({
-                Log.d("MARKER_CLICK", "⏱️ Entrato in postDelayed (dopo flyTo)")
+                Log.d("MARKER_CLICK", "⏱Entrato in postDelayed dopo flyTo")
 
                 if (newIdToDisplay != null) {
                     val context = mapView.context
                     val lifecycleOwner = context as? androidx.lifecycle.LifecycleOwner
                     if (lifecycleOwner == null) {
-                        Log.e("MARKER_CLICK", "❌ lifecycleOwner NULL")
+                        Log.e("MARKER_CLICK", "lifecycleOwner NULL")
                         return@postDelayed
                     }
 
                     val scope = lifecycleOwner.lifecycleScope
                     if (scope == null) {
-                        Log.e("MARKER_CLICK", "❌ lifecycleScope NULL")
+                        Log.e("MARKER_CLICK", "lifecycleScope NULL")
                         return@postDelayed
                     }
 
-                    Log.d("MARKER_CLICK", "🚀 Lancio coroutine")
+                    Log.d("MARKER_CLICK", "Lancio coroutine")
                     scope.launch {
+                        // Carica evento, partecipanti, profili, interessi e lingue
                         val eventRepo = EventRepository
                         val profileRepo = ProfileRepository
 
-                        Log.d("MARKER_CLICK", "📡 Fetch eventi da Supabase")
+                        Log.d("MARKER_CLICK", "Fetch eventi da Supabase")
                         val events = eventRepo.getEvents()
                         val thisEvent = events.find { it.id == newIdToDisplay }
                         if (thisEvent == null) {
-                            Log.e("MARKER_CLICK", "❌ Evento non trovato per ID $newIdToDisplay")
+                            Log.e("MARKER_CLICK", "Evento non trovato per ID $newIdToDisplay")
                             return@launch
                         }
-                        Log.d("MARKER_CLICK", "✅ Evento trovato: ${thisEvent.event_type}")
+                        Log.d("MARKER_CLICK", "Evento trovato: ${thisEvent.event_type}")
 
-                        Log.d("MARKER_CLICK", "👥 Fetch partecipanti dell'evento")
+                        Log.d("MARKER_CLICK", "Fetch partecipanti dell'evento")
                         val participantIds = eventRepo.getEventParticipants(thisEvent.id!!)
-                        Log.d("MARKER_CLICK", "👤 ID partecipanti = $participantIds")
+                        Log.d("MARKER_CLICK", "ID partecipanti = $participantIds")
 
-                        Log.d("MARKER_CLICK", "📄 Fetch profili partecipanti")
+                        Log.d("MARKER_CLICK", "Fetch profili partecipanti")
                         val participantProfiles = profileRepo.getProfilesByIds(participantIds)
-                        Log.d("MARKER_CLICK", "📎 Profili trovati: ${participantProfiles.size}")
+                        Log.d("MARKER_CLICK", "Profili trovati: ${participantProfiles.size}")
 
-                        Log.d("MARKER_CLICK", "📚 Carico tutte le lingue e interessi")
+                        Log.d("MARKER_CLICK", "Carico tutte le lingue e interessi")
                         val allLanguages = LanguageProvider.loadLanguagesFromAssets(context)
                         val allInterests = InterestRepository.fetchAllInterests()
 
-                        //Log.d("MARKER_CLICK", "📌 onToggleEventCallout con $newIdToDisplay")
-                        //onToggleEventCallout(newIdToDisplay)
-
                         val tooltipContainer = mapView.rootView.findViewById<FrameLayout>(R.id.tooltipContainer)
                         if (tooltipContainer == null) {
-                            Log.e("MARKER_CLICK", "❌ tooltipContainer non trovato")
+                            Log.e("MARKER_CLICK", "tooltipContainer non trovato")
                             return@launch
                         }
 
-                        Log.d("MARKER_CLICK", "✨ Mostro tooltip evento")
+                        Log.d("MARKER_CLICK", "Mostro tooltip evento")
                         val currentUserId = SupabaseClientProvider.auth.currentUserOrNull()?.id
                         if (currentUserId == null) {
-                            Log.e("MARKER_CLICK", "❌ currentUserId è null, non posso mostrare tooltip")
+                            Log.e("MARKER_CLICK", "currentUserId è null, non posso mostrare tooltip")
                             return@launch
                         }
 
+                        // Mostra il tooltip evento con le relative azioni
                         EventTooltipManager.show(
                             context = context,
                             mapView = mapView,
@@ -271,13 +293,14 @@ object EventAnnotationManager {
             true
         }
 
-        return annotationManager
+        return eventAnnotationManager
     }
 
+    // Rimuove un marker evento dalla mappa e dalla mappa interna
     fun removeEventMarker(eventId: String) {
         val annotation = eventMarkers[eventId]
         if (annotation != null) {
-            eventAnnotationManagers["global_event_manager"]?.delete(annotation)
+            eventAnnotationManager.delete(annotation)
             eventMarkers.remove(eventId)
             Log.d("EVENT_MARKER", "Marker evento $eventId rimosso.")
         } else {
@@ -285,6 +308,10 @@ object EventAnnotationManager {
         }
     }
 
+    /**
+     * Sincronizza i marker evento sulla mappa: rimuove quelli scaduti o lontani,
+     * e crea/aggiorna quelli validi entro 10km e con visible_until ancora attivo.
+     */
     suspend fun synchronizeEventMarkers(
         context: Context,
         mapView: MapView,
@@ -296,24 +323,25 @@ object EventAnnotationManager {
     ) {
         val style = mapView.mapboxMap.getStyle()
         if (style == null) {
-            Log.w("EVENT_SYNC", "⚠️ Stile non ancora pronto → skip sincronizzazione")
+            Log.w("EVENT_SYNC", "Stile non ancora pronto → skip sincronizzazione")
             return
         }
 
         try {
             val eventRepo = EventRepository
-            Log.d("EVENT_SYNC", "🚀 Inizio sincronizzazione eventi")
+            Log.d("EVENT_SYNC", "Inizio sincronizzazione eventi")
             val allEvents = eventRepo.getEvents()
-            Log.d("EVENT_SYNC", "📥 Ricevuti ${allEvents.size} eventi dal repository")
+            Log.d("EVENT_SYNC", "Ricevuti ${allEvents.size} eventi dal repository")
 
             val now = System.currentTimeMillis()
 
             val validEventIds = mutableListOf<String>()
 
-            Log.d("EVENT_SYNC", "🔍 Eventi trovati dal DB: ${allEvents.size}")
-            Log.d("EVENT_SYNC", "📊 Marker attualmente attivi: ${eventMarkers.size}")
+            Log.d("EVENT_SYNC", "Eventi trovati dal DB: ${allEvents.size}")
+            Log.d("EVENT_SYNC", "Marker attualmente attivi: ${eventMarkers.size}")
 
             for (event in allEvents) {
+                // Calcola distanza ed eventuale scadenza del marker evento
                 val dist = MapUtils.haversine(myLat, myLon, event.latitude, event.longitude)
 
                 val visibleUntilMillis = try {
@@ -325,11 +353,12 @@ object EventAnnotationManager {
                     Long.MIN_VALUE
                 }
 
-                Log.d("EVENT_SYNC", "📍 Evento ${event.id}: dist=$dist km, tipo=${event.event_type}, scaduto=${visibleUntilMillis < now}")
+                Log.d("EVENT_SYNC", "Evento ${event.id}: dist=$dist km, tipo=${event.event_type}, scaduto=${visibleUntilMillis < now}")
 
                 if (dist <= 10 && visibleUntilMillis >= now) {
+                    // Aggiunge marker per eventi validi (entro 10km e ancora visibili)
                     validEventIds.add(event.id!!)
-                    Log.d("EVENT_SYNC", "✅ Evento ${event.id} valido - creando marker")
+                    Log.d("EVENT_SYNC", "Evento ${event.id} valido - creando marker")
 
                     createEventMarker(
                         context = context,
@@ -341,13 +370,13 @@ object EventAnnotationManager {
                         onToggleEventCallout = onToggleEventCallout
                     )
                 } else {
-                    Log.d("EVENT_SYNC", "❌ Evento ${event.id} non valido")
+                    Log.d("EVENT_SYNC", "Evento ${event.id} non valido")
                 }
             }
 
-            Log.d("EVENT_SYNC", "📊 Sincronizzazione completata - Marker attivi: ${eventMarkers.size}")
+            Log.d("EVENT_SYNC", "Sincronizzazione completata - Marker attivi: ${eventMarkers.size}")
 
-            // Rimuovi marker non più validi
+            // Rimuove i marker per eventi che non sono più validi
             val currentMarkers = eventMarkers.keys.toList()
             for (eventId in currentMarkers) {
                 if (!validEventIds.contains(eventId)) {
@@ -361,9 +390,11 @@ object EventAnnotationManager {
         }
     }
 
+    // Rimuove tutti i marker e pulisce il manager
     fun clearAll() {
-        eventAnnotationManagers.values.forEach { it.deleteAll() }
-        eventAnnotationManagers.clear()
+        if (::eventAnnotationManager.isInitialized) {
+            eventAnnotationManager.deleteAll()
+        }
         eventMarkers.clear()
         Log.d("EVENT_MARKER", "Tutti i marker e manager evento rimossi.")
     }

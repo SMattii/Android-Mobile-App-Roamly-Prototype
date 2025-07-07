@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Layout di un singolo item (con icona e testo), usato per dropdown lingua -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -7,6 +8,7 @@
     android:gravity="center_vertical"
     android:background="?attr/selectableItemBackground">
 
+    <!-- Icona a sinistra dell’item (può essere una bandiera, un'icona di interesse, ecc.) -->
     <ImageView
         android:id="@+id/itemIconView"
         android:layout_width="24dp"
@@ -14,6 +16,7 @@
         android:layout_marginEnd="16dp"
         android:scaleType="centerCrop" />
 
+    <!-- Testo principale dell’item -->
     <TextView
         android:id="@+id/itemTextView"
         android:layout_width="wrap_content"

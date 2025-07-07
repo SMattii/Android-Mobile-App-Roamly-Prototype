@@ -1,3 +1,4 @@
+<!-- Layout principale orizzontale per messaggio inviato -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -5,11 +6,13 @@
     android:orientation="horizontal"
     android:gravity="end">
 
+    <!-- Contenitore verticale per testo messaggio e orario -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <!-- Testo del messaggio -->
         <TextView
             android:id="@+id/textMessage"
             android:layout_width="wrap_content"
@@ -20,6 +23,7 @@
             android:text="Messaggio inviato"
             android:textSize="16sp" />
 
+        <!-- Orario del messaggio -->
         <TextView
             android:id="@+id/timeText"
             android:layout_width="wrap_content"

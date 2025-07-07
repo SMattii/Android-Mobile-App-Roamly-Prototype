@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+
+<!-- Layout principale che occupa tutto lo schermo -->
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
@@ -9,7 +11,7 @@
     android:id="@+id/main"
     tools:context=".activity.LoginActivity">
 
-    <!-- Card login -->
+    <!-- Card centrale contenente il form di login -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/formCard"
         android:layout_width="0dp"
@@ -24,6 +26,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
+        <!-- Contenitore verticale con padding interno -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -32,7 +35,7 @@
             android:background="@android:color/white"
             android:fontFamily="@font/roboto_variablefont">
 
-            <!-- Campo Email -->
+            <!-- Campo di input per l'Email con icona a sinistra -->
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -52,7 +55,7 @@
                     android:fontFamily="@font/roboto_variablefont"/>
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Campo Password -->
+            <!-- Campo di input per la Password con icona e visibilità toggle -->
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -73,7 +76,7 @@
                     android:fontFamily="@font/roboto_variablefont"/>
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Bottone Sign-in -->
+            <!-- Bottone per effettuare il login con icona utente -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/loginBtn"
                 android:layout_width="match_parent"

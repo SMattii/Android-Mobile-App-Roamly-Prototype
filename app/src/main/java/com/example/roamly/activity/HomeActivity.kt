@@ -67,6 +67,9 @@ import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
 import com.mapbox.maps.plugin.gestures.OnMoveListener
 import com.mapbox.maps.plugin.gestures.gestures
 import io.github.jan.supabase.postgrest.query.Columns
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 
@@ -74,8 +77,8 @@ class HomeActivity : AppCompatActivity() {
 
     private val profileRepository = ProfileRepository
 
-    private val eventRefreshHandler = Handler(Looper.getMainLooper())
     private val eventRefreshInterval: Long = 30_000L
+    private var eventRefreshJob: Job? = null
 
     private val userProfilesCache = mutableMapOf<String, NearbyUserProfile>()
     private var currentShownProfileId: String? = null
@@ -343,8 +346,12 @@ class HomeActivity : AppCompatActivity() {
                 val userId = SupabaseClientProvider.auth.currentUserOrNull()?.id
                 if (userId != null) {
                     lifecycleScope.launch {
-                        profileRepository.saveLocationToSupabase(userId, location.latitude, location.longitude)
-                        showCurrentUserMarker(userId, userPoint)
+                        try {
+                            profileRepository.saveLocationToSupabase(userId, location.latitude, location.longitude)
+                            showCurrentUserMarker(userId, userPoint)
+                        } catch (e: Exception) {
+                            Log.e("HomeActivity", "Error saving location/showing marker: ${e.message}", e)
+                        }
                     }
                 }
 
@@ -371,7 +378,7 @@ class HomeActivity : AppCompatActivity() {
                     )
                 }
 
-                scheduleEventRefresh(location.latitude, location.longitude)
+                startEventRefreshLoop(location.latitude, location.longitude)
 
                 Log.d("MapDebug", "onLocationResult: prima del check cameraCenteredOnce: $cameraCenteredOnce")
                 if (!cameraCenteredOnce) {
@@ -403,7 +410,7 @@ class HomeActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         fusedLocationClient.removeLocationUpdates(locationCallback)
-        eventRefreshHandler.removeCallbacksAndMessages(null)
+        eventRefreshJob?.cancel()
         UserAnnotationManager.clearAll()
     }
 
@@ -651,29 +658,35 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    private fun scheduleEventRefresh(lat: Double, lon: Double) {
-        eventRefreshHandler.postDelayed({
-            lifecycleScope.launch {
-                EventAnnotationManager.synchronizeEventMarkers(
-                    context = this@HomeActivity,
-                    mapView = mapView,
-                    mapboxMap = mapView.mapboxMap,
-                    myLat = lat,
-                    myLon = lon,
-                    getCurrentShownEventId = { currentShownEventId },
-                    onToggleEventCallout = { newId ->
-                        if (newId == null) {
-                            hideEventCallout()
-                            currentShownEventId = null
-                        } else {
-                            removeEventCallout()
-                            currentShownEventId = newId
+    private fun startEventRefreshLoop(lat: Double, lon: Double) {
+        eventRefreshJob?.cancel() // Cancella il job precedente se esiste
+        eventRefreshJob = lifecycleScope.launch {
+            while (isActive) {
+                Log.d("EventRefresh", "Refreshing events...")
+                try {
+                    EventAnnotationManager.synchronizeEventMarkers(
+                        context = this@HomeActivity,
+                        mapView = mapView,
+                        mapboxMap = mapView.mapboxMap,
+                        myLat = lat,
+                        myLon = lon,
+                        getCurrentShownEventId = { currentShownEventId },
+                        onToggleEventCallout = { newId ->
+                            if (newId == null) {
+                                hideEventCallout()
+                                currentShownEventId = null
+                            } else {
+                                removeEventCallout()
+                                currentShownEventId = newId
+                            }
                         }
-                    }
-                )
+                    )
+                } catch (e: Exception) {
+                    Log.e("EventRefresh", "Error refreshing events: ${e.message}", e)
+                }
+                delay(eventRefreshInterval)
             }
-            scheduleEventRefresh(lat, lon) // ricorsione per mantenerlo attivo
-        }, eventRefreshInterval)
+        }
     }
 
     internal fun resetMapState() {
@@ -698,7 +711,7 @@ class HomeActivity : AppCompatActivity() {
         userAnnotationManagers.clear()
 
         // Ferma refresh eventi
-        eventRefreshHandler.removeCallbacksAndMessages(null)
+        eventRefreshJob?.cancel()
         EventAnnotationManager.clearAll()
 
         Log.d("MapDebug", "resetMapState: completato, userAnnotationManagers.size = ${userAnnotationManagers.size}")
@@ -722,6 +735,12 @@ class HomeActivity : AppCompatActivity() {
                 checkLocationAndRequest()
             }
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        eventRefreshJob?.cancel()
+        Log.d("MapDebug", "onPause: Event refresh job cancelled.")
     }
 
 }

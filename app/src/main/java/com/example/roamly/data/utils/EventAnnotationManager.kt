@@ -26,11 +26,13 @@ import com.mapbox.maps.plugin.annotation.generated.PointAnnotationManager
 import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions
 import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
 
 object EventAnnotationManager {
 
     private val eventAnnotationManagers = mutableMapOf<String, PointAnnotationManager>()
     private val eventMarkers = mutableMapOf<String, PointAnnotation>()
+    private val isSyncing = AtomicBoolean(false)
 
     fun createEventMarker(
         context: Context,
@@ -94,7 +96,7 @@ object EventAnnotationManager {
         }
 
 
-// 🔧 FIX: Usa la mappa interna invece di cercare nelle annotations
+// FIX: Usa la mappa interna invece di cercare nelle annotations
         val existingAnnotation = eventMarkers[event.id!!]
 
         if (existingAnnotation != null) {
@@ -120,28 +122,28 @@ object EventAnnotationManager {
         }
 
         annotationManager.addClickListener { annotation ->
-            Log.d("MARKER_CLICK", "✅ Marker evento cliccato")
+            Log.d("MARKER_CLICK", "Marker evento cliccato")
 
             val clickedEventId = annotation.getData()?.asJsonObject?.get("eventId")?.asString
             val currentId = getCurrentShownEventId()
             val wasOpen = clickedEventId == currentId
-            Log.d("MARKER_CLICK", "🔍 currentShownEventId = $currentId, clickedEventId = $clickedEventId, wasOpen = $wasOpen")
+            Log.d("MARKER_CLICK", "currentShownEventId = $currentId, clickedEventId = $clickedEventId, wasOpen = $wasOpen")
             val newIdToDisplay = if (wasOpen) null else clickedEventId
 
-            Log.d("MARKER_CLICK", "🆔 clickedEventId = $clickedEventId, wasOpen = $wasOpen → newIdToDisplay = $newIdToDisplay")
+            Log.d("MARKER_CLICK", "clickedEventId = $clickedEventId, wasOpen = $wasOpen → newIdToDisplay = $newIdToDisplay")
 
             val activity = mapView.context as? HomeActivity
             activity?.hideUserCallout()
 
-            // 🔑 MUOVI QUI il toggle prima del flyTo
+            // MUOVI QUI il toggle prima del flyTo
             onToggleEventCallout(newIdToDisplay)
 
             if (wasOpen) {
-                Log.d("MARKER_CLICK", "❎ Tooltip evento già aperto, lo chiudo")
+                Log.d("MARKER_CLICK", "Tooltip evento già aperto, lo chiudo")
                 return@addClickListener true
             }
 
-            Log.d("MARKER_CLICK", "🗺️ Eseguo flyTo")
+            Log.d("MARKER_CLICK", "Eseguo flyTo")
             mapboxMap.flyTo(
                 CameraOptions.Builder()
                     .center(annotation.point)
@@ -153,61 +155,61 @@ object EventAnnotationManager {
             )
 
             mapView.postDelayed({
-                Log.d("MARKER_CLICK", "⏱️ Entrato in postDelayed (dopo flyTo)")
+                Log.d("MARKER_CLICK", "Entrato in postDelayed (dopo flyTo)")
 
                 if (newIdToDisplay != null) {
                     val context = mapView.context
                     val lifecycleOwner = context as? androidx.lifecycle.LifecycleOwner
                     if (lifecycleOwner == null) {
-                        Log.e("MARKER_CLICK", "❌ lifecycleOwner NULL")
+                        Log.e("MARKER_CLICK", "lifecycleOwner NULL")
                         return@postDelayed
                     }
 
                     val scope = lifecycleOwner.lifecycleScope
                     if (scope == null) {
-                        Log.e("MARKER_CLICK", "❌ lifecycleScope NULL")
+                        Log.e("MARKER_CLICK", "lifecycleScope NULL")
                         return@postDelayed
                     }
 
-                    Log.d("MARKER_CLICK", "🚀 Lancio coroutine")
+                    Log.d("MARKER_CLICK", "Lancio coroutine")
                     scope.launch {
                         val eventRepo = EventRepository
                         val profileRepo = ProfileRepository
 
-                        Log.d("MARKER_CLICK", "📡 Fetch eventi da Supabase")
+                        Log.d("MARKER_CLICK", "Fetch eventi da Supabase")
                         val events = eventRepo.getEvents()
                         val thisEvent = events.find { it.id == newIdToDisplay }
                         if (thisEvent == null) {
-                            Log.e("MARKER_CLICK", "❌ Evento non trovato per ID $newIdToDisplay")
+                            Log.e("MARKER_CLICK", "Evento non trovato per ID $newIdToDisplay")
                             return@launch
                         }
-                        Log.d("MARKER_CLICK", "✅ Evento trovato: ${thisEvent.event_type}")
+                        Log.d("MARKER_CLICK", "Evento trovato: ${thisEvent.event_type}")
 
-                        Log.d("MARKER_CLICK", "👥 Fetch partecipanti dell'evento")
+                        Log.d("MARKER_CLICK", "Fetch partecipanti dell'evento")
                         val participantIds = eventRepo.getEventParticipants(thisEvent.id!!)
-                        Log.d("MARKER_CLICK", "👤 ID partecipanti = $participantIds")
+                        Log.d("MARKER_CLICK", "ID partecipanti = $participantIds")
 
-                        Log.d("MARKER_CLICK", "📄 Fetch profili partecipanti")
+                        Log.d("MARKER_CLICK", "Fetch profili partecipanti")
                         val participantProfiles = profileRepo.getProfilesByIds(participantIds)
-                        Log.d("MARKER_CLICK", "📎 Profili trovati: ${participantProfiles.size}")
+                        Log.d("MARKER_CLICK", "Profili trovati: ${participantProfiles.size}")
 
-                        Log.d("MARKER_CLICK", "📚 Carico tutte le lingue e interessi")
+                        Log.d("MARKER_CLICK", "Carico tutte le lingue e interessi")
                         val allLanguages = LanguageProvider.loadLanguagesFromAssets(context)
                         val allInterests = InterestRepository.fetchAllInterests()
 
-                        //Log.d("MARKER_CLICK", "📌 onToggleEventCallout con $newIdToDisplay")
+                        //Log.d("MARKER_CLICK", "onToggleEventCallout con $newIdToDisplay")
                         //onToggleEventCallout(newIdToDisplay)
 
                         val tooltipContainer = mapView.rootView.findViewById<FrameLayout>(R.id.tooltipContainer)
                         if (tooltipContainer == null) {
-                            Log.e("MARKER_CLICK", "❌ tooltipContainer non trovato")
+                            Log.e("MARKER_CLICK", "tooltipContainer non trovato")
                             return@launch
                         }
 
-                        Log.d("MARKER_CLICK", "✨ Mostro tooltip evento")
+                        Log.d("MARKER_CLICK", "Mostro tooltip evento")
                         val currentUserId = SupabaseClientProvider.auth.currentUserOrNull()?.id
                         if (currentUserId == null) {
-                            Log.e("MARKER_CLICK", "❌ currentUserId è null, non posso mostrare tooltip")
+                            Log.e("MARKER_CLICK", "currentUserId è null, non posso mostrare tooltip")
                             return@launch
                         }
 
@@ -264,7 +266,7 @@ object EventAnnotationManager {
                         )
                     }
                 } else {
-                    Log.d("MARKER_CLICK", "⚠️ newIdToDisplay è null, non apro tooltip")
+                    Log.d("MARKER_CLICK", "newIdToDisplay è null, non apro tooltip")
                 }
             }, 100L)
 
@@ -294,24 +296,29 @@ object EventAnnotationManager {
         getCurrentShownEventId: () -> String?,
         onToggleEventCallout: (String?) -> Unit
     ) {
-        val style = mapView.mapboxMap.getStyle()
-        if (style == null) {
-            Log.w("EVENT_SYNC", "⚠️ Stile non ancora pronto → skip sincronizzazione")
+        if (!isSyncing.compareAndSet(false, true)) {
+            Log.d("EVENT_SYNC", "Sync already in progress, skipping.")
             return
         }
 
         try {
+            val style = mapView.mapboxMap.getStyle()
+            if (style == null) {
+                Log.w("EVENT_SYNC", "Stile non ancora pronto → skip sincronizzazione")
+                return
+            }
+
             val eventRepo = EventRepository
-            Log.d("EVENT_SYNC", "🚀 Inizio sincronizzazione eventi")
+            Log.d("EVENT_SYNC", "Inizio sincronizzazione eventi")
             val allEvents = eventRepo.getEvents()
-            Log.d("EVENT_SYNC", "📥 Ricevuti ${allEvents.size} eventi dal repository")
+            Log.d("EVENT_SYNC", "Ricevuti ${allEvents.size} eventi dal repository")
 
             val now = System.currentTimeMillis()
 
             val validEventIds = mutableListOf<String>()
 
-            Log.d("EVENT_SYNC", "🔍 Eventi trovati dal DB: ${allEvents.size}")
-            Log.d("EVENT_SYNC", "📊 Marker attualmente attivi: ${eventMarkers.size}")
+            Log.d("EVENT_SYNC", "Eventi trovati dal DB: ${allEvents.size}")
+            Log.d("EVENT_SYNC", "Marker attualmente attivi: ${eventMarkers.size}")
 
             for (event in allEvents) {
                 val dist = MapUtils.haversine(myLat, myLon, event.latitude, event.longitude)
@@ -325,11 +332,11 @@ object EventAnnotationManager {
                     Long.MIN_VALUE
                 }
 
-                Log.d("EVENT_SYNC", "📍 Evento ${event.id}: dist=$dist km, tipo=${event.event_type}, scaduto=${visibleUntilMillis < now}")
+                Log.d("EVENT_SYNC", "Evento ${event.id}: dist=$dist km, tipo=${event.event_type}, scaduto=${visibleUntilMillis < now}")
 
                 if (dist <= 10 && visibleUntilMillis >= now) {
                     validEventIds.add(event.id!!)
-                    Log.d("EVENT_SYNC", "✅ Evento ${event.id} valido - creando marker")
+                    Log.d("EVENT_SYNC", "Evento ${event.id} valido - creando marker")
 
                     createEventMarker(
                         context = context,
@@ -341,11 +348,11 @@ object EventAnnotationManager {
                         onToggleEventCallout = onToggleEventCallout
                     )
                 } else {
-                    Log.d("EVENT_SYNC", "❌ Evento ${event.id} non valido")
+                    Log.d("EVENT_SYNC", "Evento ${event.id} non valido")
                 }
             }
 
-            Log.d("EVENT_SYNC", "📊 Sincronizzazione completata - Marker attivi: ${eventMarkers.size}")
+            Log.d("EVENT_SYNC", "Sincronizzazione completata - Marker attivi: ${eventMarkers.size}")
 
             // Rimuovi marker non più validi
             val currentMarkers = eventMarkers.keys.toList()
@@ -358,6 +365,9 @@ object EventAnnotationManager {
 
         } catch (e: Exception) {
             Log.e("EVENT_SYNC", "Errore sincronizzazione eventi: ${e.message}", e)
+        } finally {
+            isSyncing.set(false)
+            Log.d("EVENT_SYNC", "Sync finished.")
         }
     }
 

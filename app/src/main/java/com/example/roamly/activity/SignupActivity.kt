@@ -14,6 +14,10 @@ import android.content.Intent
 import com.example.roamly.R
 import com.example.roamly.data.utils.SupabaseClientProvider
 
+/**
+ * Activity responsabile della registrazione utente.
+ * Gestisce input email/password, validazione e invio dati a Supabase.
+ */
 class SignupActivity : AppCompatActivity() {
 
     private lateinit var emailField: TextInputEditText
@@ -37,6 +41,11 @@ class SignupActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Valida i campi del modulo di registrazione.
+     *
+     * @return `true` se tutti i campi sono validi, `false` altrimenti.
+     */
     private fun validateForm(): Boolean {
         var valid = true
 
@@ -67,19 +76,23 @@ class SignupActivity : AppCompatActivity() {
         return valid
     }
 
+    /**
+     * Esegue la registrazione dell'utente su Supabase.
+     * In caso di utente già autenticato, effettua prima il logout.
+     */
     private fun performSignup() {
         lifecycleScope.launch {
             val email = emailField.text.toString().trim()
             val password = passwordField.text.toString()
 
             try {
-                // 🔒 Se l'utente è già loggato, effettua il logout
+                // Se l'utente è già loggato, effettua il logout
                 SupabaseClientProvider.auth.currentUserOrNull()?.let {
                     Log.d("Signup", "Utente già loggato (${it.id}), eseguo logout.")
                     SupabaseClientProvider.auth.signOut()
                 }
 
-                // ✅ Procedi con la registrazione
+                // Procedi con la registrazione
                 val session = SupabaseClientProvider
                     .auth
                     .signUpWith(Email) {

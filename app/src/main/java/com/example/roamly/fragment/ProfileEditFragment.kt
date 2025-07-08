@@ -116,7 +116,6 @@ class ProfileEditFragment : Fragment() {
                 try {
                     // Prima di fare logout, resetta lo stato della mappa se possibile
                     (requireActivity() as? HomeActivity)?.let { homeActivity ->
-                        // Chiama il metodo di reset se disponibile
                         homeActivity.resetMapState()
                     }
 
@@ -131,7 +130,7 @@ class ProfileEditFragment : Fragment() {
 
                 } catch (e: Exception) {
                     Toast.makeText(requireContext(), "Errore durante il logout", Toast.LENGTH_SHORT).show()
-                    Log.e("Logout", "❌ Logout fallito: ${e.localizedMessage}")
+                    Log.e("Logout", "Logout fallito: ${e.localizedMessage}")
                 }
             }
         }

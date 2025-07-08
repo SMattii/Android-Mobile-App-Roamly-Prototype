@@ -51,7 +51,6 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.gson.JsonParser
 import com.mapbox.android.gestures.MoveGestureDetector
 import com.mapbox.geojson.Point
@@ -87,7 +86,7 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var allLanguages: List<Language>
     private lateinit var allCountries: List<Country>
 
-    private lateinit var mapView: MapView
+    internal lateinit var mapView: MapView
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
 
@@ -95,7 +94,7 @@ class HomeActivity : AppCompatActivity() {
 
     private var cameraCenteredOnce = false
 
-    private val userAnnotationManagers = mutableMapOf<String, PointAnnotationManager>()
+    internal val userAnnotationManagers = mutableMapOf<String, PointAnnotationManager>()
 
     private lateinit var bottomNav: BottomNavigationView
 
@@ -107,6 +106,7 @@ class HomeActivity : AppCompatActivity() {
 
         // Controlla se l'utente è autenticato prima di procedere
         val currentUser = SupabaseClientProvider.auth.currentUserOrNull()
+
         if (currentUser == null) {
             Log.d("MapDebug", "onCreate: No authenticated user, redirecting to login")
             startActivity(Intent(this, LoginActivity::class.java))
@@ -185,19 +185,16 @@ class HomeActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_home -> {
-                    // 🔥 Chiudi TUTTI i fragment nello stack (es: profilo, evento, ecc.)
+
                     supportFragmentManager.popBackStackImmediate(null,  FragmentManager.POP_BACK_STACK_INCLUSIVE)
 
-                    // 🔥 Nascondi i container dei fragment se visibili
                     profileFragmentContainer.visibility = View.GONE
                     eventFragmentContainer.visibility = View.GONE
                     chatFragmentContainer.visibility = View.GONE
 
-                    // 🔥 Nascondi eventuali tooltip
                     removeUserCallout()
                     removeEventCallout()
 
-                    // 🔥 Ricentra la mappa sull’utente
                     centerCameraOnUser()
 
                     true
@@ -210,7 +207,7 @@ class HomeActivity : AppCompatActivity() {
                     eventFragmentContainer.visibility = View.GONE
 
                     supportFragmentManager.beginTransaction()
-                        .replace(R.id.chatFragmentContainer, EventChatListFragment()) // ✅ replace
+                        .replace(R.id.chatFragmentContainer, EventChatListFragment())
                         .addToBackStack("EventChatList")
                         .commit()
                     true
@@ -285,6 +282,8 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun checkLocationAndRequest() {
+        Log.d("MapDebug", "checkLocationAndRequest: start")
+
         if (isLocationEnabled()) {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -293,6 +292,7 @@ class HomeActivity : AppCompatActivity() {
                 startLocationUpdates()
             }
         } else {
+            Log.w("MapDebug", "checkLocationAndRequest: location disabilitata")
             Toast.makeText(this, "Attiva la localizzazione", Toast.LENGTH_SHORT).show()
             startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
         }
@@ -321,8 +321,12 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun startLocationUpdates() {
+        Log.d("MapDebug", "startLocationUpdates: invoked")
+
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
             ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) return
+
+        Log.w("MapDebug", "startLocationUpdates: permessi non concessi")
 
         val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 20_000L)
             .setMinUpdateIntervalMillis(20_000L)
@@ -331,6 +335,8 @@ class HomeActivity : AppCompatActivity() {
 
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
+                Log.d("MapDebug", "onLocationResult: ricevuta posizione")
+
                 val location = result.lastLocation ?: return
                 val userPoint = Point.fromLngLat(location.longitude, location.latitude)
 
@@ -384,6 +390,7 @@ class HomeActivity : AppCompatActivity() {
             }
         }
 
+        Log.d("MapDebug", "startLocationUpdates: richiedo aggiornamenti")
         fusedLocationClient.requestLocationUpdates(request, locationCallback, mainLooper)
     }
 
@@ -413,6 +420,8 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun showCurrentUserMarker(userId: String, userPoint: Point) {
+        Log.d("MARKER_CURRENT_USER", "showCurrentUserMarker chiamato per userId=$userId")
+
         lifecycleScope.launch {
             try {
                 val profile = SupabaseClientProvider.db["profiles"]
@@ -477,6 +486,8 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun fetchNearbyVisibleProfiles(myLat: Double, myLon: Double) {
+        Log.d("NEARBY_PROFILES", "fetchNearbyVisibleProfiles: chiamato con lat=$myLat, lon=$myLon")
+
         lifecycleScope.launch {
             try {
                 val visibleProfiles = SupabaseClientProvider.db.from("profiles")
@@ -688,23 +699,22 @@ class HomeActivity : AppCompatActivity() {
 
         // Ferma refresh eventi
         eventRefreshHandler.removeCallbacksAndMessages(null)
-
         EventAnnotationManager.clearAll()
 
-        Log.d("MapDebug", "resetMapState: Map state reset completed")
+        Log.d("MapDebug", "resetMapState: completato, userAnnotationManagers.size = ${userAnnotationManagers.size}")
     }
 
     override fun onResume() {
         super.onResume()
 
         val currentUser = SupabaseClientProvider.auth.currentUserOrNull()
+
         if (currentUser == null) {
             Log.d("MapDebug", "onResume: No authenticated user, resetting map state")
             resetMapState()
         } else {
             Log.d("MapDebug", "onResume: User authenticated, checking location")
 
-            // ✅ Previeni desincronizzazione (es. ritorno da Onboarding con stato sporco)
             EventAnnotationManager.clearAll()
             UserAnnotationManager.clearAll()
 

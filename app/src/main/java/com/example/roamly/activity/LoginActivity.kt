@@ -20,12 +20,19 @@ import io.github.jan.supabase.auth.providers.builtin.Email
 import kotlin.jvm.java
 
 
+/**
+ * Activity responsabile della gestione del login utente tramite email e password.
+ * In caso di primo login, reindirizza alla creazione del profilo.
+ */
 class LoginActivity : AppCompatActivity() {
 
     private lateinit var emailField: TextInputEditText
     private lateinit var passwordField: TextInputEditText
     private lateinit var loginBtn: MaterialButton
 
+    /**
+     * Inizializza la UI e imposta il listener per il bottone di login.
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
@@ -48,6 +55,11 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Valida i campi di input per email e password.
+     *
+     * @return true se entrambi i campi sono validi, false altrimenti.
+     */
     private fun validateForm(): Boolean {
         var valid = true
         val email = emailField.text.toString().trim()
@@ -72,6 +84,10 @@ class LoginActivity : AppCompatActivity() {
 
 // Modifica performLogin in LoginActivity
 
+    /**
+     * Esegue il login tramite Supabase. Se l'utente è nuovo, crea un profilo base.
+     * Altrimenti, reindirizza alla schermata appropriata in base al flag `has_logged_before`.
+     */
     private fun performLogin() {
         val email = emailField.text.toString().trim()
         val password = passwordField.text.toString()
@@ -126,7 +142,7 @@ class LoginActivity : AppCompatActivity() {
                         finish()
 
                     } else {
-                        // ✅ Aggiungi flag per indicare che è un nuovo login
+                        // Aggiungi flag per indicare che è un nuovo login
                         val intent = if (!profile.has_logged_before) {
                             Intent(this@LoginActivity, MakeProfile1Activity::class.java)
                         } else {
@@ -135,7 +151,6 @@ class LoginActivity : AppCompatActivity() {
                                 putExtra("is_fresh_login", true)
                             }
                         }
-
                         startActivity(intent)
                         finish()
                     }

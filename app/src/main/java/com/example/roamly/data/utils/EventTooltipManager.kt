@@ -166,11 +166,17 @@ object EventTooltipManager {
                 }
             }
 
-            // Altrimenti → mostra "JOIN"
+            // Altrimenti → mostra "JOIN" o "FULL" se i posti sono esauriti
             else -> {
-                joinBtn.text = "JOIN"
-                joinBtn.setOnClickListener {
-                    onJoinClick?.invoke(event.id ?: return@setOnClickListener)
+                val maxParticipants = event.max_participants
+                if (maxParticipants != null && participants.size >= maxParticipants) {
+                    joinBtn.text = "FULL"
+                    joinBtn.isEnabled = false
+                } else {
+                    joinBtn.text = "JOIN"
+                    joinBtn.setOnClickListener {
+                        onJoinClick?.invoke(event.id ?: return@setOnClickListener)
+                    }
                 }
             }
         }

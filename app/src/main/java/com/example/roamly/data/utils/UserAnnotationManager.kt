@@ -20,6 +20,15 @@ import com.google.gson.JsonParser
 import com.mapbox.maps.plugin.animation.flyTo
 import com.mapbox.maps.plugin.annotation.annotations
 import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
+import android.widget.FrameLayout
+import androidx.lifecycle.lifecycleScope
+import com.example.roamly.data.repository.ProfileRepository
+import com.example.roamly.data.utils.CountryProvider
+import com.example.roamly.data.utils.LanguageProvider
+import kotlinx.coroutines.launch
+import com.example.roamly.R
+import com.example.roamly.data.utils.UserTooltipManager
+import com.example.roamly.data.utils.DataCache
 
 /**
  * Gestisce i marker utente (PointAnnotation) sulla mappa Mapbox.
@@ -35,8 +44,9 @@ import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
  */
 object UserAnnotationManager {
 
-    // Singolo PointAnnotationManager per tutti i marker utente
+    // Singolo PointAnnotationManager e listener unico
     private var userAnnotationManager: PointAnnotationManager? = null
+    private var listenerRegistered = false
     private val userMarkers = mutableMapOf<String, PointAnnotation>()
 
     /**
@@ -71,7 +81,74 @@ object UserAnnotationManager {
 
         val annotationManager = userAnnotationManager!!
 
-        // Nessun listener globale: per ogni marker creato in seguito abbiamo il suo listener dedicato
+        // Registra un singolo listener globale, stile EventAnnotationManager
+        if (!listenerRegistered) {
+            annotationManager.addClickListener { clickedAnnotation ->
+                val clickedUserId = clickedAnnotation.getData()?.asJsonObject?.get("userId")?.asString
+                if (clickedUserId == null) return@addClickListener false
+
+                val currentShownId = getCurrentShownProfileId()
+                val wasOpen = clickedUserId == currentShownId
+                val newIdToDisplay = if (wasOpen) null else clickedUserId
+
+                val activity = mapView.context as? HomeActivity
+                activity?.hideEventCallout()
+
+                // Notifica HomeActivity per aggiornare currentShownProfileId e chiudere eventuali tooltip utenti
+                onToggleCallout(newIdToDisplay)
+
+                if (wasOpen) {
+                    return@addClickListener true
+                }
+
+                mapboxMap.flyTo(
+                    CameraOptions.Builder()
+                        .center(clickedAnnotation.point)
+                        .zoom(mapboxMap.cameraState.zoom)
+                        .build(),
+                    MapAnimationOptions.mapAnimationOptions { duration(500L) }
+                )
+
+                mapView.postDelayed({
+                    if (newIdToDisplay != null) {
+                        val context = mapView.context
+                        val lifecycleOwner = context as? androidx.lifecycle.LifecycleOwner ?: return@postDelayed
+                        val scope = lifecycleOwner.lifecycleScope
+
+                        scope.launch {
+                            val profileRepo = ProfileRepository
+                            // Usa cache globale se disponibile, altrimenti fetch e aggiorna cache
+                            val cached = DataCache.getUser(newIdToDisplay)
+                            val profile = cached ?: run {
+                                val fetchedMap = profileRepo.fetchNearbyProfilesWithDetails(listOf(newIdToDisplay))
+                                val fetched = fetchedMap[newIdToDisplay]
+                                if (fetched != null) DataCache.putUsers(listOf(fetched))
+                                fetched
+                            } ?: return@launch
+
+                            val allCountries = CountryProvider.loadCountriesFromAssets(context)
+                            val allLanguages = LanguageProvider.loadLanguagesFromAssets(context)
+
+                            val tooltipContainer = mapView.rootView.findViewById<FrameLayout>(R.id.tooltipContainer) ?: return@launch
+
+                            UserTooltipManager.show(
+                                context = context,
+                                mapView = mapView,
+                                mapboxMap = mapboxMap,
+                                tooltipContainer = tooltipContainer,
+                                point = clickedAnnotation.point,
+                                profile = profile,
+                                allCountries = allCountries,
+                                allLanguages = allLanguages
+                            )
+                        }
+                    }
+                }, 500L)
+
+                true
+            }
+            listenerRegistered = true
+        }
 
         Glide.with(context)
             .asBitmap()
@@ -105,34 +182,7 @@ object UserAnnotationManager {
                             userMarkers[userId] = marker
                             Log.d("MARKER_CREATE", "Creato nuovo marker per userId=$userId")
 
-                            // Registra listener click per questo marker specifico
-                            annotationManager.addClickListener { clickedAnnotation ->
-                                if (clickedAnnotation != marker) return@addClickListener false
-
-                                val clickedUserId = clickedAnnotation.getData()?.asJsonObject?.get("userId")?.asString
-                                val currentShownProfileId = getCurrentShownProfileId()
-
-                                val newUserIdToDisplay = if (clickedUserId == currentShownProfileId) null else clickedUserId
-
-                                if (clickedUserId != currentShownProfileId) onToggleCallout(null)
-
-                                val activity = mapView.context as? HomeActivity
-                                activity?.hideEventCallout()
-
-                                mapboxMap.flyTo(
-                                    CameraOptions.Builder()
-                                        .center(clickedAnnotation.point)
-                                        .zoom(mapboxMap.cameraState.zoom)
-                                        .build(),
-                                    MapAnimationOptions.mapAnimationOptions { duration(500L) }
-                                )
-
-                                mapView.postDelayed({
-                                    onToggleCallout(newUserIdToDisplay)
-                                }, 700L)
-
-                                true
-                            }
+                            // Nessun listener dedicato necessario ora
                         } catch (e: Exception) {
                             Log.e("MARKER_ERROR", "Errore creazione marker: ${e.message}")
                         }
@@ -166,7 +216,7 @@ object UserAnnotationManager {
     fun clearAll() {
         userAnnotationManager?.deleteAll()
         userAnnotationManager = null
-        // nessun listenerRegistered, nulla da fare
+        listenerRegistered = false
         userMarkers.clear()
     }
 

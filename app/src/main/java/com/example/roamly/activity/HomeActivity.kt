@@ -35,7 +35,6 @@ import com.example.roamly.data.models.NearbyUser
 import com.example.roamly.data.models.Profile
 import com.example.roamly.R
 import com.example.roamly.data.utils.SupabaseClientProvider
-import com.example.roamly.data.models.NearbyUserProfile
 import com.example.roamly.data.repository.ProfileRepository
 import com.example.roamly.data.utils.EventAnnotationManager
 import com.example.roamly.data.utils.UserAnnotationManager
@@ -71,6 +70,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import com.example.roamly.data.utils.DataCache
 
 
 class HomeActivity : AppCompatActivity() {
@@ -80,7 +80,7 @@ class HomeActivity : AppCompatActivity() {
     private val eventRefreshInterval: Long = 30_000L
     private var eventRefreshJob: Job? = null
 
-    private val userProfilesCache = mutableMapOf<String, NearbyUserProfile>()
+    // Rimossa cache locale; i profili sono ora gestiti da DataCache
     private var currentShownProfileId: String? = null
 
     var currentShownEventId: String? = null
@@ -543,29 +543,11 @@ class HomeActivity : AppCompatActivity() {
                                 currentShownProfileId = null
                                 Log.d("TOOLTIP_FLOW", "Richiesta di chiusura tooltip dal click. currentShownProfileId azzerato.")
                             } else {
-                                // Se MapAnnotationManager ha detto di aprire (newIdToDisplay è un ID)
-                                Log.d("TOOLTIP_ACTION", "removeCallout chiamato. Rimuovo TUTTI i tooltip e azzero currentShownProfileId.")
-                                removeUserCallout() // Assicura che non ci siano altri tooltip aperti, e azzera currentShownProfileId
-                                currentShownProfileId = newIdToDisplay // Imposta il nuovo ID del profilo da mostrare
-                                Log.d("TOOLTIP_FLOW", "currentShownProfileId impostato a: $currentShownProfileId")
-
-                                val pt = point
-                                val profile = userProfilesCache[newIdToDisplay]
-                                if (profile != null) {
-                                    Log.d("TOOLTIP_FLOW", "Chiamo TooltipManager.show per userId=$newIdToDisplay")
-                                    UserTooltipManager.show(
-                                        context = this@HomeActivity,
-                                        mapView = mapView,
-                                        mapboxMap = mapView.mapboxMap,
-                                        tooltipContainer = findViewById(R.id.tooltipContainer),
-                                        point = pt,
-                                        profile = profile,
-                                        allCountries = allCountries,
-                                        allLanguages = allLanguages
-                                    )
-                                } else {
-                                    Log.w("TOOLTIP_FLOW", "Profilo non trovato nella cache per userId=$newIdToDisplay")
-                                }
+                                // Aprire un nuovo tooltip: chiudiamo l'esistente ma NON lo mostriamo qui;
+                                // sarà il listener in UserAnnotationManager a farlo dopo il flyTo.
+                                removeUserCallout()
+                                currentShownProfileId = newIdToDisplay
+                                Log.d("TOOLTIP_FLOW", "currentShownProfileId impostato a: $currentShownProfileId (tooltip verrà mostrato dal manager)")
                             }
                         }
                     )
@@ -576,9 +558,8 @@ class HomeActivity : AppCompatActivity() {
 
                 if (nearbyUserIdsCurrentlyFetched.isNotEmpty()) {
                     val detailedProfiles = profileRepository.fetchNearbyProfilesWithDetails(nearbyUserIdsCurrentlyFetched)
-                    userProfilesCache.clear()
-                    userProfilesCache.putAll(detailedProfiles)
-                    Log.d("PROFILES_CACHE", "Cache popolata con ${userProfilesCache.size} profili")
+                    DataCache.putUsers(detailedProfiles.values)
+                    Log.d("PROFILES_CACHE", "Cache popolata con ${detailedProfiles.size} profili")
                 }
 
             } catch (e: Exception) {
@@ -695,8 +676,8 @@ class HomeActivity : AppCompatActivity() {
         // Reset stato camera
         cameraCenteredOnce = false
 
-        // Pulisci cache profili
-        userProfilesCache.clear()
+        // Pulisci cache globale
+        DataCache.clear()
 
         // Reset ID mostrati
         currentShownProfileId = null

@@ -10,6 +10,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.roamly.R
 import com.example.roamly.activity.HomeActivity
 import com.example.roamly.data.models.Event
+import com.example.roamly.data.utils.DataCache
 import com.example.roamly.data.repository.EventRepository
 import com.example.roamly.data.repository.InterestRepository
 import com.example.roamly.data.repository.ProfileRepository
@@ -51,6 +52,9 @@ object EventAnnotationManager {
 
         val annotationManager = eventAnnotationManager!!
 
+        // Aggiorna cache globale con l'evento corrente
+        event.id?.let { DataCache.putEvents(listOf(event)) }
+
         // Registra il listener di click una sola volta per evitare duplicati
         if (!listenerRegistered) {
             annotationManager.addClickListener { annotation ->
@@ -89,7 +93,13 @@ object EventAnnotationManager {
                             val eventRepo = EventRepository
                             val profileRepo = ProfileRepository
 
-                            val thisEvent = eventRepo.getEvents().find { it.id == newIdToDisplay } ?: return@launch
+                            // Usa cache globale se possibile
+                            val cached = DataCache.getEvent(newIdToDisplay)
+                            val thisEvent = cached ?: run {
+                                val fetched = eventRepo.getEvents().find { it.id == newIdToDisplay }
+                                if (fetched != null) DataCache.putEvents(listOf(fetched))
+                                fetched
+                            } ?: return@launch
 
                             val participantIds = eventRepo.getEventParticipants(thisEvent.id!!)
                             val participantProfiles = profileRepo.getProfilesByIds(participantIds)
@@ -154,7 +164,7 @@ object EventAnnotationManager {
                             )
                         }
                     }
-                }, 100L)
+                }, 500L)
 
                 true
             }
@@ -336,6 +346,7 @@ object EventAnnotationManager {
         eventAnnotationManager?.deleteAll()
         eventAnnotationManager = null
         eventMarkers.clear()
+        // la cache globale viene svuotata da DataCache.clear() nello stato di reset
         listenerRegistered = false
         Log.d("EVENT_MARKER", "Tutti i marker e manager evento rimossi.")
     }

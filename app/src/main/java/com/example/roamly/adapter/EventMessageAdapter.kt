@@ -14,6 +14,15 @@ import com.example.roamly.data.models.EventMessageWithSender
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
+/**
+ * Adapter per visualizzare una lista di messaggi in una chat di gruppo evento.
+ * Distingue tra messaggi inviati dall’utente loggato (vista "sent") e ricevuti dagli altri (vista "received").
+ * I messaggi ricevuti possono mostrare intestazioni con nome e avatar se non consecutivi dallo stesso sender.
+ *
+ * @param messages Lista dei messaggi da visualizzare, con incluso il mittente.
+ * @param currentUserId ID dell’utente loggato (per distinguere i messaggi "sent").
+ * @param userColorMap Mappa da userId a colore della bolla, usata per differenziare visivamente i mittenti.
+ */
 class EventMessageAdapter(
     private val messages: List<EventMessageWithSender>,
     private val currentUserId: String,
@@ -25,11 +34,17 @@ class EventMessageAdapter(
         private const val VIEW_TYPE_RECEIVED = 2
     }
 
+    /**
+     * Determina il tipo di vista per un messaggio in base al mittente.
+     */
     override fun getItemViewType(position: Int): Int {
         val message = messages[position]
         return if (message.sender.id == currentUserId) VIEW_TYPE_SENT else VIEW_TYPE_RECEIVED
     }
 
+    /**
+     * Crea il ViewHolder per il tipo di vista specificato.
+     */
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         return if (viewType == VIEW_TYPE_SENT) {
@@ -41,6 +56,9 @@ class EventMessageAdapter(
         }
     }
 
+    /**
+     * Associa i dati del messaggio alla vista, gestendo anche l'intestazione nei ricevuti.
+     */
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val current = messages[position]
         val showHeader = position == 0 || messages[position - 1].message.sender_id != current.message.sender_id
@@ -54,10 +72,18 @@ class EventMessageAdapter(
 
     override fun getItemCount(): Int = messages.size
 
+
+    /**
+     * ViewHolder per i messaggi inviati dall’utente loggato.
+     */
     class SentViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val messageText: TextView = view.findViewById(R.id.textMessage)
         private val timeText: TextView = view.findViewById(R.id.timeText)
 
+
+        /**
+         * Popola la vista con il testo del messaggio e l’orario.
+         */
         fun bind(message: EventMessage) {
             messageText.text = message.message
             messageText.setBackgroundColor(Color.parseColor("#BBDEFB")) // blu chiaro
@@ -65,12 +91,24 @@ class EventMessageAdapter(
         }
     }
 
+    /**
+     * ViewHolder per i messaggi ricevuti da altri utenti.
+     * Mostra il nome e l’avatar del mittente solo se non è un messaggio consecutivo.
+     */
     class ReceivedViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val messageText: TextView = view.findViewById(R.id.textMessage)
         private val senderName: TextView = view.findViewById(R.id.textSenderName)
         private val senderAvatar: ImageView = view.findViewById(R.id.imageSenderAvatar)
         private val timeText: TextView = view.findViewById(R.id.timeText)
 
+        /**
+         * Popola la vista con messaggio, orario, nome e avatar del mittente.
+         * L’intestazione viene mostrata solo se `showHeader` è true.
+         *
+         * @param wrapper Messaggio e mittente associato.
+         * @param showHeader Se true, mostra nome e avatar del mittente.
+         * @param bubbleColor Colore della bolla assegnato a questo mittente.
+         */
         fun bind(wrapper: EventMessageWithSender, showHeader: Boolean, bubbleColor: Int) {
             val (message, sender) = wrapper
 
@@ -96,6 +134,12 @@ class EventMessageAdapter(
     }
 }
 
+/**
+ * Converte una stringa ISO-8601 in formato orario `HH:mm`, oppure restituisce `"??:??"` in caso di errore.
+ *
+ * @param isoTimestamp Timestamp in formato ISO (es. `2024-07-09T16:45:00Z`).
+ * @return L’orario formattato o un fallback.
+ */
 private fun formatTime(isoTimestamp: String): String {
     return try {
         val instant = OffsetDateTime.parse(isoTimestamp)

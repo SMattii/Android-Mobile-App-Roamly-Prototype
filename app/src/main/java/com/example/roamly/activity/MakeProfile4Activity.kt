@@ -15,21 +15,42 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.materialswitch.MaterialSwitch
 import kotlinx.coroutines.launch
 
+/**
+ * `MakeProfile4Activity` rappresenta l'ultima schermata dell'onboarding,
+ * dove l'utente può scegliere tra una vibe "Chill" o "Party"
+ * e impostare la visibilità del proprio profilo.
+ *
+ * Al salvataggio, il profilo viene aggiornato su Supabase
+ * e l'utente viene reindirizzato alla `HomeActivity`.
+ */
 class MakeProfile4Activity : AppCompatActivity() {
 
+    /** Switch per selezionare la vibe (Chill / Party) */
     private lateinit var vibeSwitch: MaterialSwitch
+
+    /** Switch per impostare la visibilità del profilo */
     private lateinit var visibilitySwitch: MaterialSwitch
+
+    /** Label associata alla vibe "Party" */
     private lateinit var partyText: TextView
+
+    /** Label associata alla vibe "Chill" */
     private lateinit var chillText: TextView
+
+    /** Label "No" per il campo visibilità */
     private lateinit var noText: TextView
+
+    /** Label "Yes" per il campo visibilità */
     private lateinit var yesText: TextView
+
+    /** Pulsante per completare la registrazione e accedere all'app */
     private lateinit var jumpInButton: MaterialButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_make_profile4)
 
-        // Collega gli elementi del layout
+        // Inizializzazione elementi UI
         vibeSwitch = findViewById(R.id.vibeSwitch)
         visibilitySwitch = findViewById(R.id.visibilitySwitch)
         partyText = findViewById(R.id.partyText)
@@ -38,7 +59,7 @@ class MakeProfile4Activity : AppCompatActivity() {
         yesText = findViewById(R.id.yesText)
         jumpInButton = findViewById(R.id.jumpInButton)
 
-        // Cambia il colore dei testi quando si preme lo switch Vibe
+        // Cambia colori delle label al toggle del vibe switch
         vibeSwitch.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 partyText.setTextColor(ContextCompat.getColor(this, R.color.gray))
@@ -49,7 +70,7 @@ class MakeProfile4Activity : AppCompatActivity() {
             }
         }
 
-        // Cambia il colore dei testi quando si preme lo switch Visibility
+        // Cambia colori delle label al toggle del visibility switch
         visibilitySwitch.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 noText.setTextColor(ContextCompat.getColor(this, R.color.gray))
@@ -60,7 +81,7 @@ class MakeProfile4Activity : AppCompatActivity() {
             }
         }
 
-        // Quando si preme "Jump In"
+        // Azione al click su "Jump In"
         jumpInButton.setOnClickListener {
             lifecycleScope.launch {
                 updateUserVibeAndVisibility()
@@ -68,6 +89,12 @@ class MakeProfile4Activity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Aggiorna il profilo utente su Supabase con la vibe selezionata e la visibilità.
+     * Se l'utente è autenticato, effettua una query per ottenere il profilo corrente,
+     * lo aggiorna con i nuovi valori e salva il risultato.
+     * In caso di successo, reindirizza alla `HomeActivity`.
+     */
     private suspend fun updateUserVibeAndVisibility() {
         val userId = SupabaseClientProvider.auth.currentUserOrNull()?.id ?: run {
             Toast.makeText(this, "Utente non autenticato. Riprova il login.", Toast.LENGTH_LONG).show()

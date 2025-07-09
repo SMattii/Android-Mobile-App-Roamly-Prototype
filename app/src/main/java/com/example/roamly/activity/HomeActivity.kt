@@ -72,7 +72,27 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import com.example.roamly.data.utils.DataCache
 
-
+/**
+ * Activity principale dell'app Roamly.
+ *
+ * Gestisce la visualizzazione della mappa Mapbox con profili utente e eventi nelle vicinanze,
+ * la navigazione tramite bottom navigation (profilo, home, chat), il polling degli eventi,
+ * e il tracciamento della posizione utente. Permette inoltre la creazione eventi tramite
+ * drag-and-drop sulla mappa, la gestione dei marker con tooltip dinamici e il salvataggio
+ * della posizione in Supabase.
+ *
+ * Funzionalità principali:
+ * - Visualizzazione e sincronizzazione eventi con `EventAnnotationManager`
+ * - Mostra profili utente vicini e i relativi marker con tooltip
+ * - Navigazione tra sezioni (profilo, mappa, chat)
+ * - Drag-and-drop per la creazione eventi
+ * - Autenticazione Supabase e gestione permessi di localizzazione
+ *
+ * @see EventAnnotationManager
+ * @see UserAnnotationManager
+ * @see ProfileRepository
+ * @see SupabaseClientProvider
+ */
 class HomeActivity : AppCompatActivity() {
 
     private val profileRepository = ProfileRepository
@@ -80,7 +100,6 @@ class HomeActivity : AppCompatActivity() {
     private val eventRefreshInterval: Long = 30_000L
     private var eventRefreshJob: Job? = null
 
-    // Rimossa cache locale; i profili sono ora gestiti da DataCache
     private var currentShownProfileId: String? = null
 
     var currentShownEventId: String? = null
@@ -101,6 +120,9 @@ class HomeActivity : AppCompatActivity() {
 
     private lateinit var bottomNav: BottomNavigationView
 
+    /**
+     * Inizializza l'activity, configura la mappa, gestisce la navigazione e avvia il tracciamento posizione.
+     */
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -284,6 +306,10 @@ class HomeActivity : AppCompatActivity() {
 
     }
 
+    /**
+     * Verifica se il GPS è attivo e i permessi sono stati concessi.
+     * In caso positivo, avvia l’aggiornamento della posizione.
+     */
     private fun checkLocationAndRequest() {
         Log.d("MapDebug", "checkLocationAndRequest: start")
 
@@ -301,6 +327,9 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Richiede i permessi di localizzazione all’utente se non già concessi.
+     */
     private fun requestLocationPermissions() {
         ActivityCompat.requestPermissions(
             this,
@@ -312,6 +341,9 @@ class HomeActivity : AppCompatActivity() {
         )
     }
 
+    /**
+     * Gestisce il risultato della richiesta permessi di localizzazione.
+     */
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE &&
@@ -323,6 +355,10 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Avvia l’ascolto della posizione dell’utente tramite FusedLocationProviderClient.
+     * Ogni aggiornamento salva la posizione su Supabase, mostra il marker e sincronizza eventi e profili vicini.
+     */
     private fun startLocationUpdates() {
         Log.d("MapDebug", "startLocationUpdates: invoked")
 
@@ -401,12 +437,20 @@ class HomeActivity : AppCompatActivity() {
         fusedLocationClient.requestLocationUpdates(request, locationCallback, mainLooper)
     }
 
+    /**
+     * Verifica se la localizzazione è attiva a livello di sistema.
+     *
+     * @return true se GPS o rete sono abilitati, false altrimenti.
+     */
     private fun isLocationEnabled(): Boolean {
         val lm = getSystemService(LOCATION_SERVICE) as LocationManager
         return lm.isProviderEnabled(LocationManager.GPS_PROVIDER) || lm.isProviderEnabled(
             LocationManager.NETWORK_PROVIDER)
     }
 
+    /**
+     * Alla chiusura dell’activity, interrompe aggiornamenti di posizione e cancella i marker.
+     */
     override fun onDestroy() {
         super.onDestroy()
         fusedLocationClient.removeLocationUpdates(locationCallback)
@@ -414,18 +458,30 @@ class HomeActivity : AppCompatActivity() {
         UserAnnotationManager.clearAll()
     }
 
+    /**
+     * Salva lo stato della mappa, in particolare se la camera è stata centrata almeno una volta.
+     */
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putBoolean("cameraCenteredOnceState", cameraCenteredOnce)
         Log.d("MapDebug", "onSaveInstanceState: salvato cameraCenteredOnce = $cameraCenteredOnce")
     }
 
+    /**
+     * Ripristina lo stato salvato, incluso lo zoom iniziale centrato.
+     */
    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
         super.onRestoreInstanceState(savedInstanceState)
         val restoredState = savedInstanceState.getBoolean("cameraCenteredOnceState", false)
         Log.d("MapDebug", "onRestoreInstanceState: ripristinato cameraCenteredOnce = $restoredState")
     }
 
+    /**
+     * Mostra il marker per l’utente corrente sulla mappa, con immagine profilo personalizzata.
+     *
+     * @param userId ID dell’utente.
+     * @param userPoint Posizione geografica dell’utente.
+     */
     private fun showCurrentUserMarker(userId: String, userPoint: Point) {
         Log.d("MARKER_CURRENT_USER", "showCurrentUserMarker chiamato per userId=$userId")
 
@@ -492,6 +548,13 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Recupera i profili visibili da Supabase, filtra quelli entro 10 km e mostra i relativi marker.
+     * Popola la cache con i profili dettagliati.
+     *
+     * @param myLat Latitudine dell’utente corrente.
+     * @param myLon Longitudine dell’utente corrente.
+     */
     private fun fetchNearbyVisibleProfiles(myLat: Double, myLon: Double) {
         Log.d("NEARBY_PROFILES", "fetchNearbyVisibleProfiles: chiamato con lat=$myLat, lon=$myLon")
 
@@ -569,6 +632,11 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Rimuove dalla mappa i marker di utenti che non sono più vicini.
+     *
+     * @param currentNearbyIds Lista degli ID utente ancora rilevati come vicini.
+     */
     private fun cleanupNonNearbyMarkers(currentNearbyIds: List<String>) {
         val currentUserId = SupabaseClientProvider.auth.currentUserOrNull()?.id
         val idsToKeep = mutableSetOf<String>()
@@ -582,7 +650,9 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    // Nasconde il tooltip corrente, se presente
+    /**
+     * Nasconde il tooltip dell’utente mostrato attualmente.
+     */
     fun hideUserCallout() {
         val tooltipContainer = findViewById<FrameLayout>(R.id.tooltipContainer)
         tooltipContainer.removeAllViews()
@@ -590,7 +660,9 @@ class HomeActivity : AppCompatActivity() {
         Log.d("TOOLTIP_ACTION", "hideCallout chiamato. Rimuovo tooltip e azzero currentShownProfileId.")
     }
 
-    // Rimuove forzatamente tutti i tooltip
+    /**
+     * Rimuove tutti i tooltip utente forzatamente dalla mappa.
+     */
     fun removeUserCallout() {
         val tooltipContainer = findViewById<FrameLayout>(R.id.tooltipContainer)
         tooltipContainer.removeAllViews()
@@ -598,12 +670,18 @@ class HomeActivity : AppCompatActivity() {
         Log.d("TOOLTIP_ACTION", "removeCallout chiamato. Rimuovo TUTTI i tooltip e azzero currentShownProfileId.")
     }
 
+    /**
+     * Nasconde il tooltip evento attualmente mostrato.
+     */
     fun hideEventCallout() {
         findViewById<FrameLayout>(R.id.tooltipContainer).removeAllViews()
         currentShownEventId = null
         Log.d("EVENT_TOOLTIP", "Tooltip evento nascosto.")
     }
 
+    /**
+     * Rimuove tutti i tooltip evento visibili dalla mappa.
+     */
     fun removeEventCallout() {
         val tooltipContainer = findViewById<FrameLayout>(R.id.tooltipContainer)
         tooltipContainer.removeAllViews()
@@ -611,6 +689,9 @@ class HomeActivity : AppCompatActivity() {
         Log.d("EVENT_TOOLTIP", "Tutti i tooltip evento rimossi.")
     }
 
+    /**
+     * Ricentra manualmente la mappa sulla posizione corrente dell’utente.
+     */
     private fun centerCameraOnUser() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
             ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -639,6 +720,13 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Avvia un job che aggiorna periodicamente i marker evento sulla mappa.
+     * Include il controllo visibilità e la gestione dei tooltip evento.
+     *
+     * @param lat Latitudine corrente dell’utente.
+     * @param lon Longitudine corrente dell’utente.
+     */
     private fun startEventRefreshLoop(lat: Double, lon: Double) {
         eventRefreshJob?.cancel() // Cancella il job precedente se esiste
         eventRefreshJob = lifecycleScope.launch {
@@ -670,6 +758,12 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Reset completo dello stato della mappa:
+     * - cancella tooltip
+     * - resetta variabili
+     * - svuota la cache e annulla i job in corso.
+     */
     internal fun resetMapState() {
         Log.d("MapDebug", "resetMapState: Resetting all map state variables")
 
@@ -698,6 +792,10 @@ class HomeActivity : AppCompatActivity() {
         Log.d("MapDebug", "resetMapState: completato, userAnnotationManagers.size = ${userAnnotationManagers.size}")
     }
 
+    /**
+     * All'avvio dell’activity (o ritorno in foreground), se l’utente è autenticato riavvia la sincronizzazione.
+     * Altrimenti resetta completamente la mappa.
+     */
     override fun onResume() {
         super.onResume()
 
@@ -718,6 +816,9 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * In pausa, interrompe l’aggiornamento ciclico degli eventi.
+     */
     override fun onPause() {
         super.onPause()
         eventRefreshJob?.cancel()

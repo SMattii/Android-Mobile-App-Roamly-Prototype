@@ -31,16 +31,16 @@ import com.example.roamly.data.utils.UserTooltipManager
 import com.example.roamly.data.utils.DataCache
 
 /**
- * Gestisce i marker utente (PointAnnotation) sulla mappa Mapbox.
- * Ogni utente visibile viene rappresentato da un marker con immagine profilo circolare.
- * Il marker può essere aggiornato o cliccato per mostrare/nascondere un tooltip utente.
+ * Gestisce i marker utente (`PointAnnotation`) su Mapbox.
  *
- * Usa una mappa per tenere traccia dei PointAnnotationManager e dei marker per ogni userId.
+ * Per ogni utente visibile, mostra un marker circolare con immagine profilo.
+ * Gestisce click, animazioni, cache e tooltip associati.
  *
- * Dipende da:
- * - Glide per il caricamento asincrono delle immagini
- * - Mapbox Annotation Plugin per la gestione dei marker
- * - HomeActivity per nascondere il tooltip evento (quando si interagisce con un marker utente)
+ * Il manager è unico e centralizzato:
+ * - Tiene una sola istanza di `PointAnnotationManager`
+ * - Registra un unico listener per gestire interazioni
+ * - Usa Glide per caricare immagini in modo asincrono
+ * - Supporta apertura dinamica dei tooltip utente con dati da Supabase
  */
 object UserAnnotationManager {
 

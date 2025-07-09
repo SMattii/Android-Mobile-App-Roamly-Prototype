@@ -15,7 +15,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.roamly.R
 import com.example.roamly.adapter.EventMessageAdapter
-import com.example.roamly.data.models.EventMessage
 import com.example.roamly.data.models.EventMessageWithSender
 import com.example.roamly.data.models.Profile
 import com.example.roamly.data.repository.EventRepository
@@ -23,9 +22,27 @@ import com.example.roamly.data.repository.ProfileRepository
 import com.example.roamly.data.utils.SupabaseClientProvider
 import kotlinx.coroutines.launch
 
+/**
+ * Fragment che gestisce la chat di gruppo per un evento.
+ *
+ * Mostra una lista di messaggi associati a un evento specifico, con supporto per:
+ * - Invio di nuovi messaggi (solo se partecipante, altrimenti aggiunto automaticamente)
+ * - Caricamento dei profili partecipanti (per mostrare nome, avatar, colori distintivi)
+ * - Scroll automatico all'ultimo messaggio
+ * - UI adattata dinamicamente alla `BottomNavigationView`
+ *
+ * I messaggi sono visualizzati tramite [EventMessageAdapter], con differenziazione visiva
+ * tra mittente loggato e altri partecipanti.
+ */
 class EventChatFragment : Fragment() {
 
     companion object {
+        /**
+         * Crea una nuova istanza del fragment per una chat evento.
+         *
+         * @param eventId ID dell'evento da associare alla chat.
+         * @param eventDesc Titolo descrittivo mostrato nella UI.
+         */
         fun newInstance(eventId: String, eventDesc: String): EventChatFragment {
             val fragment = EventChatFragment()
             val args = Bundle()
@@ -40,7 +57,6 @@ class EventChatFragment : Fragment() {
     private lateinit var inputBox: EditText
     private lateinit var sendButton: ImageView
     private lateinit var adapter: EventMessageAdapter
-    private val messageList = mutableListOf<EventMessage>()
 
     private lateinit var eventId: String
     private lateinit var currentUserId: String
@@ -57,6 +73,15 @@ class EventChatFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_event_chat, container, false)
     }
 
+    /**
+     * Inizializza la UI e imposta listener e logica di caricamento.
+     *
+     * - Imposta titolo evento nella toolbar
+     * - Inizializza RecyclerView e layout manager
+     * - Carica messaggi e partecipanti
+     * - Registra il listener per il bottone di invio
+     * - Applica padding dinamico per la compatibilità con la BottomNavigationView
+     */
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         eventId = requireArguments().getString("event_id")!!
 
@@ -71,10 +96,10 @@ class EventChatFragment : Fragment() {
         inputBox = view.findViewById(R.id.editTextMessage)
         sendButton = view.findViewById(R.id.buttonSend)
 
-        // ✅ Solo layout manager, il resto lo fa loadParticipantsAndMessages()
+        // Solo layout manager, il resto lo fa loadParticipantsAndMessages()
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
-        // ✅ Carica tutto
+        // Carica tutto
         loadParticipantsAndMessages()
 
         sendButton.setOnClickListener {
@@ -85,7 +110,7 @@ class EventChatFragment : Fragment() {
             }
         }
 
-        // ✅ Imposta padding dinamico in base alla BottomNavigationView della Home
+        // Imposta padding dinamico in base alla BottomNavigationView della Home
         view.post {
             val bottomNav = requireActivity().findViewById<View>(R.id.bottomNavigationView)
             val bottomHeight = bottomNav?.height ?: 0
@@ -97,19 +122,18 @@ class EventChatFragment : Fragment() {
         }
     }
 
-    private fun loadMessages() {
-        lifecycleScope.launch {
-            val messages = EventRepository.getMessagesForEvent(eventId)
-            messageList.clear()
-            messageList.addAll(messages)
-            adapter.notifyDataSetChanged()
-            recyclerView.scrollToPosition(messageList.size - 1)
-        }
-    }
-
+    /**
+     * Invia un nuovo messaggio alla chat evento.
+     *
+     * - Verifica se l'utente è partecipante all'evento (e lo aggiunge se non lo è)
+     * - Invia il messaggio tramite Supabase
+     * - Ricarica messaggi e partecipanti per aggiornare la lista
+     *
+     * @param text Il contenuto testuale del messaggio da inviare.
+     */
     private fun sendMessage(text: String) {
         lifecycleScope.launch {
-            Log.d("EVENT_CHAT", "🔄 sendMessage iniziato per utente: $currentUserId")
+            Log.d("EVENT_CHAT", "sendMessage iniziato per utente: $currentUserId")
 
             // 1. Controlla i partecipanti correnti
             val currentParticipants = EventRepository.getEventParticipants(eventId)
@@ -134,6 +158,14 @@ class EventChatFragment : Fragment() {
         }
     }
 
+    /**
+     * Carica i partecipanti e i messaggi della chat evento.
+     *
+     * - Ottiene la lista di profili partecipanti
+     * - Assegna un colore identificativo ad ogni partecipante
+     * - Ottiene i messaggi e li associa ai profili mittenti
+     * - Inizializza o aggiorna l’adapter della RecyclerView
+     */
     private fun loadParticipantsAndMessages() {
         lifecycleScope.launch {
             val participantIds = EventRepository.getEventParticipants(eventId)
@@ -167,6 +199,13 @@ class EventChatFragment : Fragment() {
         }
     }
 
+    /**
+     * Assegna un colore identificativo a ciascun partecipante (escluso l'utente loggato).
+     * I colori sono ciclici tra una lista predefinita.
+     *
+     * @param profiles Lista dei profili partecipanti.
+     * @return Mappa da userId a colore (Int).
+     */
     private fun assignColorsToUsers(profiles: List<Profile>): Map<String, Int> {
         val availableColors = listOf(
             0xFFE57373.toInt(), // rosso

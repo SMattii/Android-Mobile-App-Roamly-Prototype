@@ -38,6 +38,22 @@ import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
+/**
+ * Fragment che consente agli utenti di creare un nuovo evento.
+ *
+ * L’utente può specificare tipo di evento, data, orario, range di età, numero massimo
+ * di partecipanti, lingue, interessi e descrizione. Al termine, i dati vengono validati e inviati
+ * a Supabase tramite `EventRepository`. Se la creazione ha successo, viene anche generato
+ * il marker evento sulla mappa.
+ *
+ * Le coordinate dell’evento vengono passate tramite `arguments` (chiavi: `"latitude"` e `"longitude"`).
+ *
+ * Dipendenze principali:
+ * - SupabaseClientProvider: per ID utente autenticato
+ * - InterestRepository, LanguageProvider: per dropdown dinamici
+ * - EventRepository: per la creazione effettiva
+ * - EventAnnotationManager: per creare il marker su Mapbox
+ */
 class EventCreationFragment : Fragment() {
 
     private val TAG = "EventCreationFragment"
@@ -62,6 +78,9 @@ class EventCreationFragment : Fragment() {
     private val selectedLanguages = mutableListOf<Language>()
     private val selectedInterests = mutableListOf<Interest>()
 
+    /**
+     * Infla il layout XML associato a questo fragment.
+     */
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -70,6 +89,16 @@ class EventCreationFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_create_event, container, false)
     }
 
+    /**
+     * Inizializza tutti i componenti UI e imposta listener e adapter.
+     * Chiama:
+     * - `bindViews()`: associa le view del layout
+     * - `setupDropdowns()`: carica interessi, lingue, date, tipi
+     * - `setupChipSelections()`: gestisce aggiunta/rimozione chip
+     * - `setupSliders()`: aggiorna testo in base ai valori slider
+     * - `setupTimePicker()`: mostra dialog orario
+     * - `setupCreateButton()`: valida e crea l'evento
+     */
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         Log.d(TAG, "onViewCreated: binding views")
         bindViews(view)
@@ -89,6 +118,7 @@ class EventCreationFragment : Fragment() {
         Log.d(TAG, "onViewCreated: setting up create button")
         setupCreateButton()
     }
+
 
     private fun bindViews(view: View) {
         try {
@@ -111,6 +141,11 @@ class EventCreationFragment : Fragment() {
         }
     }
 
+    /**
+     * Configura i dropdown per tipo evento, data, interessi e lingue.
+     * I dati per interessi e lingue vengono caricati tramite repository/provider.
+     * In caso di errore mostra un Toast informativo.
+     */
     private fun setupDropdowns() {
 
         val eventTypes = listOf("Chill", "Party")
@@ -169,6 +204,11 @@ class EventCreationFragment : Fragment() {
         }
     }
 
+    /**
+     * Gestisce il comportamento di selezione di interessi e lingue.
+     * Aggiunge una chip con icona nel rispettivo ChipGroup.
+     * Alla pressione della close icon, la chip viene rimossa e aggiorna la lista interna.
+     */
     private fun setupChipSelections() {
         languagesDropdown.setOnItemClickListener { parent, _, position, _ ->
             val selectedLanguage = parent.getItemAtPosition(position) as Language
@@ -201,6 +241,15 @@ class EventCreationFragment : Fragment() {
         }
     }
 
+    /**
+     * Aggiunge una chip al gruppo specificato con icona e testo.
+     * Imposta un listener sulla close icon per rimuoverla e invocare un callback.
+     *
+     * @param chipGroup Il gruppo in cui aggiungere la chip.
+     * @param label Il testo da mostrare nella chip.
+     * @param iconResId La risorsa drawable dell’icona.
+     * @param onRemove Callback invocato quando la chip viene rimossa.
+     */
     private fun addChipWithIcon(
         chipGroup: ChipGroup,
         label: String,
@@ -220,6 +269,10 @@ class EventCreationFragment : Fragment() {
         chipGroup.addView(chip)
     }
 
+    /**
+     * Inizializza gli slider per età e numero di partecipanti.
+     * Imposta listener per aggiornare i testi relativi ai valori selezionati.
+     */
     private fun setupSliders() {
         ageRangeSlider.addOnChangeListener { slider, _, _ ->
             val values = slider.values
@@ -232,6 +285,10 @@ class EventCreationFragment : Fragment() {
         }
     }
 
+    /**
+     * Configura un MaterialTimePicker per la selezione dell’orario dell’evento.
+     * L’orario scelto viene formattato e inserito nel campo `timeInput`.
+     */
     private fun setupTimePicker() {
         timeInput.setOnClickListener {
             Log.d(TAG, "Time picker clicked")
@@ -251,6 +308,17 @@ class EventCreationFragment : Fragment() {
         }
     }
 
+    /**
+     * Imposta il comportamento del pulsante "Create Event".
+     *
+     * - Recupera tutti i dati inseriti dall’utente
+     * - Costruisce un oggetto [Event]
+     * - Invia l’evento a Supabase tramite [EventRepository]
+     * - Genera un marker evento su mappa tramite [EventAnnotationManager]
+     * - Torna alla schermata precedente se tutto ha successo
+     *
+     * Mostra log in caso di errori e un Toast per feedback utente.
+     */
     private fun setupCreateButton() {
         Log.d(TAG, "setupCreateButton: attaching listener")
 
@@ -363,6 +431,13 @@ class EventCreationFragment : Fragment() {
         }
     }
 
+    /**
+     * Crea una nuova istanza del fragment passando le coordinate dell’evento.
+     *
+     * @param latitude Latitudine del punto in cui creare l’evento
+     * @param longitude Longitudine del punto in cui creare l’evento
+     * @return Una nuova istanza configurata di [EventCreationFragment]
+     */
     companion object {
         fun newInstance(latitude: Double, longitude: Double): EventCreationFragment {
             val fragment = EventCreationFragment()

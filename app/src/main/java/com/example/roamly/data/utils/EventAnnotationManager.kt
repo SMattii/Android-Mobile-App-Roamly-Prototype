@@ -29,6 +29,24 @@ import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 
+/**
+ * Singleton responsabile della gestione dei marker evento sulla mappa Mapbox.
+ *
+ * Si occupa di:
+ * - Creare marker personalizzati con icona e bordo
+ * - Sincronizzare i marker validi entro 10km e non scaduti
+ * - Gestire i click sui marker per mostrare un tooltip dettagliato
+ * - Rimuovere marker non più validi (evento scaduto o fuori raggio)
+ * - Evitare la duplicazione dei listener
+ *
+ * Utilizza:
+ * - [PointAnnotationManager] per la creazione dei marker
+ * - Cache condivisa via [DataCache]
+ * - Chiamate asincrone a Supabase via [EventRepository] e [ProfileRepository]
+ *
+ * Deve essere inizializzato all'interno di una `MapView` e richiede accesso a `HomeActivity`
+ * per gestire correttamente il contesto e la UI associata.
+ */
 object EventAnnotationManager {
 
     private var eventAnnotationManager: PointAnnotationManager? = null
@@ -36,6 +54,24 @@ object EventAnnotationManager {
     private val eventMarkers = mutableMapOf<String, PointAnnotation>()
     private val isSyncing = AtomicBoolean(false)
 
+    /**
+     * Crea o aggiorna un marker per un evento sulla mappa.
+     *
+     * Se l'evento esiste già, aggiorna la sua posizione. Altrimenti crea un nuovo marker
+     * con icona dinamica basata sul tipo evento ("party", "chill", ecc.) e lo registra nel sistema Mapbox.
+     *
+     * Registra anche un listener click (una sola volta) che apre/chiude il tooltip dell'evento
+     * ed effettua uno `flyTo` animato sul punto selezionato.
+     *
+     * @param context Contesto dell'app (deve essere associato a HomeActivity).
+     * @param mapView La MapView attiva.
+     * @param mapboxMap Istanza MapboxMap associata.
+     * @param event L'evento da rappresentare.
+     * @param point La posizione geografica (lat/lon) del marker.
+     * @param getCurrentShownEventId Lambda per ottenere l’ID del tooltip attualmente visibile.
+     * @param onToggleEventCallout Callback per mostrare o chiudere il tooltip associato.
+     * @return Il manager dei marker evento.
+     */
     fun createEventMarker(
         context: Context,
         mapView: MapView,
@@ -247,6 +283,11 @@ object EventAnnotationManager {
         return annotationManager
     }
 
+    /**
+     * Rimuove il marker evento associato all'ID specificato, se esistente.
+     *
+     * @param eventId ID dell’evento da rimuovere.
+     */
     fun removeEventMarker(eventId: String) {
         val annotation = eventMarkers[eventId]
         if (annotation != null) {
@@ -258,6 +299,23 @@ object EventAnnotationManager {
         }
     }
 
+    /**
+     * Sincronizza tutti i marker evento visibili sulla mappa.
+     *
+     * Recupera gli eventi dal repository, filtra quelli entro 10km e non scaduti
+     * (tramite `visible_until`), e aggiunge o aggiorna i marker corrispondenti.
+     *
+     * Rimuove automaticamente i marker associati a eventi che non sono più validi.
+     * Il metodo è protetto da flag `isSyncing` per evitare chiamate parallele.
+     *
+     * @param context Contesto dell’app.
+     * @param mapView MapView attiva.
+     * @param mapboxMap Istanza mappa.
+     * @param myLat Latitudine utente.
+     * @param myLon Longitudine utente.
+     * @param getCurrentShownEventId Lambda per sapere quale evento è attualmente aperto.
+     * @param onToggleEventCallout Callback per aprire o chiudere il tooltip.
+     */
     suspend fun synchronizeEventMarkers(
         context: Context,
         mapView: MapView,
@@ -342,6 +400,12 @@ object EventAnnotationManager {
         }
     }
 
+    /**
+     * Cancella tutti i marker evento e resetta il manager interno.
+     *
+     * Da usare ad esempio al logout o nel reset completo dell’app.
+     * La cache eventi viene invece gestita da [DataCache.clear].
+     */
     fun clearAll() {
         eventAnnotationManager?.deleteAll()
         eventAnnotationManager = null

@@ -32,6 +32,19 @@ import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.launch
 
+/**
+ * Fragment per modificare il profilo utente.
+ *
+ * Consente di aggiornare nome, cognome, età (non modificabile), paese, categoria,
+ * vibe (chill/party), lingue parlate, interessi, immagine profilo e visibilità pubblica.
+ * Include anche funzionalità per logout e cambio password.
+ *
+ * Utilizza Supabase per autenticazione, storage e persistenza dei dati utente.
+ *
+ * @see Profile
+ * @see ProfileRepository
+ * @see SupabaseClientProvider
+ */
 class ProfileEditFragment : Fragment() {
 
     private val profileRepository = ProfileRepository
@@ -75,23 +88,33 @@ class ProfileEditFragment : Fragment() {
         }
     }
 
+    /**
+     * Crea la view del fragment dal layout `fragment_edit_profile`.
+     */
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View = inflater.inflate(R.layout.fragment_edit_profile, container, false)
 
+    /**
+     * Inizializza la UI, carica il profilo corrente e imposta i listener.
+     * Gestisce il salvataggio del profilo, il logout e il cambio password.
+     */
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         bindViews(view)
 
+        // Permette selezione immagine e avvia upload
         profileImageView.setOnClickListener {
             imagePickerLauncher.launch("image/*")
         }
 
+        // Chiude il fragment
         btnClose.setOnClickListener {
             parentFragmentManager.popBackStack()
             requireActivity().findViewById<View>(R.id.profileFragmentContainer).visibility = View.GONE
         }
 
+        // Carica dati profilo utente
         lifecycleScope.launch {
             currentUserId = SupabaseClientProvider.auth.currentUserOrNull()?.id
             if (currentUserId == null) return@launch
@@ -109,8 +132,7 @@ class ProfileEditFragment : Fragment() {
             saveProfileChanges()
         }
 
-        // Modifica il logout in ProfileEditFragment
-
+        // Esegue logout e torna alla schermata di onboarding
         btnLogout.setOnClickListener {
             lifecycleScope.launch {
                 try {
@@ -135,6 +157,7 @@ class ProfileEditFragment : Fragment() {
             }
         }
 
+        // Mostra dialog per il cambio password
         btnChangePassword.setOnClickListener {
             val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_change_password, null)
             val newPasswordInput = dialogView.findViewById<EditText>(R.id.newPasswordInput)
@@ -173,6 +196,9 @@ class ProfileEditFragment : Fragment() {
         }
     }
 
+    /**
+     * Associa le view XML alle variabili del fragment.
+     */
     private fun bindViews(view: View) {
         profileImageView = view.findViewById(R.id.profileImageView)
         firstNameField = view.findViewById(R.id.firstNameField)
@@ -193,6 +219,9 @@ class ProfileEditFragment : Fragment() {
         btnLogout = view.findViewById(R.id.btnLogout)
     }
 
+    /**
+     * Configura il dropdown delle lingue con autocomplete e chip removibili.
+     */
     private fun setupLanguageDropdown() {
         languageAdapter = LanguageAdapter(requireContext(), allLanguages.toMutableList())
         languagesDropdown.setAdapter(languageAdapter)
@@ -210,11 +239,17 @@ class ProfileEditFragment : Fragment() {
         }
     }
 
+    /**
+     * Aggiorna il dropdown lingue escludendo quelle già selezionate.
+     */
     private fun updateLanguageDropdown() {
         val remainingLanguages = allLanguages.filterNot { selectedLanguages.contains(it) }
         languageAdapter.updateLanguages(remainingLanguages)
     }
 
+    /**
+     * Aggiunge un chip visivo per una lingua selezionata, con icona bandiera.
+     */
     private fun addLanguageChip(language: Language) {
         val chip = Chip(requireContext()).apply {
             text = language.name
@@ -236,6 +271,9 @@ class ProfileEditFragment : Fragment() {
         selectedLanguagesChipGroup.addView(chip)
     }
 
+    /**
+     * Configura il dropdown interessi con autocomplete e chip.
+     */
     private fun setupInterestDropdown() {
         val interestPairs = allInterests.map { it to R.drawable.ic_interest_default }
         val interestAdapter = InterestAdapter(requireContext(), interestPairs.toMutableList())
@@ -250,6 +288,9 @@ class ProfileEditFragment : Fragment() {
         }
     }
 
+    /**
+     * Aggiunge un chip visivo per un interesse selezionato.
+     */
     private fun addInterestChip(interest: Interest) {
         val chip = Chip(requireContext()).apply {
             text = interest.name
@@ -267,6 +308,9 @@ class ProfileEditFragment : Fragment() {
         selectedInterestsChipGroup.addView(chip)
     }
 
+    /**
+     * Carica i dati del profilo da Supabase e popola i campi del fragment.
+     */
     private suspend fun loadUserProfileAndPopulate() {
         val profileData = profileRepository.getCompleteProfile(currentUserId!!)
         val profile = profileData?.profile ?: return
@@ -320,6 +364,9 @@ class ProfileEditFragment : Fragment() {
         updateLanguageDropdown()
     }
 
+    /**
+     * Salva le modifiche effettuate al profilo su Supabase.
+     */
     private fun saveProfileChanges() {
         val profile = currentProfile?.copy(
             first_name = firstNameField.text?.toString(),
@@ -351,6 +398,12 @@ class ProfileEditFragment : Fragment() {
         }
     }
 
+    /**
+     * Esegue l’upload dell’immagine profilo selezionata su Supabase Storage
+     * e aggiorna l’URL del profilo con l’immagine pubblica.
+     *
+     * @param uri Uri dell’immagine selezionata.
+     */
     private fun uploadAndSaveImage(uri: Uri) {
         lifecycleScope.launch {
             val imageBytes = requireContext().contentResolver.openInputStream(uri)?.readBytes() ?: return@launch
@@ -374,7 +427,7 @@ class ProfileEditFragment : Fragment() {
                             currentProfile = profile.copy(profile_image_url = publicUrl)
                             profileRepository.updateProfile(currentProfile!!)
                         } else {
-                            Log.e("ProfileImageUpload", "❌ Impossibile recuperare il profilo per aggiornare l'immagine.")
+                            Log.e("ProfileImageUpload", "Impossibile recuperare il profilo per aggiornare l'immagine.")
                         }
                     }
                 } else {
@@ -382,7 +435,7 @@ class ProfileEditFragment : Fragment() {
                     profileRepository.updateProfile(currentProfile!!)
                 }
 
-                Log.d("ProfileImageUpload", "✅ Aggiornato profilo con nuova immagine: $publicUrl")
+                Log.d("ProfileImageUpload", "Aggiornato profilo con nuova immagine: $publicUrl")
 
                 // Ricarica immagine con Glide (senza cache)
                 Glide.with(requireContext())
@@ -401,6 +454,12 @@ class ProfileEditFragment : Fragment() {
         }
     }
 
+    /**
+     * Restituisce l’ID della risorsa drawable associata a un interesse.
+     *
+     * @param name Nome dell’interesse.
+     * @return ID della risorsa drawable.
+     */
     private fun getInterestIconResId(name: String): Int {
         return when (name.lowercase()) {
             "food and drinks" -> R.drawable.ic_food

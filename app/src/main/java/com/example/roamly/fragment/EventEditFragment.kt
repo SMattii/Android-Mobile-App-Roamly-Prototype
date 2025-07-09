@@ -24,9 +24,18 @@ import com.google.android.material.slider.RangeSlider
 import com.google.android.material.slider.Slider
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
-import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.launch
 
+/**
+ * Fragment che consente la modifica di un evento esistente.
+ *
+ * Precompila i campi con i dati dell'evento passato e permette all'utente di modificare
+ * descrizione, orario, range di età, numero massimo di partecipanti, interessi e lingue.
+ * Alla conferma, i cambiamenti vengono salvati su Supabase.
+ *
+ * @see Event
+ * @see EventRepository
+ */
 class EventEditFragment : Fragment() {
 
     private lateinit var interestsDropdown: MaterialAutoCompleteTextView
@@ -50,6 +59,14 @@ class EventEditFragment : Fragment() {
 
     private var currentEvent: Event? = null
 
+    /**
+     * Crea e ritorna la view associata a questo fragment.
+     *
+     * @param inflater L'inflater usato per creare la view.
+     * @param container Il view group padre (se presente).
+     * @param savedInstanceState Stato salvato in precedenza (non usato qui).
+     * @return La view radice del layout `fragment_event_edit`.
+     */
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -57,6 +74,12 @@ class EventEditFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_event_edit, container, false)
     }
 
+    /**
+     * Inizializza le view e precompila i dati dell'evento selezionato.
+     * Imposta listener per campi dinamici come slider, dropdown e time picker.
+     *
+     * @param view La view già creata da `onCreateView`.
+     */
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         bindViews(view)
 
@@ -80,6 +103,7 @@ class EventEditFragment : Fragment() {
             return
         }
 
+        // Carica dati da Supabase e popola campi
         lifecycleScope.launch {
             val allLanguages = LanguageProvider.loadLanguagesFromAssets(requireContext())
             val allInterests = InterestRepository.fetchAllInterests()
@@ -106,6 +130,11 @@ class EventEditFragment : Fragment() {
         }
     }
 
+    /**
+     * Collega tutte le view del layout alle proprietà Kotlin.
+     *
+     * @param view La view principale del fragment.
+     */
     private fun bindViews(view: View) {
         interestsDropdown = view.findViewById(R.id.interestsDropdown)
         interestsChipGroup = view.findViewById(R.id.interestsChipGroup)
@@ -120,6 +149,12 @@ class EventEditFragment : Fragment() {
         eventDescriptionInput = view.findViewById(R.id.descriptionInput)
     }
 
+    /**
+     * Configura i dropdown per lingue e interessi, aggiungendo i rispettivi listener.
+     *
+     * @param allLanguages Lista completa di lingue disponibili.
+     * @param allInterests Lista completa di interessi disponibili.
+     */
     private fun setupDropdowns(allLanguages: List<Language>, allInterests: List<Interest>) {
         languageAdapter = LanguageAdapter(requireContext(), allLanguages.toMutableList())
         languagesDropdown.setAdapter(languageAdapter)
@@ -165,6 +200,13 @@ class EventEditFragment : Fragment() {
         }
     }
 
+    /**
+     * Popola i campi UI con i dati esistenti dell’evento.
+     *
+     * @param event Evento da modificare.
+     * @param allLanguages Lista completa delle lingue.
+     * @param allInterests Lista completa degli interessi.
+     */
     private fun populateFields(event: Event, allLanguages: List<Language>, allInterests: List<Interest>) {
 
         eventDescriptionInput.setText(event.desc)
@@ -199,6 +241,14 @@ class EventEditFragment : Fragment() {
         }
     }
 
+    /**
+     * Aggiunge un chip con icona a un ChipGroup, con supporto alla rimozione.
+     *
+     * @param group Il gruppo in cui aggiungere il chip.
+     * @param label Il testo da mostrare nel chip.
+     * @param icon L'icona associata al chip.
+     * @param onRemove Callback da eseguire alla rimozione.
+     */
     private fun addChip(group: ChipGroup, label: String, icon: Int, onRemove: () -> Unit) {
         val chip = Chip(requireContext()).apply {
             text = label
@@ -213,6 +263,12 @@ class EventEditFragment : Fragment() {
         group.addView(chip)
     }
 
+    /**
+     * Restituisce l'icona corretta per un interesse dato il nome.
+     *
+     * @param name Nome dell’interesse.
+     * @return L’ID della risorsa drawable dell’icona.
+     */
     private fun getInterestIcon(name: String): Int {
         return when (name.lowercase()) {
             "food and drinks" -> R.drawable.ic_food
@@ -225,6 +281,9 @@ class EventEditFragment : Fragment() {
         }
     }
 
+    /**
+     * Salva le modifiche apportate all’evento aggiornandolo su Supabase.
+     */
     private fun saveChanges() {
         val updated = currentEvent?.copy(
             desc = eventDescriptionInput.text?.toString() ?: "",
@@ -249,6 +308,9 @@ class EventEditFragment : Fragment() {
         }
     }
 
+    /**
+     * Mostra un time picker per selezionare l’orario dell’evento.
+     */
     private fun showTimePicker() {
         val currentHour =  eventTime?.hour ?: 20
         val currentMinute = eventTime?.minute ?: 0
@@ -261,8 +323,17 @@ class EventEditFragment : Fragment() {
     }
 
     companion object {
+        /**
+         * Evento da modificare, da impostare prima di creare il fragment.
+         */
         var eventToEdit: Event? = null
 
+        /**
+         * Crea una nuova istanza del fragment con l’evento da modificare.
+         *
+         * @param event L’evento da modificare.
+         * @return Un’istanza di [EventEditFragment] con l’evento preimpostato.
+         */
         fun newInstance(event: Event): EventEditFragment {
             eventToEdit = event
             return EventEditFragment()

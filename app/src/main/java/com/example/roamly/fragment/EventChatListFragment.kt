@@ -15,18 +15,36 @@ import com.example.roamly.data.repository.EventRepository
 import com.example.roamly.data.utils.SupabaseClientProvider
 import kotlinx.coroutines.launch
 
+/**
+ * Fragment che mostra la lista di eventi a cui l'utente partecipa e per i quali è attiva una chat.
+ *
+ * Ogni elemento della lista rappresenta un evento e, se cliccato, apre la chat corrispondente
+ * tramite un `EventChatFragment`.
+ *
+ * La lista viene caricata da Supabase in base all'utente autenticato.
+ */
 class EventChatListFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: EventChatListAdapter
     private val eventList = mutableListOf<Event>()
 
+    /**
+     * Infla il layout del fragment.
+     */
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         return inflater.inflate(R.layout.fragment_event_chat_list, container, false)
     }
 
+    /**
+     * Inizializza la RecyclerView e carica gli eventi dell'utente corrente.
+     *
+     * - Imposta il layout manager
+     * - Inizializza l'adapter con listener click
+     * - Avvia il caricamento asincrono degli eventi partecipati
+     */
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         recyclerView = view.findViewById(R.id.recyclerViewChatList)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
@@ -38,6 +56,10 @@ class EventChatListFragment : Fragment() {
         loadUserEvents()
     }
 
+    /**
+     * Recupera tutti gli eventi a cui l'utente attualmente autenticato partecipa.
+     * Popola la lista `eventList` e aggiorna l'adapter.
+     */
     private fun loadUserEvents() {
         val currentUserId = SupabaseClientProvider.auth.currentUserOrNull()?.id ?: return
         lifecycleScope.launch {
@@ -48,6 +70,12 @@ class EventChatListFragment : Fragment() {
         }
     }
 
+    /**
+     * Apre il fragment della chat per l’evento selezionato.
+     *
+     * @param eventId ID dell’evento da aprire in chat.
+     * @param eventDesc Descrizione testuale dell’evento (usata come titolo chat).
+     */
     private fun openChat(eventId: String, eventDesc: String) {
         val fragment = EventChatFragment.newInstance(eventId, eventDesc)
         parentFragmentManager.beginTransaction()

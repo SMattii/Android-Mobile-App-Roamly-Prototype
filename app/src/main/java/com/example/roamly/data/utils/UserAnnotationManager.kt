@@ -35,8 +35,8 @@ import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
  */
 object UserAnnotationManager {
 
-    // Un manager per utente e una mappa per tutti i marker utente
-    private val userAnnotationManagers = mutableMapOf<String, PointAnnotationManager>()
+    // Singolo PointAnnotationManager per tutti i marker utente
+    private var userAnnotationManager: PointAnnotationManager? = null
     private val userMarkers = mutableMapOf<String, PointAnnotation>()
 
     /**
@@ -65,9 +65,13 @@ object UserAnnotationManager {
         getCurrentShownProfileId: () -> String?,
         onToggleCallout: (newUserId: String?) -> Unit
     ): PointAnnotationManager {
-        val annotationManager = userAnnotationManagers.getOrPut(userId) {
-            mapView.annotations.createPointAnnotationManager()
+        if (userAnnotationManager == null) {
+            userAnnotationManager = mapView.annotations.createPointAnnotationManager()
         }
+
+        val annotationManager = userAnnotationManager!!
+
+        // Nessun listener globale: per ogni marker creato in seguito abbiamo il suo listener dedicato
 
         Glide.with(context)
             .asBitmap()
@@ -101,19 +105,23 @@ object UserAnnotationManager {
                             userMarkers[userId] = marker
                             Log.d("MARKER_CREATE", "Creato nuovo marker per userId=$userId")
 
-                            annotationManager.addClickListener { annotation ->
-                                val clickedUserId = annotation.getData()?.asJsonObject?.get("userId")?.asString
+                            // Registra listener click per questo marker specifico
+                            annotationManager.addClickListener { clickedAnnotation ->
+                                if (clickedAnnotation != marker) return@addClickListener false
+
+                                val clickedUserId = clickedAnnotation.getData()?.asJsonObject?.get("userId")?.asString
                                 val currentShownProfileId = getCurrentShownProfileId()
 
                                 val newUserIdToDisplay = if (clickedUserId == currentShownProfileId) null else clickedUserId
+
                                 if (clickedUserId != currentShownProfileId) onToggleCallout(null)
+
                                 val activity = mapView.context as? HomeActivity
                                 activity?.hideEventCallout()
 
-
                                 mapboxMap.flyTo(
                                     CameraOptions.Builder()
-                                        .center(annotation.point)
+                                        .center(clickedAnnotation.point)
                                         .zoom(mapboxMap.cameraState.zoom)
                                         .build(),
                                     MapAnimationOptions.mapAnimationOptions { duration(500L) }
@@ -145,12 +153,8 @@ object UserAnnotationManager {
      */
     fun removeUserMarker(userId: String) {
         userMarkers[userId]?.let { marker ->
-            userAnnotationManagers[userId]?.delete(marker)
+            userAnnotationManager?.delete(marker)
             userMarkers.remove(userId)
-        }
-        userAnnotationManagers[userId]?.let { manager ->
-            manager.deleteAll()
-            userAnnotationManagers.remove(userId)
         }
         Log.d("MARKER_REMOVE", "Rimosso marker e manager per userId=$userId")
     }
@@ -160,10 +164,9 @@ object UserAnnotationManager {
      * Chiamato quando la mappa viene resettata o aggiornata completamente.
      */
     fun clearAll() {
-        userAnnotationManagers.forEach { (_, manager) ->
-            manager.deleteAll()
-        }
-        userAnnotationManagers.clear()
+        userAnnotationManager?.deleteAll()
+        userAnnotationManager = null
+        // nessun listenerRegistered, nulla da fare
         userMarkers.clear()
     }
 
@@ -173,5 +176,5 @@ object UserAnnotationManager {
      *
      * @return Lista di ID utente presenti sulla mappa
      */
-    fun getManagedUserIds(): List<String> = userAnnotationManagers.keys.toList()
+    fun getManagedUserIds(): List<String> = userMarkers.keys.toList()
 }

@@ -116,8 +116,6 @@ class HomeActivity : AppCompatActivity() {
 
     private var cameraCenteredOnce = false
 
-    internal val userAnnotationManagers = mutableMapOf<String, PointAnnotationManager>()
-
     private lateinit var bottomNav: BottomNavigationView
 
     /**
@@ -434,7 +432,24 @@ class HomeActivity : AppCompatActivity() {
         }
 
         Log.d("MapDebug", "startLocationUpdates: richiedo aggiornamenti")
+
+        // Inizia ad ascoltare gli update continui.
         fusedLocationClient.requestLocationUpdates(request, locationCallback, mainLooper)
+
+        // Prova subito a centrare la mappa sulla lastLocation disponibile per un feedback più rapido.
+        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+            if (location != null && !cameraCenteredOnce) {
+                val userPoint = Point.fromLngLat(location.longitude, location.latitude)
+                mapView.mapboxMap.flyTo(
+                    CameraOptions.Builder()
+                        .center(userPoint)
+                        .zoom(17.0)
+                        .build()
+                )
+                cameraCenteredOnce = true
+                Log.d("MapDebug", "Camera centrata immediatamente su lastLocation")
+            }
+        }
     }
 
     /**
@@ -483,64 +498,32 @@ class HomeActivity : AppCompatActivity() {
      * @param userPoint Posizione geografica dell’utente.
      */
     private fun showCurrentUserMarker(userId: String, userPoint: Point) {
-        Log.d("MARKER_CURRENT_USER", "showCurrentUserMarker chiamato per userId=$userId")
-
         lifecycleScope.launch {
             try {
                 val profile = SupabaseClientProvider.db["profiles"]
                     .select { filter { eq("id", userId) } }
                     .decodeSingle<Profile>()
 
-                if (!profile.profile_image_url.isNullOrBlank()) {
-                    Glide.with(this@HomeActivity)
-                        .asBitmap()
-                        .load(profile.profile_image_url)
-                        .circleCrop()
-                        .into(object : CustomTarget<Bitmap>() {
-                            override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
-                                val largeBitmap = Bitmap.createScaledBitmap(resource, 150, 150, false)
-                                val style = mapView.mapboxMap.style
-                                if (style != null) {
-                                    val imageId = "current-user-marker-$userId"
-                                    try {
-                                        style.addImage(imageId, largeBitmap)
-                                    } catch (e: Exception) {
-                                        // Ignora se l'immagine è già stata aggiunta (errore comune di Mapbox in questi casi)
-                                        Log.w("MARKER_CURRENT_USER", "Immagine già aggiunta o altro errore: ${e.message}")
-                                    }
+                val imageUrl = profile.profile_image_url ?: return@launch
 
-                                    // Ottieni o crea il PointAnnotationManager per l'utente corrente
-                                    val annotationManager = userAnnotationManagers.getOrPut("current_user_manager") {
-                                        mapView.annotations.createPointAnnotationManager()
-                                    }
-
-                                    // Controlla se esiste già un marker per l'utente corrente
-                                    val existingAnnotation = annotationManager.annotations.firstOrNull {
-                                        // Usiamo un ID fisso per l'istanza del marker dell'utente corrente
-                                        it.getData()?.asJsonObject?.get("markerId")?.asString == "current_user_marker_instance"
-                                    } as? PointAnnotation
-
-                                    if (existingAnnotation != null) {
-                                        // Aggiorna la posizione del marker esistente
-                                        existingAnnotation.point = userPoint
-                                        annotationManager.update(existingAnnotation)
-                                        Log.d("MARKER_CURRENT_USER", "Aggiornato marker esistente per utente corrente.")
-                                    } else {
-                                        // Crea un nuovo marker se non esiste
-                                        val options = PointAnnotationOptions()
-                                            .withPoint(userPoint)
-                                            .withIconImage(imageId)
-                                            // Aggiungi un dato univoco per identificare questo marker in futuro
-                                            .withData(JsonParser.parseString("{'markerId': 'current_user_marker_instance', 'userId': '$userId'}").asJsonObject)
-
-                                        val newAnnotation = annotationManager.create(options)
-                                        Log.d("MARKER_CURRENT_USER", "Creato nuovo marker per utente corrente.")
-                                    }
-                                }
-                            }
-                            override fun onLoadCleared(placeholder: Drawable?) {}
-                        })
-                }
+                UserAnnotationManager.createOrUpdateUserMarker(
+                    context = this@HomeActivity,
+                    mapView = mapView,
+                    mapboxMap = mapView.mapboxMap,
+                    userId = userId,
+                    imageUrl = imageUrl,
+                    point = userPoint,
+                    getCurrentShownProfileId = { currentShownProfileId },
+                    onToggleCallout = { newId ->
+                        if (newId == null) {
+                            hideUserCallout()
+                            currentShownProfileId = null
+                        } else {
+                            removeUserCallout()
+                            currentShownProfileId = newId
+                        }
+                    }
+                )
             } catch (e: Exception) {
                 Log.e("MARKER_CURRENT_USER", "Errore gestione marker utente: ${e.message}", e)
                 Toast.makeText(this@HomeActivity, "Errore immagine profilo: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -640,7 +623,7 @@ class HomeActivity : AppCompatActivity() {
     private fun cleanupNonNearbyMarkers(currentNearbyIds: List<String>) {
         val currentUserId = SupabaseClientProvider.auth.currentUserOrNull()?.id
         val idsToKeep = mutableSetOf<String>()
-        if (currentUserId != null) idsToKeep.add("current_user_manager")
+        if (currentUserId != null) idsToKeep.add(currentUserId)
         idsToKeep.addAll(currentNearbyIds)
 
         val idsToRemove = UserAnnotationManager.getManagedUserIds().filter { it !in idsToKeep }
@@ -783,13 +766,12 @@ class HomeActivity : AppCompatActivity() {
 
         // Pulisci annotation managers
         UserAnnotationManager.clearAll()
-        userAnnotationManagers.clear()
 
         // Ferma refresh eventi
         eventRefreshJob?.cancel()
         EventAnnotationManager.clearAll()
 
-        Log.d("MapDebug", "resetMapState: completato, userAnnotationManagers.size = ${userAnnotationManagers.size}")
+        Log.d("MapDebug", "resetMapState: completato, user markers size = ${UserAnnotationManager.getManagedUserIds().size}")
     }
 
     /**

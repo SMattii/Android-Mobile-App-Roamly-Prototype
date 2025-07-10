@@ -120,6 +120,9 @@ object EventAnnotationManager {
                 )
 
                 mapView.postDelayed({
+                    // Se lo stato del tooltip è cambiato nel frattempo (ad esempio l'utente ha cliccato di nuovo o ha mosso la mappa), interrompi.
+                    if (getCurrentShownEventId() != newIdToDisplay) return@postDelayed
+
                     if (newIdToDisplay != null) {
                         val context = mapView.context
                         val lifecycleOwner = context as? androidx.lifecycle.LifecycleOwner ?: return@postDelayed

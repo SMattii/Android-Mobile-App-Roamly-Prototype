@@ -38,7 +38,7 @@ class EventChatFragment : Fragment() {
 
     companion object {
         /**
-         * Crea una nuova istanza del fragment per una chat evento.
+         * Crea una nuova istanza del fragment per una chat evento, factory method.
          *
          * @param eventId ID dell'evento da associare alla chat.
          * @param eventDesc Titolo descrittivo mostrato nella UI.
@@ -224,7 +224,7 @@ class EventChatFragment : Fragment() {
         var colorIndex = 0
 
         for (profile in profiles) {
-            if (profile.id == currentUserId) continue // evitiamo di colorare l'utente loggato
+            if (profile.id == currentUserId) continue // evito di colorare l'utente loggato
             colorMap[profile.id] = availableColors[colorIndex % availableColors.size]
             colorIndex++
         }

@@ -15,7 +15,7 @@
         android:id="@+id/titleText4"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Completa il tuo profilo"
+        android:text="Complete your profile"
         android:textSize="20sp"
         android:textStyle="bold"
         android:textColor="@android:color/black"

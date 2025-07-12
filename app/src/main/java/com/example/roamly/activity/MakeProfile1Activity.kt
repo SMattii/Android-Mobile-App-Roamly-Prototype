@@ -64,7 +64,9 @@ class MakeProfile1Activity : AppCompatActivity() {
 
     /**
      * Launcher per la selezione di un'immagine dalla galleria.
-     * Una volta selezionata, mostra l'anteprima e avvia l'upload.
+     * Utilizza ActivityResultContracts.GetContent() per aprire il selettore di file,
+     * mostra l'anteprima nell'ImageView e avvia l'upload su Supabase in background.
+     * Il callback gestisce il risultato: se l'Uri non è null, aggiorna l'UI e carica l'immagine.
      */
     val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         if (uri != null) {

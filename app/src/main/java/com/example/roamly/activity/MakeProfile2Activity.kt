@@ -111,7 +111,8 @@ class MakeProfile2Activity : AppCompatActivity() {
 
     /**
      * Aggiunge un chip per la lingua specificata nella ChipGroup delle lingue selezionate.
-     * Permette la rimozione della lingua tramite l'icona di chiusura.
+     * Permette la rimozione della lingua tramite l'icona di chiusura. Il layout è quello standard
+     * dei chip material (icon - text - closeicon)
      *
      * @param language Lingua da aggiungere come chip.
      */
@@ -147,8 +148,7 @@ class MakeProfile2Activity : AppCompatActivity() {
     }
 
     /**
-     * Salva le lingue attualmente selezionate nel database Supabase,
-     * sovrascrivendo eventuali voci precedenti, e passa all'attività successiva.
+     * Salva le lingue attualmente selezionate nel database Supabase e passa all'attività successiva.
      *
      * @throws Exception In caso di errore nell'aggiornamento.
      */
@@ -160,12 +160,6 @@ class MakeProfile2Activity : AppCompatActivity() {
         }
 
         try {
-
-            // Rimuove tutte le lingue esistenti per il profilo
-            SupabaseClientProvider.db.from("profile_languages")
-                .delete {
-                    filter { eq("profile_id", userId) }
-                }
 
             // Inserisce le nuove selezioni, se presenti
             if (selectedLanguages.isNotEmpty()) {

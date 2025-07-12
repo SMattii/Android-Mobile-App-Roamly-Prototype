@@ -119,6 +119,11 @@ class EventCreationFragment : Fragment() {
         setupCreateButton()
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        (activity as? HomeActivity)?.findViewById<FrameLayout>(R.id.eventFragmentContainer)?.visibility = View.GONE
+    }
+
 
     private fun bindViews(view: View) {
         try {

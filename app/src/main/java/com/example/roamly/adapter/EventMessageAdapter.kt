@@ -72,14 +72,12 @@ class EventMessageAdapter(
 
     override fun getItemCount(): Int = messages.size
 
-
     /**
      * ViewHolder per i messaggi inviati dall’utente loggato.
      */
     class SentViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val messageText: TextView = view.findViewById(R.id.textMessage)
         private val timeText: TextView = view.findViewById(R.id.timeText)
-
 
         /**
          * Popola la vista con il testo del messaggio e l’orario.

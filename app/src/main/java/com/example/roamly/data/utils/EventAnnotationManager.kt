@@ -258,7 +258,7 @@ object EventAnnotationManager {
         }
 
 
-// FIX: Usa la mappa interna invece di cercare nelle annotations
+        // Usa la mappa interna invece di cercare nelle annotations
         val existingAnnotation = eventMarkers[event.id!!]
 
         if (existingAnnotation != null) {

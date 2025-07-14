@@ -73,7 +73,6 @@ import kotlinx.coroutines.launch
 import com.example.roamly.data.utils.DataCache
 
 /**
- * Activity principale dell'app Roamly.
  *
  * Gestisce la visualizzazione della mappa Mapbox con profili utente e eventi nelle vicinanze,
  * la navigazione tramite bottom navigation (profilo, home, chat), il polling degli eventi,
@@ -404,9 +403,11 @@ class HomeActivity : AppCompatActivity() {
                             if (newId == null) {
                                 hideEventCallout()
                                 currentShownEventId = null
+                                Log.d("TOOLTIP_FLOW", "Chiudo il tooltip e setto a null, ID: $newId")
                             } else {
                                 removeEventCallout()
                                 currentShownEventId = newId
+                                Log.d("TOOLTIP_FLOW", "Nuovo evento selezionato, ID: $newId")
                             }
                         }
                     )

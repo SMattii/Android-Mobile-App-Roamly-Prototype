@@ -19,7 +19,7 @@ The goal is to create an environment where meeting new people, joining local eve
 - This is a Work In Progress (WIP) project developed as part of the Mobile Application Development course exam.  
 
 ### Screens
-<img src="https://github.com/SMattii/Android-Mobile-App-Roamly-Prototype/assets/people.png" width="260"/> <img src="https://github.com/SMattii/Android-Mobile-App-Roamly-Prototype/assets/activities.png" width="260"/> <img src="https://github.com/SMattii/Android-Mobile-App-Roamly-Prototype/assets/map.png" width="260"/>
+<img src="https://github.com/SMattii/Android-Mobile-App-Roamly-Prototype/people.png" width="260"/> <img src="https://github.com/SMattii/Android-Mobile-App-Roamly-Prototype/activities.png" width="260"/> <img src="https://github.com/SMattii/Android-Mobile-App-Roamly-Prototype/map.png" width="260"/>
 
 (Design prototype built with Figma)
 

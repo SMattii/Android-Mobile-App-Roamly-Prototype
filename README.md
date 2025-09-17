@@ -1,3 +1,4 @@
+```markdown
 # Roamly
 
 Roamly is a mobile app designed for students, travelers, and digital nomads who want to build connections based on shared interests.  
@@ -19,7 +20,12 @@ The goal is to create an environment where meeting new people, joining local eve
 - This is a Work In Progress (WIP) project developed as part of the Mobile Application Development course exam.  
 
 ### Screens
-<img src="https://github.com/SMattii/Android-Mobile-App-Roamly-Prototype/people.png" width="260"/> <img src="https://github.com/SMattii/Android-Mobile-App-Roamly-Prototype/activities.png" width="260"/> <img src="https://github.com/SMattii/Android-Mobile-App-Roamly-Prototype/map.png" width="260"/>
+
+#### People & Activities
+<img src="people.png" width="260"/> <img src="activities.png" width="260"/>
+
+#### Map & Interactive Markers
+<img src="map.png" width="260"/> <img src="map-detail.png" width="260"/>
 
 (Design prototype built with Figma)
 
@@ -43,3 +49,37 @@ The goal is to create an environment where meeting new people, joining local eve
 ---
 
 ## 📂 Repository Structure
+```
+
+/app          → Android source code (UI, logic, models)
+/gradle       → build scripts
+build.gradle, settings.gradle → project configuration
+.gitignore    → ignored files for Git
+
+````
+
+---
+
+## 🚀 How to Run
+1. Clone the repository  
+   ```bash
+   git clone https://github.com/SMattii/Android-Mobile-App-Roamly-Prototype.git
+````
+
+2. Open the project in Android Studio
+3. Set up Supabase credentials:
+
+   * Endpoint
+   * API keys
+   * Database schema
+4. Build and run on an Android emulator or real device
+
+---
+
+## 🤝 Contact
+
+Author: Mattia
+[GitHub Repository](https://github.com/SMattii/Android-Mobile-App-Roamly-Prototype)
+
+```
+```

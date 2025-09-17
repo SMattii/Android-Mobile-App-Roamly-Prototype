@@ -22,10 +22,11 @@ The goal is to create an environment where meeting new people, joining local eve
 ### Screens
 
 #### People & Activities
-<img src="people.png" width="260"/> <img src="activities.png" width="260"/>
+![People](people.png)
+![Activities](activities.png)
 
 #### Map & Interactive Markers
-<img src="map.png" width="260"/> <img src="map-detail.png" width="260"/>
+![Map](map.png)
 
 (Design prototype built with Figma)
 

@@ -22,7 +22,7 @@ The goal is to create an environment where meeting new people, joining local eve
 ### Screens
 
 #### People & Activities
-![People](people.png)
+![People](people.png)  
 ![Activities](activities.png)
 
 #### Map & Interactive Markers
@@ -56,31 +56,6 @@ The goal is to create an environment where meeting new people, joining local eve
 /gradle       → build scripts
 build.gradle, settings.gradle → project configuration
 .gitignore    → ignored files for Git
-
-````
-
----
-
-## 🚀 How to Run
-1. Clone the repository  
-   ```bash
-   git clone https://github.com/SMattii/Android-Mobile-App-Roamly-Prototype.git
-````
-
-2. Open the project in Android Studio
-3. Set up Supabase credentials:
-
-   * Endpoint
-   * API keys
-   * Database schema
-4. Build and run on an Android emulator or real device
-
----
-
-## 🤝 Contact
-
-Author: Mattia
-[GitHub Repository](https://github.com/SMattii/Android-Mobile-App-Roamly-Prototype)
 
 ```
 ```

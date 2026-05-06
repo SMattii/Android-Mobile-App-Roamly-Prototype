@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.util.Base64
 import android.util.Log
 import android.view.View
 import android.widget.ImageView
@@ -30,8 +29,6 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.launch
 import io.ktor.http.ContentType.Image
-import org.json.JSONObject
-import java.util.Date
 import kotlin.jvm.java
 
 /**
@@ -105,7 +102,6 @@ class MakeProfile1Activity : AppCompatActivity() {
         val session = SupabaseClientProvider.auth.currentSessionOrNull()
         val user = SupabaseClientProvider.auth.currentUserOrNull()
         Log.d("AuthDebug", "Session: ${session != null} | User ID: ${user?.id}")
-        Log.d("AuthDebug", "Access token: ${session?.accessToken}")
 
         // Inizializzazione view references
         profileImageView = findViewById(R.id.profileImageView)
@@ -167,55 +163,21 @@ class MakeProfile1Activity : AppCompatActivity() {
 
     /**
      * Carica l'immagine su Supabase Storage e restituisce l'URL pubblico.
-     * Effettua anche il controllo di validità del token JWT prima dell'upload.
-     *
      * @param context Context corrente per aprire lo stream
      * @param imageUri Uri dell'immagine selezionata
      * @return String? URL immagine o null in caso di errore
      */
     suspend fun uploadProfileImage(context: Context, imageUri: Uri): String? {
         return try {
-            // 1.1 Recupero della sessione e del token JWT
-            val sessionBeforeUpload = SupabaseClientProvider.auth.currentSessionOrNull()
-            Log.d("SupabaseUploadDebug", "Session prima dell'upload: ${sessionBeforeUpload != null}")
-            Log.d("SupabaseUploadDebug", "User ID prima dell'upload: ${sessionBeforeUpload?.user?.id}")
-            Log.d("SupabaseUploadDebug", "Access token (parziale) prima dell'upload: ${sessionBeforeUpload?.accessToken?.take(20)}...")
-            val accessToken = sessionBeforeUpload?.accessToken
-            if (accessToken != null) {
-                // 1.2 Se esiste un token, ne decodifico il payload per leggere la data di scadenza ("exp")
-                try {
-                    val parts = accessToken.split(".")
-                    if (parts.size == 3) {
-                        val payload = String(Base64.decode(parts[1], Base64.URL_SAFE))
-                        val json = JSONObject(payload)
-                        val exp = json.optLong("exp")
-                        if (exp > 0) {
-                            val expirationDate = Date(exp * 1000)
-                            Log.d("SupabaseUploadDebug", "JWT Scadenza: $expirationDate")
-                            val currentTime = System.currentTimeMillis()
-                            if (expirationDate.time < currentTime) {
-                                Log.d("SupabaseUploadDebug", "ATTENZIONE: Il token è scaduto prima dell'upload!")
-                            } else {
-                                Log.d("SupabaseUploadDebug", "Token valido. Scade tra: ${(expirationDate.time - currentTime) / 1000 / 60} minuti.")
-                            }
-                        }
-                    }
-                } catch (e: Exception) {
-                    Log.e("SupabaseUploadDebug", "Errore decodifica JWT: ${e.localizedMessage}")
-                }
-            } else {
-                Log.d("SupabaseUploadDebug", "Access token è null prima dell'upload.")
-            }
-
-            // 1.3 Apertura dello stream e lettura dei byte dell’immagine
+            // 1.1 Apertura dello stream e lettura dei byte dell'immagine
             val inputStream = context.contentResolver.openInputStream(imageUri) ?: return null
             val imageBytes = inputStream.readBytes()
 
-            // 1.4 Creazione del percorso di upload basato sull’ID utente e timestamp
-            val userId = SupabaseClientProvider.auth.currentUserOrNull()?.id ?: return null // Ottieni l'ID utente
-            val fileName = "${userId}/profile_${System.currentTimeMillis()}.jpg" // Percorso: user_id/nome_file.jpg
+            // 1.2 Creazione del percorso di upload basato sull'ID utente e timestamp
+            val userId = SupabaseClientProvider.auth.currentUserOrNull()?.id ?: return null
+            val fileName = "${userId}/profile_${System.currentTimeMillis()}.jpg"
 
-            // 1.5 Ottengo il bucket "avatars" e lancio l’upload
+            // 1.3 Ottengo il bucket "avatars" e lancio l'upload
             val bucket = SupabaseClientProvider.storage["avatars"]
 
             bucket.upload(
@@ -226,11 +188,11 @@ class MakeProfile1Activity : AppCompatActivity() {
                 contentType = Image.JPEG
             }
 
-            // 1.6 Restituisco l’URL pubblico appena creato
+            // 1.4 Restituisco l'URL pubblico appena creato
             bucket.publicUrl(fileName)
 
         } catch (e: Exception) {
-            // 1.7 In caso di qualsiasi errore, loggo e restituisco null
+            // 1.5 In caso di qualsiasi errore, loggo e restituisco null
             Log.e("SupabaseUpload", "Errore durante l'upload immagine: ${e.localizedMessage}")
             null
         }

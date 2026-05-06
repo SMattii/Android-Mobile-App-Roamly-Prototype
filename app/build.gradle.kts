@@ -17,6 +17,9 @@ if (localPropertiesFile.exists()) {
     }
 }
 
+fun localProperty(name: String): String =
+    localProps.getProperty(name)?.trim().orEmpty()
+
 android {
     namespace = "com.example.roamly"
     compileSdk = 35
@@ -30,9 +33,10 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "SUPABASE_URL", "\"${localProps["SUPABASE_URL"]}\"")
-        buildConfigField("String", "SUPABASE_KEY", "\"${localProps["SUPABASE_KEY"]}\"")
-        buildConfigField("String", "MAPBOX_TOKEN", "\"${localProps["MAPBOX_PUBLIC_TOKEN"]}\"")
+        buildConfigField("String", "SUPABASE_URL", "\"${localProperty("SUPABASE_URL")}\"")
+        buildConfigField("String", "SUPABASE_KEY", "\"${localProperty("SUPABASE_KEY")}\"")
+        buildConfigField("String", "MAPBOX_TOKEN", "\"${localProperty("MAPBOX_PUBLIC_TOKEN")}\"")
+        resValue("string", "mapbox_access_token", localProperty("MAPBOX_PUBLIC_TOKEN"))
     }
 
     buildFeatures {

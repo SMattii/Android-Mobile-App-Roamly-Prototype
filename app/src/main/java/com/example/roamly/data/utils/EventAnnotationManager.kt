@@ -87,9 +87,10 @@ object EventAnnotationManager {
         }
 
         val annotationManager = eventAnnotationManager!!
+        val eventId = event.id ?: return annotationManager
 
         // Aggiorna cache globale con l'evento corrente
-        event.id?.let { DataCache.putEvents(listOf(event)) }
+        DataCache.putEvents(listOf(event))
 
         // Registra il listener di click una sola volta per evitare duplicati
         if (!listenerRegistered) {
@@ -140,7 +141,8 @@ object EventAnnotationManager {
                                 fetched
                             } ?: return@launch
 
-                            val participantIds = eventRepo.getEventParticipants(thisEvent.id!!)
+                            val selectedEventId = thisEvent.id ?: return@launch
+                            val participantIds = eventRepo.getEventParticipants(selectedEventId)
                             val participantProfiles = profileRepo.getProfilesByIds(participantIds)
 
                             val allLanguages = LanguageProvider.loadLanguagesFromAssets(context)
@@ -259,24 +261,24 @@ object EventAnnotationManager {
 
 
         // Usa la mappa interna invece di cercare nelle annotations
-        val existingAnnotation = eventMarkers[event.id!!]
+        val existingAnnotation = eventMarkers[eventId]
 
         if (existingAnnotation != null) {
             // Aggiorna marker esistente
             existingAnnotation.point = point
             annotationManager.update(existingAnnotation)
-            Log.d("EVENT_MARKER", "Marker evento ${event.id} aggiornato")
+            Log.d("EVENT_MARKER", "Marker evento $eventId aggiornato")
         } else {
             // Crea nuovo marker
             val options = PointAnnotationOptions()
                 .withPoint(point)
                 .withIconImage(imageId)
-                .withData(JsonParser.parseString("{\"eventId\": \"${event.id}\"}").asJsonObject)
+                .withData(JsonParser.parseString("{\"eventId\": \"$eventId\"}").asJsonObject)
 
             try {
                 val annotation = annotationManager.create(options)
-                eventMarkers[event.id] = annotation
-                Log.d("EVENT_MARKER", "Nuovo marker evento ${event.id} creato")
+                eventMarkers[eventId] = annotation
+                Log.d("EVENT_MARKER", "Nuovo marker evento $eventId creato")
             } catch (e: Exception) {
                 Log.e("EVENT_MARKER", "Errore creazione marker evento: ${e.message}")
                 return annotationManager
@@ -353,6 +355,7 @@ object EventAnnotationManager {
             Log.d("EVENT_SYNC", "Marker attualmente attivi: ${eventMarkers.size}")
 
             for (event in allEvents) {
+                val eventId = event.id ?: continue
                 val dist = MapUtils.haversine(myLat, myLon, event.latitude, event.longitude)
 
                 val visibleUntilMillis = try {
@@ -367,8 +370,8 @@ object EventAnnotationManager {
                 Log.d("EVENT_SYNC", "Evento ${event.id}: dist=$dist km, tipo=${event.event_type}, scaduto=${visibleUntilMillis < now}")
 
                 if (dist <= 10 && visibleUntilMillis >= now) {
-                    validEventIds.add(event.id!!)
-                    Log.d("EVENT_SYNC", "Evento ${event.id} valido - creando marker")
+                    validEventIds.add(eventId)
+                    Log.d("EVENT_SYNC", "Evento $eventId valido - creando marker")
 
                     createEventMarker(
                         context = context,

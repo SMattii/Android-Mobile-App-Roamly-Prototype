@@ -34,6 +34,7 @@ import com.example.roamly.data.utils.LanguageProvider
 import com.example.roamly.data.models.NearbyUser
 import com.example.roamly.data.models.Profile
 import com.example.roamly.R
+import com.example.roamly.BuildConfig
 import com.example.roamly.data.utils.SupabaseClientProvider
 import com.example.roamly.data.repository.ProfileRepository
 import com.example.roamly.data.utils.EventAnnotationManager
@@ -52,6 +53,7 @@ import com.google.android.gms.location.Priority
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.gson.JsonParser
 import com.mapbox.android.gestures.MoveGestureDetector
+import com.mapbox.common.MapboxOptions
 import com.mapbox.geojson.Point
 import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.MapView
@@ -110,6 +112,7 @@ class HomeActivity : AppCompatActivity() {
     internal lateinit var mapView: MapView
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
+    private var isTrackingLocation = false
 
     private val LOCATION_PERMISSION_REQUEST_CODE = 1001
 
@@ -139,6 +142,7 @@ class HomeActivity : AppCompatActivity() {
         EventAnnotationManager.clearAll()
         UserAnnotationManager.clearAll()
 
+        MapboxOptions.accessToken = BuildConfig.MAPBOX_TOKEN
         setContentView(R.layout.activity_home)
 
         // Reset stato se è una nuova sessione
@@ -148,7 +152,6 @@ class HomeActivity : AppCompatActivity() {
         }
 
         Log.d("MapDebug", "onCreate chiamato. cameraCenteredOnce = $cameraCenteredOnce")
-        setContentView(R.layout.activity_home)
 
         allInterests = InterestProvider.getAllAvailableInterests()
         allLanguages = LanguageProvider.loadLanguagesFromAssets(this)
@@ -362,7 +365,8 @@ class HomeActivity : AppCompatActivity() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
             ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) return
 
-        Log.w("MapDebug", "startLocationUpdates: permessi non concessi")
+        stopLocationUpdates()
+        Log.d("MapDebug", "startLocationUpdates: permessi concessi")
 
         val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 20_000L)
             .setMinUpdateIntervalMillis(20_000L)
@@ -436,6 +440,7 @@ class HomeActivity : AppCompatActivity() {
 
         // Inizia ad ascoltare gli update continui.
         fusedLocationClient.requestLocationUpdates(request, locationCallback, mainLooper)
+        isTrackingLocation = true
 
         // Prova subito a centrare la mappa sulla lastLocation disponibile per un feedback più rapido.
         fusedLocationClient.lastLocation.addOnSuccessListener { location ->
@@ -469,9 +474,16 @@ class HomeActivity : AppCompatActivity() {
      */
     override fun onDestroy() {
         super.onDestroy()
-        fusedLocationClient.removeLocationUpdates(locationCallback)
+        stopLocationUpdates()
         eventRefreshJob?.cancel()
         UserAnnotationManager.clearAll()
+    }
+
+    private fun stopLocationUpdates() {
+        if (::fusedLocationClient.isInitialized && ::locationCallback.isInitialized && isTrackingLocation) {
+            fusedLocationClient.removeLocationUpdates(locationCallback)
+            isTrackingLocation = false
+        }
     }
 
     /**
@@ -804,6 +816,7 @@ class HomeActivity : AppCompatActivity() {
      */
     override fun onPause() {
         super.onPause()
+        stopLocationUpdates()
         eventRefreshJob?.cancel()
         Log.d("MapDebug", "onPause: Event refresh job cancelled.")
     }

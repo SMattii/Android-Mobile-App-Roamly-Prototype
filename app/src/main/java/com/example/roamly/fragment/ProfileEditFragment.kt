@@ -312,7 +312,8 @@ class ProfileEditFragment : Fragment() {
      * Carica i dati del profilo da Supabase e popola i campi del fragment.
      */
     private suspend fun loadUserProfileAndPopulate() {
-        val profileData = profileRepository.getCompleteProfile(currentUserId!!)
+        val userId = currentUserId ?: return
+        val profileData = profileRepository.getCompleteProfile(userId)
         val profile = profileData?.profile ?: return
         currentProfile = profile
 
@@ -348,7 +349,7 @@ class ProfileEditFragment : Fragment() {
         val languageEntries = SupabaseClientProvider.db.from("profile_languages")
             .select()
             .decodeList<LanguageLink>()
-            .filter { it.profile_id == currentUserId }
+            .filter { it.profile_id == userId }
 
         val existingLanguages = languageEntries.mapNotNull { entry ->
             allLanguages.find { it.id == entry.language_id }

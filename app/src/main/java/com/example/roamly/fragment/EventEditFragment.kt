@@ -112,7 +112,7 @@ class EventEditFragment : Fragment() {
             setupDropdowns(allLanguages, allInterests)
             populateFields(event, allLanguages, allInterests)
 
-            val participantIds = EventRepository.getEventParticipants(event.id!!)
+            val participantIds = EventRepository.getEventParticipants(event.id)
             val currentParticipantsCount = participantIds.size
 
             participantsSlider.valueFrom = currentParticipantsCount.toFloat()

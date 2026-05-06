@@ -190,6 +190,8 @@ object EventRepository {
      * @return `true` se l’aggiornamento ha avuto successo, `false` in caso di errore.
      */
     suspend fun updateEvent(event: Event): Boolean {
+        val eventId = event.id ?: return false
+
         return try {
             withContext(Dispatchers.IO) {
                 // Ricalcola `visible_until` in base a data + ora modificata
@@ -212,7 +214,7 @@ object EventRepository {
                 SupabaseClientProvider.db.from("events")
                     .update(updatedEvent) {
                         filter {
-                            eq("id", event.id!!)
+                            eq("id", eventId)
                         }
                     }
             }

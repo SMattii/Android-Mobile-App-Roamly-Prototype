@@ -49,7 +49,9 @@ class EventChatListFragment : Fragment() {
         recyclerView = view.findViewById(R.id.recyclerViewChatList)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         adapter = EventChatListAdapter(eventList) { event ->
-            openChat(event.id!!, event.desc)
+            event.id?.let { eventId ->
+                openChat(eventId, event.desc)
+            }
         }
         recyclerView.adapter = adapter
 

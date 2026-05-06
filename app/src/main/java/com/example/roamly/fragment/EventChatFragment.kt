@@ -195,7 +195,9 @@ class EventChatFragment : Fragment() {
             adapter = EventMessageAdapter(messagesWithSender, currentUserId, userColorMap)
             recyclerView.adapter = adapter
             adapter.notifyDataSetChanged()
-            recyclerView.scrollToPosition(messagesWithSender.size - 1)
+            if (messagesWithSender.isNotEmpty()) {
+                recyclerView.scrollToPosition(messagesWithSender.lastIndex)
+            }
         }
     }
 

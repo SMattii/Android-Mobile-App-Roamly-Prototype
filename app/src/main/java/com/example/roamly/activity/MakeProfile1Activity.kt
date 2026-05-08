@@ -122,10 +122,10 @@ class MakeProfile1Activity : AppCompatActivity() {
 
         // Listener slider per aggiornare il testo dell'età in tempo reale
         ageSlider.value = 25f
-        ageValueText.text = "Age: 25 years"
+        ageValueText.text = "25"
         ageSlider.setLabelFormatter { value -> "${value.toInt()} years" }
         ageSlider.addOnChangeListener { _, value, _ ->
-            ageValueText.text = "Age: ${value.toInt()} years"
+            ageValueText.text = value.toInt().toString()
         }
 
         // Definizione categorie e adapter per dropdown

@@ -82,15 +82,50 @@
 
                 <!-- Valore corrente dell’età mostrato sopra lo slider -->
                 <TextView
-                    android:id="@+id/ageValueText"
+                    android:id="@+id/ageSectionLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:gravity="center"
+                    android:text="Age"
+                    android:textColor="@color/roamly_black"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:id="@+id/ageValueContainer"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Age: 25 years"
-                    android:textColor="@color/roamly_red"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
                     android:layout_marginTop="8dp"
-                    android:layout_marginBottom="8dp" />
+                    android:layout_marginBottom="12dp"
+                    android:background="@drawable/bg_age_value_pill"
+                    android:gravity="center"
+                    android:minWidth="108dp"
+                    android:orientation="horizontal"
+                    android:paddingStart="18dp"
+                    android:paddingTop="8dp"
+                    android:paddingEnd="18dp"
+                    android:paddingBottom="8dp">
+
+                    <TextView
+                        android:id="@+id/ageValueText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="25"
+                        android:textColor="@color/roamly_red"
+                        android:textSize="30sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:text="years"
+                        android:textColor="@color/gray"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
 
                 <!-- Slider per selezionare l’età da 18 a 99 anni -->
                 <com.google.android.material.slider.Slider
@@ -102,9 +137,38 @@
                     android:stepSize="1"
                     android:value="25"
                     app:tickVisible="false"
-                    app:trackHeight="6dp"
-                    app:thumbRadius="12dp"
-                    android:layout_marginBottom="24dp" />
+                    app:labelBehavior="gone"
+                    app:trackHeight="8dp"
+                    app:trackColorActive="@color/roamly_red"
+                    app:trackColorInactive="@color/light_gray"
+                    app:thumbColor="@color/roamly_red"
+                    app:thumbRadius="14dp"
+                    app:haloColor="@color/roamly_blush" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="-2dp"
+                    android:layout_marginBottom="24dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="18"
+                        android:textColor="@color/gray"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="end"
+                        android:text="99"
+                        android:textColor="@color/gray"
+                        android:textSize="12sp" />
+                </LinearLayout>
 
                 <!-- Dropdown per la selezione del paese di origine -->
                 <com.google.android.material.textfield.TextInputLayout

@@ -1,18 +1,20 @@
 package com.example.roamly.activity
 
+import android.app.AlertDialog
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.util.Patterns
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.example.roamly.R
+import com.example.roamly.data.utils.AuthValidation
+import com.example.roamly.data.utils.SupabaseClientProvider
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import io.github.jan.supabase.auth.providers.builtin.Email
 import kotlinx.coroutines.launch
-import android.content.Intent
-import com.example.roamly.R
-import com.example.roamly.data.utils.SupabaseClientProvider
 
 /**
  * Activity responsabile della registrazione utente.
@@ -41,11 +43,6 @@ class SignupActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Valida i campi del modulo di registrazione.
-     *
-     * @return `true` se tutti i campi sono validi, `false` altrimenti.
-     */
     private fun validateForm(): Boolean {
         var valid = true
 
@@ -57,17 +54,19 @@ class SignupActivity : AppCompatActivity() {
             emailField.error = null
         }
 
-        val pwd = passwordField.text.toString()
-        if (pwd.length < 6) {
-            passwordField.error = "La password deve contenere almeno 6 caratteri"
+        val password = passwordField.text.toString()
+        val passwordError = AuthValidation.passwordValidationMessage(password)
+        if (passwordError != null) {
+            passwordField.error = passwordError
             valid = false
         } else {
             passwordField.error = null
         }
 
-        val pwdConfirm = confirmPasswordField.text.toString()
-        if (pwdConfirm != pwd) {
-            confirmPasswordField.error = "Le password non corrispondono"
+        val passwordConfirmation = confirmPasswordField.text.toString()
+        val matchError = AuthValidation.passwordsMatchMessage(password, passwordConfirmation)
+        if (matchError != null) {
+            confirmPasswordField.error = matchError
             valid = false
         } else {
             confirmPasswordField.error = null
@@ -76,57 +75,65 @@ class SignupActivity : AppCompatActivity() {
         return valid
     }
 
-    /**
-     * Esegue la registrazione dell'utente su Supabase.
-     * In caso di utente già autenticato, effettua prima il logout.
-     */
     private fun performSignup() {
         lifecycleScope.launch {
             val email = emailField.text.toString().trim()
             val password = passwordField.text.toString()
 
             try {
-                // Se l'utente è già loggato, effettua il logout
+                registerButton.isEnabled = false
+
                 SupabaseClientProvider.auth.currentUserOrNull()?.let {
-                    Log.d("Signup", "Utente già loggato (${it.id}), eseguo logout.")
+                    Log.d("Signup", "Utente gia loggato (${it.id}), eseguo logout.")
                     SupabaseClientProvider.auth.signOut()
                 }
 
-                // Procedi con la registrazione
-                val session = SupabaseClientProvider
-                    .auth
-                    .signUpWith(Email) {
-                        this.email = email
-                        this.password = password
-                    }
-
-                val user = SupabaseClientProvider.auth.currentUserOrNull()
-
-                if (user != null) {
-                    Toast.makeText(
-                        this@SignupActivity,
-                        "Registrazione completata",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    val intent = Intent(this@SignupActivity, LoginActivity::class.java)
-                    startActivity(intent)
-                    finish()
-                } else {
-                    Toast.makeText(
-                        this@SignupActivity,
-                        "Registrazione ricevuta. Controlla la tua casella email",
-                        Toast.LENGTH_LONG
-                    ).show()
+                SupabaseClientProvider.auth.signUpWith(Email) {
+                    this.email = email
+                    this.password = password
                 }
+
+                SupabaseClientProvider.auth.currentUserOrNull()?.let {
+                    SupabaseClientProvider.auth.signOut()
+                }
+
+                showVerificationDialog()
 
             } catch (e: Exception) {
                 Log.e("Signup", "Errore durante signup", e)
-                Toast.makeText(
-                    this@SignupActivity,
-                    "Signup fallito: ${e.message}",
-                    Toast.LENGTH_LONG
-                ).show()
+                val message = if (isEmailAlreadyInUse(e)) {
+                    "Email gia in uso"
+                } else {
+                    "Registrazione non riuscita. Riprova piu tardi"
+                }
+                Toast.makeText(this@SignupActivity, message, Toast.LENGTH_LONG).show()
+            } finally {
+                registerButton.isEnabled = true
             }
         }
+    }
+
+    private fun showVerificationDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Verifica email")
+            .setMessage("Ti abbiamo inviato una email di verifica. Conferma l'indirizzo, poi accedi dalla schermata di login.")
+            .setPositiveButton("Vai al login") { _, _ ->
+                startActivity(Intent(this, LoginActivity::class.java))
+                finish()
+            }
+            .setCancelable(false)
+            .show()
+    }
+
+    private fun isEmailAlreadyInUse(error: Exception): Boolean {
+        val message = error.message.orEmpty().lowercase()
+        return listOf(
+            "already registered",
+            "already exists",
+            "email_exists",
+            "email already",
+            "user already",
+            "duplicate"
+        ).any { it in message }
     }
 }

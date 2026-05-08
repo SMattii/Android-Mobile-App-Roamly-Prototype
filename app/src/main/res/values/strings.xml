@@ -3,6 +3,8 @@
     <string name="signup">Signup</string>
     <string name="login">Login</string>
     <string name="belong_anywhere">Belong Anywhere</string>
+    <string name="password_requirements">At least 8 characters, with uppercase, lowercase, number, and symbol.</string>
+    <string name="profile_languages_helper">Choose the languages you use most to communicate.</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

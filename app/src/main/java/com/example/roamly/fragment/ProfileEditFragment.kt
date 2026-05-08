@@ -20,6 +20,7 @@ import com.example.roamly.adapter.LanguageAdapter
 import com.example.roamly.data.models.*
 import com.example.roamly.data.repository.InterestRepository
 import com.example.roamly.data.repository.ProfileRepository
+import com.example.roamly.data.utils.AuthValidation
 import com.example.roamly.data.utils.LanguageProvider
 import com.example.roamly.data.utils.SupabaseClientProvider
 import com.google.android.material.button.MaterialButtonToggleGroup
@@ -163,21 +164,23 @@ class ProfileEditFragment : Fragment() {
             val newPasswordInput = dialogView.findViewById<EditText>(R.id.newPasswordInput)
             val confirmPasswordInput = dialogView.findViewById<EditText>(R.id.confirmPasswordInput)
 
-            AlertDialog.Builder(requireContext())
+            val dialog = AlertDialog.Builder(requireContext())
                 .setTitle("Change Password")
                 .setView(dialogView)
-                .setPositiveButton("Change") { _, _ ->
+                .setPositiveButton("Change", null)
+                .setNegativeButton("Cancel", null)
+                .create()
+
+            dialog.setOnShowListener {
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                     val newPassword = newPasswordInput.text.toString()
                     val confirmPassword = confirmPasswordInput.text.toString()
 
-                    if (newPassword != confirmPassword) {
-                        Toast.makeText(requireContext(), "Passwords do not match", Toast.LENGTH_SHORT).show()
-                        return@setPositiveButton
-                    }
-
-                    if (newPassword.length < 6) {
-                        Toast.makeText(requireContext(), "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
-                        return@setPositiveButton
+                    val validationError = AuthValidation.passwordValidationMessage(newPassword)
+                        ?: AuthValidation.passwordsMatchMessage(newPassword, confirmPassword)
+                    if (validationError != null) {
+                        Toast.makeText(requireContext(), validationError, Toast.LENGTH_SHORT).show()
+                        return@setOnClickListener
                     }
 
                     lifecycleScope.launch {
@@ -186,13 +189,14 @@ class ProfileEditFragment : Fragment() {
                                 password = newPassword
                             }
                             Toast.makeText(requireContext(), "Password changed successfully", Toast.LENGTH_SHORT).show()
+                            dialog.dismiss()
                         } catch (e: Exception) {
-                            Toast.makeText(requireContext(), "Error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(requireContext(), "Password update failed", Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
-                .setNegativeButton("Cancel", null)
-                .show()
+            }
+            dialog.show()
         }
     }
 

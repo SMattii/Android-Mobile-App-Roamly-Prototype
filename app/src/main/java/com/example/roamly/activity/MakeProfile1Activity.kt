@@ -121,8 +121,11 @@ class MakeProfile1Activity : AppCompatActivity() {
         countryDropdown.setAdapter(adapter)
 
         // Listener slider per aggiornare il testo dell'età in tempo reale
+        ageSlider.value = 25f
+        ageValueText.text = "Age: 25 years"
+        ageSlider.setLabelFormatter { value -> "${value.toInt()} years" }
         ageSlider.addOnChangeListener { _, value, _ ->
-            ageValueText.text = "${value.toInt()}"
+            ageValueText.text = "Age: ${value.toInt()} years"
         }
 
         // Definizione categorie e adapter per dropdown
@@ -213,7 +216,7 @@ class MakeProfile1Activity : AppCompatActivity() {
 
         // 2. Raccolta e validazione campi
         val fullName = nameField.text.toString().trim()
-        val age = ageValueText.text.toString()
+        val age = ageSlider.value.toInt().toString()
         val country = countryDropdown.text.toString().trim()
         val category = categoryDropdown.text.toString().trim()
 

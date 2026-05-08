@@ -156,11 +156,17 @@ class LoginActivity : AppCompatActivity() {
                     }
 
                 } else {
-                    Toast.makeText(this@LoginActivity, "Credenziali non valide", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@LoginActivity, "Credenziali errate", Toast.LENGTH_SHORT).show()
                 }
 
             } catch (e: Exception) {
-                Toast.makeText(this@LoginActivity, "Errore login: ${e.message}", Toast.LENGTH_LONG).show()
+                Log.e("Login", "Login failed", e)
+                val message = if (e.message.orEmpty().contains("email not confirmed", ignoreCase = true)) {
+                    "Conferma la tua email prima di accedere"
+                } else {
+                    "Credenziali errate"
+                }
+                Toast.makeText(this@LoginActivity, message, Toast.LENGTH_LONG).show()
             }
         }
     }

@@ -85,7 +85,9 @@
                     android:id="@+id/ageValueText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Age: 18"
+                    android:text="Age: 25 years"
+                    android:textColor="@color/roamly_red"
+                    android:textSize="18sp"
                     android:textStyle="bold"
                     android:layout_marginTop="8dp"
                     android:layout_marginBottom="8dp" />
@@ -98,7 +100,10 @@
                     android:valueFrom="18"
                     android:valueTo="99"
                     android:stepSize="1"
-                    android:value="18"
+                    android:value="25"
+                    app:tickVisible="false"
+                    app:trackHeight="6dp"
+                    app:thumbRadius="12dp"
                     android:layout_marginBottom="24dp" />
 
                 <!-- Dropdown per la selezione del paese di origine -->

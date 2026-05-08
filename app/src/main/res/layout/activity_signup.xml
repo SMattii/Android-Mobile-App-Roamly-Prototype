@@ -58,7 +58,7 @@
       <com.google.android.material.textfield.TextInputLayout
           android:layout_width="match_parent"
           android:layout_height="wrap_content"
-          android:layout_marginBottom="16dp"
+          android:layout_marginBottom="6dp"
           app:startIconDrawable="@drawable/ic_lock"
           app:endIconMode="password_toggle"
           app:boxCornerRadiusTopStart="15dp"
@@ -74,6 +74,15 @@
             android:inputType="textPassword"
             android:fontFamily="@font/roboto_variablefont"/>
       </com.google.android.material.textfield.TextInputLayout>
+
+      <TextView
+          android:id="@+id/passwordRequirementsText"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_marginBottom="16dp"
+          android:text="@string/password_requirements"
+          android:textColor="@color/gray"
+          android:textSize="12sp" />
 
       <!-- Campo Conferma Password -->
       <com.google.android.material.textfield.TextInputLayout

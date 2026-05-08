@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.util.Patterns
+import android.view.View
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -14,6 +15,7 @@ import com.example.roamly.data.models.Profile
 import com.example.roamly.R
 import com.example.roamly.data.utils.SupabaseClientProvider
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.launch
 import io.github.jan.supabase.auth.providers.builtin.Email
@@ -29,6 +31,8 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var emailField: TextInputEditText
     private lateinit var passwordField: TextInputEditText
     private lateinit var loginBtn: MaterialButton
+    private lateinit var loginProgress: CircularProgressIndicator
+    private var isLoginInProgress = false
 
     /**
      * Inizializza la UI e imposta il listener per il bottone di login.
@@ -47,9 +51,10 @@ class LoginActivity : AppCompatActivity() {
         emailField = findViewById(R.id.loginEmail)
         passwordField = findViewById(R.id.loginPassword)
         loginBtn = findViewById(R.id.loginBtn)
+        loginProgress = findViewById(R.id.loginProgress)
 
         loginBtn.setOnClickListener {
-            if (validateForm()) {
+            if (!isLoginInProgress && validateForm()) {
                 performLogin()
             }
         }
@@ -91,6 +96,8 @@ class LoginActivity : AppCompatActivity() {
     private fun performLogin() {
         val email = emailField.text.toString().trim()
         val password = passwordField.text.toString()
+
+        setLoginLoading(true)
 
         lifecycleScope.launch {
             try {
@@ -167,8 +174,19 @@ class LoginActivity : AppCompatActivity() {
                     "Credenziali errate"
                 }
                 Toast.makeText(this@LoginActivity, message, Toast.LENGTH_LONG).show()
+            } finally {
+                if (!isFinishing) {
+                    setLoginLoading(false)
+                }
             }
         }
+    }
+
+    private fun setLoginLoading(isLoading: Boolean) {
+        isLoginInProgress = isLoading
+        loginBtn.isClickable = !isLoading
+        loginBtn.isFocusable = !isLoading
+        loginProgress.visibility = if (isLoading) View.VISIBLE else View.GONE
     }
 
 }

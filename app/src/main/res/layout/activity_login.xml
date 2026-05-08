@@ -77,20 +77,37 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <!-- Bottone per effettuare il login con icona utente -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/loginBtn"
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
-                android:text="Sign-in"
-                android:textSize="20sp"
-                app:cornerRadius="15dp"
-                android:textColor="@android:color/white"
-                android:backgroundTint="@color/roamly_red"
-                android:layout_marginTop="8dp"
-                app:icon="@drawable/ic_user"
-                app:iconPadding="4dp"
-                app:iconTint="@android:color/white"
-                android:fontFamily="@font/roboto_variablefont"/>
+                android:layout_marginTop="8dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/loginBtn"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:text="Sign-in"
+                    android:textSize="20sp"
+                    app:cornerRadius="15dp"
+                    android:textColor="@android:color/white"
+                    android:backgroundTint="@color/roamly_red"
+                    app:icon="@drawable/ic_user"
+                    app:iconPadding="4dp"
+                    app:iconTint="@android:color/white"
+                    android:fontFamily="@font/roboto_variablefont"/>
+
+                <com.google.android.material.progressindicator.CircularProgressIndicator
+                    android:id="@+id/loginProgress"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_gravity="center_vertical|end"
+                    android:layout_marginEnd="20dp"
+                    android:visibility="gone"
+                    android:indeterminate="true"
+                    app:indicatorColor="@android:color/white"
+                    app:indicatorSize="28dp"
+                    app:trackThickness="3dp" />
+            </FrameLayout>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 

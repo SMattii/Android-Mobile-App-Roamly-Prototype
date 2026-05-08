@@ -212,11 +212,7 @@ object EventAnnotationManager {
             listenerRegistered = true
         }
 
-        val iconRes = when (event.event_type.lowercase()) {
-            "party" -> R.drawable.ic_event_party
-            "chill" -> R.drawable.ic_event_chill
-            else -> R.drawable.ic_event_generic
-        }
+        val iconRes = EventTypeProvider.iconResFor(event.event_type)
 
         val iconDrawable = AppCompatResources.getDrawable(context, iconRes)
         if (iconDrawable == null) {

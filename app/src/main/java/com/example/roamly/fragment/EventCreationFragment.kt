@@ -1,63 +1,68 @@
 package com.example.roamly.fragment
 
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.FrameLayout
+import android.widget.TextView
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
 import com.example.roamly.R
 import com.example.roamly.activity.HomeActivity
+import com.example.roamly.adapter.EventTypeAdapter
 import com.example.roamly.adapter.InterestAdapter
 import com.example.roamly.adapter.LanguageAdapter
 import com.example.roamly.data.models.Event
 import com.example.roamly.data.models.Interest
 import com.example.roamly.data.models.Language
 import com.example.roamly.data.repository.EventRepository
+import com.example.roamly.data.repository.InterestRepository
+import com.example.roamly.data.utils.EventAnnotationManager
+import com.example.roamly.data.utils.EventTypeProvider
+import com.example.roamly.data.utils.EventTypeProvider.EventTypeOption
+import com.example.roamly.data.utils.InterestProvider
 import com.example.roamly.data.utils.LanguageProvider
 import com.example.roamly.data.utils.SupabaseClientProvider
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
+import com.google.android.material.datepicker.CalendarConstraints
+import com.google.android.material.datepicker.DateValidatorPointForward
+import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.slider.RangeSlider
 import com.google.android.material.slider.Slider
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
-import com.google.android.material.timepicker.MaterialTimePicker
-import com.google.android.material.timepicker.TimeFormat
-import kotlinx.coroutines.launch
-import com.example.roamly.data.repository.InterestRepository
-import com.example.roamly.data.utils.EventAnnotationManager
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import com.google.android.material.timepicker.MaterialTimePicker
+import com.google.android.material.timepicker.TimeFormat
 import com.mapbox.geojson.Point
 import com.mapbox.maps.MapView
+import kotlinx.coroutines.launch
+import java.time.Instant
 import java.time.LocalDate
-import java.time.ZonedDateTime
+import java.time.LocalTime
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import java.util.Locale
 
-/**
- * Fragment che consente agli utenti di creare un nuovo evento.
- *
- * L’utente può specificare tipo di evento, data, orario, range di età, numero massimo
- * di partecipanti, lingue, interessi e descrizione. Al termine, i dati vengono validati e inviati
- * a Supabase tramite `EventRepository`. Se la creazione ha successo, viene anche generato
- * il marker evento sulla mappa.
- *
- * Le coordinate dell’evento vengono passate tramite `arguments` (chiavi: `"latitude"` e `"longitude"`).
- *
- * Dipendenze principali:
- * - SupabaseClientProvider: per ID utente autenticato
- * - InterestRepository, LanguageProvider: per dropdown dinamici
- * - EventRepository: per la creazione effettiva
- * - EventAnnotationManager: per creare il marker su Mapbox
- */
 class EventCreationFragment : Fragment() {
 
-    private val TAG = "EventCreationFragment"
+    private val tag = "EventCreationFragment"
 
+    private lateinit var eventNameLayout: TextInputLayout
+    private lateinit var eventTypeLayout: TextInputLayout
+    private lateinit var dateInputLayout: TextInputLayout
+    private lateinit var timeInputLayout: TextInputLayout
+
+    private lateinit var eventNameInput: TextInputEditText
     private lateinit var eventTypeDropdown: MaterialAutoCompleteTextView
     private lateinit var interestsDropdown: MaterialAutoCompleteTextView
     private lateinit var interestsChipGroup: ChipGroup
@@ -65,155 +70,104 @@ class EventCreationFragment : Fragment() {
     private lateinit var languagesChipGroup: ChipGroup
     private lateinit var ageRangeSlider: RangeSlider
     private lateinit var ageRangeText: TextView
-    private lateinit var dateDropdown: MaterialAutoCompleteTextView
-    private lateinit var timeInput: EditText
+    private lateinit var dateInput: TextInputEditText
+    private lateinit var timeInput: TextInputEditText
     private lateinit var participantsSlider: Slider
     private lateinit var participantsValueText: TextView
-    private lateinit var createEventButton: Button
-    private lateinit var eventDescriptionInput: TextInputEditText
+    private lateinit var createEventButton: MaterialButton
 
     private lateinit var languageAdapter: LanguageAdapter
     private lateinit var interestAdapter: InterestAdapter
 
     private val selectedLanguages = mutableListOf<Language>()
     private val selectedInterests = mutableListOf<Interest>()
+    private var selectedEventType: EventTypeOption? = null
+    private var selectedEventDate: LocalDate? = LocalDate.now()
 
-    /**
-     * Infla il layout XML associato a questo fragment.
-     */
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        Log.d(TAG, "onCreateView: inflating layout")
+    ): View {
         return inflater.inflate(R.layout.fragment_create_event, container, false)
     }
 
-    /**
-     * Inizializza tutti i componenti UI e imposta listener e adapter.
-     * Chiama:
-     * - `bindViews()`: associa le view del layout
-     * - `setupDropdowns()`: carica interessi, lingue, date, tipi
-     * - `setupChipSelections()`: gestisce aggiunta/rimozione chip
-     * - `setupSliders()`: aggiorna testo in base ai valori slider
-     * - `setupTimePicker()`: mostra dialog orario
-     * - `setupCreateButton()`: valida e crea l'evento
-     */
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        Log.d(TAG, "onViewCreated: binding views")
         bindViews(view)
-
-        Log.d(TAG, "onViewCreated: setting up dropdowns")
         setupDropdowns()
-
-        Log.d(TAG, "onViewCreated: setting up chip selections")
         setupChipSelections()
-
-        Log.d(TAG, "onViewCreated: setting up sliders")
         setupSliders()
-
-        Log.d(TAG, "onViewCreated: setting up time picker")
+        setupDatePicker()
         setupTimePicker()
-
-        Log.d(TAG, "onViewCreated: setting up create button")
         setupCreateButton()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        (activity as? HomeActivity)?.findViewById<FrameLayout>(R.id.eventFragmentContainer)?.visibility = View.GONE
+        (activity as? HomeActivity)
+            ?.findViewById<FrameLayout>(R.id.eventFragmentContainer)
+            ?.visibility = View.GONE
     }
-
 
     private fun bindViews(view: View) {
-        try {
-            eventTypeDropdown = view.findViewById(R.id.eventTypeDropdown)
-            interestsDropdown = view.findViewById(R.id.interestsDropdown)
-            interestsChipGroup = view.findViewById(R.id.interestsChipGroup)
-            languagesDropdown = view.findViewById(R.id.languagesDropdown)
-            languagesChipGroup = view.findViewById(R.id.languagesChipGroup)
-            ageRangeSlider = view.findViewById(R.id.ageRangeSlider)
-            ageRangeText = view.findViewById(R.id.ageRangeText)
-            dateDropdown = view.findViewById(R.id.dateDropdown)
-            timeInput = view.findViewById(R.id.timeInput)
-            participantsSlider = view.findViewById(R.id.participantsSlider)
-            participantsValueText = view.findViewById(R.id.participantsValueText)
-            createEventButton = view.findViewById(R.id.createEventButton)
-            eventDescriptionInput = view.findViewById(R.id.descriptionInput)
-            Log.d(TAG, "bindViews: all views successfully bound")
-        } catch (e: Exception) {
-            Log.e(TAG, "bindViews: error binding views", e)
-        }
+        eventNameLayout = view.findViewById(R.id.eventNameLayout)
+        eventTypeLayout = view.findViewById(R.id.eventTypeLayout)
+        dateInputLayout = view.findViewById(R.id.dateInputLayout)
+        timeInputLayout = view.findViewById(R.id.timeInputLayout)
+        eventNameInput = view.findViewById(R.id.descriptionInput)
+        eventTypeDropdown = view.findViewById(R.id.eventTypeDropdown)
+        interestsDropdown = view.findViewById(R.id.interestsDropdown)
+        interestsChipGroup = view.findViewById(R.id.interestsChipGroup)
+        languagesDropdown = view.findViewById(R.id.languagesDropdown)
+        languagesChipGroup = view.findViewById(R.id.languagesChipGroup)
+        ageRangeSlider = view.findViewById(R.id.ageRangeSlider)
+        ageRangeText = view.findViewById(R.id.ageRangeText)
+        dateInput = view.findViewById(R.id.dateInput)
+        timeInput = view.findViewById(R.id.timeInput)
+        participantsSlider = view.findViewById(R.id.participantsSlider)
+        participantsValueText = view.findViewById(R.id.participantsValueText)
+        createEventButton = view.findViewById(R.id.createEventButton)
     }
 
-    /**
-     * Configura i dropdown per tipo evento, data, interessi e lingue.
-     * I dati per interessi e lingue vengono caricati tramite repository/provider.
-     * In caso di errore mostra un Toast informativo.
-     */
     private fun setupDropdowns() {
+        val eventTypes = EventTypeProvider.commonTypes()
+        eventTypeDropdown.setAdapter(EventTypeAdapter(requireContext(), eventTypes))
+        eventTypeDropdown.setOnClickListener { eventTypeDropdown.showDropDown() }
 
-        val eventTypes = listOf("Chill", "Party")
-
-        val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy z")
-        val today = ZonedDateTime.now()
-        val tomorrow = today.plusDays(1)
-
-        val dateOptions = listOf(
-            today.format(formatter),
-            tomorrow.format(formatter)
-        )
-
-        eventTypeDropdown.setAdapter(
-            ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, eventTypes)
-        )
-
-        dateDropdown.setAdapter(
-            ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, dateOptions)
-        )
+        eventTypeDropdown.setOnItemClickListener { parent, _, position, _ ->
+            val selected = parent.getItemAtPosition(position) as EventTypeOption
+            selectedEventType = selected
+            eventTypeDropdown.setText(getString(selected.labelResId), false)
+            eventTypeLayout.error = null
+        }
 
         lifecycleScope.launch {
             try {
-                // --- Interessi ---
-                val interestRepo = InterestRepository
-                val allInterests = interestRepo.fetchAllInterests()
-
-                val interestIconMap = mapOf(
-                    "nature" to R.drawable.ic_nature,
-                    "networking" to R.drawable.ic_networking,
-                    "nightlife" to R.drawable.ic_nightlife,
-                    "culture" to R.drawable.ic_culture,
-                    "sport" to R.drawable.ic_sport,
-                    "food and drinks" to R.drawable.ic_food
-                )
-
-                val interestPairs = allInterests.mapNotNull { interest ->
-                    interestIconMap[interest.name.lowercase()]?.let { iconResId ->
-                        Pair(interest, iconResId)
-                    }
+                val allInterests = InterestRepository.fetchAllInterests()
+                val interestPairs = allInterests.map { interest ->
+                    interest to (InterestProvider.getIconResIdFor(interest.name)
+                        ?: R.drawable.ic_interest_default)
                 }
 
                 interestAdapter = InterestAdapter(requireContext(), interestPairs.toMutableList())
                 interestsDropdown.setAdapter(interestAdapter)
+                interestsDropdown.setOnClickListener { interestsDropdown.showDropDown() }
 
-                // --- Lingue ---
                 val allLanguages = LanguageProvider.loadLanguagesFromAssets(requireContext())
                 languageAdapter = LanguageAdapter(requireContext(), allLanguages.toMutableList())
                 languagesDropdown.setAdapter(languageAdapter)
-
-
+                languagesDropdown.setOnClickListener { languagesDropdown.showDropDown() }
             } catch (e: Exception) {
-                Log.e(TAG, "Errore durante il caricamento di interessi o lingue", e)
-                Toast.makeText(requireContext(), "Errore durante il caricamento dati", Toast.LENGTH_SHORT).show()
+                Log.e(tag, "Failed to load interests or languages", e)
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.event_data_load_error),
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }
 
-    /**
-     * Gestisce il comportamento di selezione di interessi e lingue.
-     * Aggiunge una chip con icona nel rispettivo ChipGroup.
-     * Alla pressione della close icon, la chip viene rimossa e aggiorna la lista interna.
-     */
     private fun setupChipSelections() {
         languagesDropdown.setOnItemClickListener { parent, _, position, _ ->
             val selectedLanguage = parent.getItemAtPosition(position) as Language
@@ -231,7 +185,8 @@ class EventCreationFragment : Fragment() {
         }
 
         interestsDropdown.setOnItemClickListener { parent, _, position, _ ->
-            val (selectedInterest, iconResId) = parent.getItemAtPosition(position) as Pair<Interest, Int>
+            val (selectedInterest, iconResId) =
+                parent.getItemAtPosition(position) as Pair<Interest, Int>
             if (!selectedInterests.contains(selectedInterest)) {
                 selectedInterests.add(selectedInterest)
                 addChipWithIcon(
@@ -246,26 +201,23 @@ class EventCreationFragment : Fragment() {
         }
     }
 
-    /**
-     * Aggiunge una chip al gruppo specificato con icona e testo.
-     * Imposta un listener sulla close icon per rimuoverla e invocare un callback.
-     *
-     * @param chipGroup Il gruppo in cui aggiungere la chip.
-     * @param label Il testo da mostrare nella chip.
-     * @param iconResId La risorsa drawable dell’icona.
-     * @param onRemove Callback invocato quando la chip viene rimossa.
-     */
     private fun addChipWithIcon(
         chipGroup: ChipGroup,
         label: String,
         iconResId: Int,
         onRemove: () -> Unit
     ) {
+        val strokeColor = ContextCompat.getColor(requireContext(), R.color.light_gray)
         val chip = Chip(requireContext()).apply {
             text = label
             chipIcon = ContextCompat.getDrawable(requireContext(), iconResId)
+            chipBackgroundColor = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.white))
+            chipStrokeColor = ColorStateList.valueOf(strokeColor)
+            chipStrokeWidth = 1f
+            closeIconTint = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.roamly_black))
             isCloseIconVisible = true
             isCheckable = false
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.roamly_black))
             setOnCloseIconClickListener {
                 chipGroup.removeView(this)
                 onRemove()
@@ -274,111 +226,123 @@ class EventCreationFragment : Fragment() {
         chipGroup.addView(chip)
     }
 
-    /**
-     * Inizializza gli slider per età e numero di partecipanti.
-     * Imposta listener per aggiornare i testi relativi ai valori selezionati.
-     */
     private fun setupSliders() {
+        updateAgeRangeText(ageRangeSlider.values)
         ageRangeSlider.addOnChangeListener { slider, _, _ ->
-            val values = slider.values
-            ageRangeText.text = "Age range: ${values[0].toInt()} - ${values[1].toInt()}"
+            updateAgeRangeText(slider.values)
         }
 
-        participantsValueText.text = "Participants: ${participantsSlider.value.toInt()}"
+        updateParticipantsText(participantsSlider.value.toInt())
         participantsSlider.addOnChangeListener { slider, _, _ ->
-            participantsValueText.text = "Participants: ${slider.value.toInt()}"
+            updateParticipantsText(slider.value.toInt())
         }
     }
 
-    /**
-     * Configura un MaterialTimePicker per la selezione dell’orario dell’evento.
-     * L’orario scelto viene formattato e inserito nel campo `timeInput`.
-     */
-    private fun setupTimePicker() {
-        timeInput.setOnClickListener {
-            Log.d(TAG, "Time picker clicked")
-            val picker = MaterialTimePicker.Builder()
-                .setTimeFormat(TimeFormat.CLOCK_24H)
-                .setHour(18)
-                .setMinute(0)
-                .setTitleText("Select time")
+    private fun updateAgeRangeText(values: List<Float>) {
+        ageRangeText.text = getString(
+            R.string.event_age_value,
+            values[0].toInt(),
+            values[1].toInt()
+        )
+    }
+
+    private fun updateParticipantsText(value: Int) {
+        participantsValueText.text = getString(R.string.event_participants_value, value)
+    }
+
+    private fun setupDatePicker() {
+        selectedEventDate?.let { dateInput.setText(formatDateForDisplay(it)) }
+
+        dateInput.setOnClickListener {
+            val constraints = CalendarConstraints.Builder()
+                .setValidator(DateValidatorPointForward.now())
                 .build()
 
-            picker.show(parentFragmentManager, "timePicker")
-            picker.addOnPositiveButtonClickListener {
-                val selectedTime = String.format("%02d:%02d", picker.hour, picker.minute)
-                timeInput.setText(selectedTime)
-                Log.d(TAG, "Time selected: $selectedTime")
+            val picker = MaterialDatePicker.Builder.datePicker()
+                .setTitleText(getString(R.string.event_select_date_title))
+                .setSelection(selectedEventDate?.toUtcMillis() ?: MaterialDatePicker.todayInUtcMilliseconds())
+                .setCalendarConstraints(constraints)
+                .build()
+
+            picker.addOnPositiveButtonClickListener { selection ->
+                selectedEventDate = Instant.ofEpochMilli(selection)
+                    .atZone(ZoneOffset.UTC)
+                    .toLocalDate()
+                dateInput.setText(formatDateForDisplay(selectedEventDate!!))
+                dateInputLayout.error = null
             }
+
+            picker.show(parentFragmentManager, "eventDatePicker")
         }
     }
 
-    /**
-     * Imposta il comportamento del pulsante "Create Event".
-     *
-     * - Recupera tutti i dati inseriti dall’utente
-     * - Costruisce un oggetto [Event]
-     * - Invia l’evento a Supabase tramite [EventRepository]
-     * - Genera un marker evento su mappa tramite [EventAnnotationManager]
-     * - Torna alla schermata precedente se tutto ha successo
-     *
-     * Mostra log in caso di errori e un Toast per feedback utente.
-     */
+    private fun formatDateForDisplay(date: LocalDate): String {
+        val formatter = DateTimeFormatter
+            .ofLocalizedDate(FormatStyle.MEDIUM)
+            .withLocale(Locale.getDefault())
+        return date.format(formatter)
+    }
+
+    private fun LocalDate.toUtcMillis(): Long {
+        return atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+    }
+
+    private fun setupTimePicker() {
+        timeInput.setOnClickListener {
+            val fallback = LocalTime.now().plusHours(1).withMinute(0)
+            val currentTime = parseSelectedTime() ?: fallback
+
+            val picker = MaterialTimePicker.Builder()
+                .setTimeFormat(TimeFormat.CLOCK_24H)
+                .setHour(currentTime.hour)
+                .setMinute(currentTime.minute)
+                .setTitleText(getString(R.string.event_select_time_title))
+                .build()
+
+            picker.addOnPositiveButtonClickListener {
+                val selectedTime = String.format(Locale.ROOT, "%02d:%02d", picker.hour, picker.minute)
+                timeInput.setText(selectedTime)
+                timeInputLayout.error = null
+            }
+
+            picker.show(parentFragmentManager, "eventTimePicker")
+        }
+    }
+
+    private fun parseSelectedTime(): LocalTime? {
+        return runCatching {
+            val parts = timeInput.text?.toString().orEmpty().split(":")
+            LocalTime.of(parts[0].toInt(), parts[1].toInt())
+        }.getOrNull()
+    }
+
     private fun setupCreateButton() {
-        Log.d(TAG, "setupCreateButton: attaching listener")
-
         createEventButton.setOnClickListener {
-            Log.d(TAG, "createEventButton clicked")
+            if (!validateForm()) return@setOnClickListener
 
-            // Controllo autenticazione
             val profileId = SupabaseClientProvider.auth.currentUserOrNull()?.id
             if (profileId == null) {
-                Log.w(TAG, "Utente non autenticato")
-                Toast.makeText(requireContext(), "Utente non autenticato", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), getString(R.string.event_auth_required), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            Log.d(TAG, "Utente autenticato con ID: $profileId")
 
-            // Recupero coordinate dal bundle
-            val latitude = arguments?.getDouble("latitude") ?: run {
-                Log.e(TAG, "Latitude non trovata nei parametri")
-                return@setOnClickListener
-            }
-            val longitude = arguments?.getDouble("longitude") ?: run {
-                Log.e(TAG, "Longitude non trovata nei parametri")
-                return@setOnClickListener
-            }
-            Log.d(TAG, "Coordinate recuperate: lat=$latitude, long=$longitude")
+            val latitude = arguments?.getDouble("latitude") ?: return@setOnClickListener
+            val longitude = arguments?.getDouble("longitude") ?: return@setOnClickListener
 
-            // Recupero valori dai campi UI
-            val eventType = eventTypeDropdown.text.toString()
-
-            val rawDate = dateDropdown.text.toString().substringBefore(" ") // "03/07/2025"
-            val inputFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
-            val date = LocalDate.parse(rawDate, inputFormatter).toString() // "2025-07-03"
-
-            val time = timeInput.text.toString()
+            val eventName = eventNameInput.text?.toString()?.trim().orEmpty()
+            val eventType = selectedEventType?.key ?: return@setOnClickListener
+            val date = selectedEventDate?.toString() ?: return@setOnClickListener
+            val time = timeInput.text?.toString().orEmpty()
             val minAge = ageRangeSlider.values.getOrNull(0)?.toInt()
             val maxAge = ageRangeSlider.values.getOrNull(1)?.toInt()
             val maxParticipants = participantsSlider.value.toInt()
             val interests = selectedInterests.map { it.id }
             val languages = selectedLanguages.map { it.id }
-            val vibe = eventType // stesso valore di eventType per ora
-            val eventDescriptionText = eventDescriptionInput.text?.toString() ?: ""
-
-            // Log dei dati inseriti
-            Log.d(TAG, "Tipo evento: $eventType")
-            Log.d(TAG, "Data: $date, Ora: $time")
-            Log.d(TAG, "Range età: $minAge - $maxAge")
-            Log.d(TAG, "Partecipanti max: $maxParticipants")
-            Log.d(TAG, "Interessi: $interests")
-            Log.d(TAG, "Lingue: $languages")
-
             val generatedId = java.util.UUID.randomUUID().toString()
 
             val event = Event(
                 id = generatedId,
-                desc = eventDescriptionText,
+                desc = eventName,
                 profile_id = profileId,
                 latitude = latitude,
                 longitude = longitude,
@@ -390,23 +354,16 @@ class EventCreationFragment : Fragment() {
                 min_age = minAge,
                 max_age = maxAge,
                 max_participants = maxParticipants,
-                vibe = vibe
+                vibe = eventType
             )
 
-            Log.d(TAG, "Evento costruito: $event")
-
-            // Invio al repository per creazione su Supabase
+            createEventButton.isEnabled = false
             lifecycleScope.launch {
                 try {
-                    Log.d(TAG, "Invio evento a Supabase...")
                     EventRepository.createEvent(event)
-                    Log.i(TAG, "Evento creato con successo")
-                    Toast.makeText(requireContext(), "Evento creato!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), getString(R.string.event_create_success), Toast.LENGTH_SHORT).show()
 
                     val eventPoint = Point.fromLngLat(longitude, latitude)
-
-                    // QUI CE IL PROBLEMA BISOGNA DICHIARARE CURRENTSHOWNEVENTID
-
                     EventAnnotationManager.createEventMarker(
                         context = requireContext(),
                         mapView = requireActivity().findViewById(R.id.mapView),
@@ -426,31 +383,53 @@ class EventCreationFragment : Fragment() {
                         }
                     )
 
-                    // Torna indietro nella pila dei fragment
-                    parentFragmentManager.popBackStack("EventCreationFragment", FragmentManager.POP_BACK_STACK_INCLUSIVE)
+                    parentFragmentManager.popBackStack(
+                        "EventCreationFragment",
+                        FragmentManager.POP_BACK_STACK_INCLUSIVE
+                    )
                 } catch (e: Exception) {
-                    Log.e(TAG, "Errore durante la creazione evento", e)
-                    Toast.makeText(requireContext(), "Errore creazione evento", Toast.LENGTH_SHORT).show()
+                    Log.e(tag, "Failed to create event", e)
+                    createEventButton.isEnabled = true
+                    Toast.makeText(requireContext(), getString(R.string.event_create_error), Toast.LENGTH_SHORT).show()
                 }
             }
         }
     }
 
-    /**
-     * Crea una nuova istanza del fragment passando le coordinate dell’evento.
-     *
-     * @param latitude Latitudine del punto in cui creare l’evento
-     * @param longitude Longitudine del punto in cui creare l’evento
-     * @return Una nuova istanza configurata di [EventCreationFragment]
-     */
+    private fun validateForm(): Boolean {
+        eventNameLayout.error = null
+        eventTypeLayout.error = null
+        dateInputLayout.error = null
+        timeInputLayout.error = null
+
+        var valid = true
+        if (eventNameInput.text?.toString()?.trim().isNullOrBlank()) {
+            eventNameLayout.error = getString(R.string.event_name_required)
+            valid = false
+        }
+        if (selectedEventType == null) {
+            eventTypeLayout.error = getString(R.string.event_type_required)
+            valid = false
+        }
+        if (selectedEventDate == null) {
+            dateInputLayout.error = getString(R.string.event_date_required)
+            valid = false
+        }
+        if (timeInput.text?.toString()?.trim().isNullOrBlank()) {
+            timeInputLayout.error = getString(R.string.event_time_required)
+            valid = false
+        }
+        return valid
+    }
+
     companion object {
         fun newInstance(latitude: Double, longitude: Double): EventCreationFragment {
-            val fragment = EventCreationFragment()
-            val args = Bundle()
-            args.putDouble("latitude", latitude)
-            args.putDouble("longitude", longitude)
-            fragment.arguments = args
-            return fragment
+            return EventCreationFragment().apply {
+                arguments = Bundle().apply {
+                    putDouble("latitude", latitude)
+                    putDouble("longitude", longitude)
+                }
+            }
         }
     }
 }

@@ -8,6 +8,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.roamly.R
 import com.example.roamly.data.models.Event
+import com.example.roamly.data.utils.EventTypeProvider
 
 /**
  * Adapter per una lista di eventi mostrati in una schermata di riepilogo.
@@ -66,12 +67,7 @@ class EventChatListAdapter(
             descText.text = event.desc
             dateText.text = formatDateTime(event.date, event.time)
 
-            val iconRes = when (event.event_type.lowercase()) {
-                "party" -> R.drawable.ic_event_party
-                "chill" -> R.drawable.ic_event_chill
-                else -> R.drawable.ic_event_generic
-            }
-            iconType.setImageResource(iconRes)
+            iconType.setImageResource(EventTypeProvider.iconResFor(event.event_type))
 
             itemView.setOnClickListener { onClick(event) }
         }
@@ -87,7 +83,7 @@ class EventChatListAdapter(
             return if (!date.isNullOrBlank() && !time.isNullOrBlank()) {
                 "$date, $time"
             } else {
-                "Data non disponibile"
+                itemView.context.getString(R.string.event_date_unavailable)
             }
         }
     }

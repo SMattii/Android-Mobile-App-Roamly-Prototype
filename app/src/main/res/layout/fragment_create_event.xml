@@ -1,194 +1,362 @@
-<!-- Layout scrollabile per la schermata di creazione nuovo evento -->
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/app_background">
+    android:background="@color/app_background"
+    android:clipToPadding="false"
+    android:fillViewport="true"
+    android:paddingTop="14dp"
+    android:paddingBottom="136dp">
 
-    <!-- Contenitore verticale principale -->
-    <LinearLayout
-        android:orientation="vertical"
-        android:padding="24dp"
-        android:layout_marginTop="48dp"
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
-        android:background="@android:color/white"
-        android:fontFamily="@font/roboto_variablefont">
+        android:layout_marginStart="18dp"
+        android:layout_marginEnd="18dp"
+        android:layout_marginBottom="32dp"
+        app:cardBackgroundColor="@color/white"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="4dp"
+        app:strokeColor="#1F2E282A"
+        app:strokeWidth="1dp">
 
-        <!-- Titolo schermata -->
-        <TextView
-            android:text="Create a new event"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/black"
-            android:layout_marginBottom="16dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
-        <!-- Campo descrizione evento -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/eventDescription"
-            android:hint="Event description (e.g. Aperitivo con tapas)"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/descriptionInput"
+            android:fontFamily="@font/roboto_variablefont"
+            android:orientation="vertical"
+            android:paddingStart="20dp"
+            android:paddingTop="24dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="24dp">
+
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:maxLines="3"
-                android:inputType="textMultiLine"
-                android:paddingStart="12dp"
-                android:paddingLeft="12dp" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:text="@string/event_create_title"
+                android:textColor="@color/black"
+                android:textSize="24sp"
+                android:textStyle="bold" />
 
-        <!-- Tipo evento (chill, party...) -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:hint="Event type (Chill, Party...)"
-            app:endIconMode="dropdown_menu"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp">
-            <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                android:id="@+id/eventTypeDropdown"
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingStart="12dp"
-                android:paddingLeft="12dp" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="20dp"
+                android:text="@string/event_create_subtitle"
+                android:textColor="@color/gray"
+                android:textSize="14sp" />
 
-        <!-- Campo per aggiungere interessi -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:hint="Add Interests"
-            app:endIconMode="dropdown_menu"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp">
-            <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                android:id="@+id/interestsDropdown"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/eventNameLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingStart="12dp"
-                android:paddingLeft="12dp" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_marginBottom="14dp"
+                android:hint="@string/event_name_hint"
+                app:boxBackgroundMode="outline"
+                app:boxCornerRadiusBottomEnd="14dp"
+                app:boxCornerRadiusBottomStart="14dp"
+                app:boxCornerRadiusTopEnd="14dp"
+                app:boxCornerRadiusTopStart="14dp"
+                app:boxStrokeColor="@color/roamly_black"
+                app:helperText="@string/event_name_helper"
+                app:hintTextColor="@color/gray"
+                app:startIconDrawable="@drawable/ic_event_marker"
+                app:startIconTint="@color/roamly_black">
 
-        <!-- ChipGroup per mostrare gli interessi selezionati -->
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/interestsChipGroup"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:chipSpacingHorizontal="8dp"
-            app:chipSpacingVertical="8dp"
-            app:singleLine="false" />
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/descriptionInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textCapSentences"
+                    android:maxLines="1"
+                    android:textColor="@color/roamly_black"
+                    android:textSize="16sp" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Campo per aggiungere lingue preferite -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:hint="Preferred Languages"
-            app:endIconMode="dropdown_menu"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp">
-            <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                android:id="@+id/languagesDropdown"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/eventTypeLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingStart="12dp"
-                android:paddingLeft="12dp" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_marginBottom="14dp"
+                android:hint="@string/event_type_hint"
+                app:boxBackgroundMode="outline"
+                app:boxCornerRadiusBottomEnd="14dp"
+                app:boxCornerRadiusBottomStart="14dp"
+                app:boxCornerRadiusTopEnd="14dp"
+                app:boxCornerRadiusTopStart="14dp"
+                app:boxStrokeColor="@color/roamly_black"
+                app:endIconMode="dropdown_menu"
+                app:helperText="@string/event_type_helper"
+                app:hintTextColor="@color/gray"
+                app:startIconDrawable="@drawable/ic_event_generic"
+                app:startIconTint="@color/roamly_black">
 
-        <!-- ChipGroup per lingue selezionate -->
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/languagesChipGroup"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:chipSpacingHorizontal="8dp"
-            app:chipSpacingVertical="8dp"
-            app:singleLine="false" />
+                <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                    android:id="@+id/eventTypeDropdown"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="none"
+                    android:textColor="@color/roamly_black"
+                    android:textSize="16sp" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Etichetta per visualizzare range età -->
-        <TextView
-            android:id="@+id/ageRangeText"
-            android:text="Age range: 25 - 35"
-            android:textStyle="bold"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp" />
-
-        <!-- Slider per selezionare il range di età -->
-        <com.google.android.material.slider.RangeSlider
-            android:id="@+id/ageRangeSlider"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:valueFrom="18"
-            android:valueTo="99"
-            android:stepSize="1"
-            app:values="@array/default_age_range"
-            android:layout_marginBottom="16dp" />
-
-        <!-- Campo per selezionare la data dell’evento -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:hint="Date"
-            app:endIconMode="dropdown_menu"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp">
-            <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                android:id="@+id/dateDropdown"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/interestsLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingStart="12dp"
-                android:paddingLeft="12dp" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_marginBottom="8dp"
+                android:hint="@string/event_interests_hint"
+                app:boxBackgroundMode="outline"
+                app:boxCornerRadiusBottomEnd="14dp"
+                app:boxCornerRadiusBottomStart="14dp"
+                app:boxCornerRadiusTopEnd="14dp"
+                app:boxCornerRadiusTopStart="14dp"
+                app:boxStrokeColor="@color/roamly_black"
+                app:endIconMode="dropdown_menu"
+                app:helperText="@string/event_interests_helper"
+                app:hintTextColor="@color/gray"
+                app:startIconDrawable="@drawable/ic_interest_default"
+                app:startIconTint="@color/roamly_black">
 
-        <!-- Campo per selezionare orario evento -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:hint="Time (HH:mm)"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/timeInput"
+                <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                    android:id="@+id/interestsDropdown"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/roamly_black"
+                    android:textSize="16sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/interestsChipGroup"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:focusable="false"
-                android:inputType="time"
-                android:paddingStart="12dp"
-                android:paddingLeft="12dp" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_marginBottom="14dp"
+                app:chipSpacingHorizontal="8dp"
+                app:chipSpacingVertical="8dp"
+                app:singleLine="false" />
 
-        <!-- Etichetta numero partecipanti -->
-        <TextView
-            android:id="@+id/participantsValueText"
-            android:text="Participants: 2"
-            android:textStyle="bold"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp" />
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/languagesLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:hint="@string/event_languages_hint"
+                app:boxBackgroundMode="outline"
+                app:boxCornerRadiusBottomEnd="14dp"
+                app:boxCornerRadiusBottomStart="14dp"
+                app:boxCornerRadiusTopEnd="14dp"
+                app:boxCornerRadiusTopStart="14dp"
+                app:boxStrokeColor="@color/roamly_black"
+                app:endIconMode="dropdown_menu"
+                app:helperText="@string/event_languages_helper"
+                app:hintTextColor="@color/gray"
+                app:startIconDrawable="@drawable/ic_flag_default"
+                app:startIconTint="@color/roamly_black">
 
-        <!-- Slider per selezionare numero massimo partecipanti -->
-        <com.google.android.material.slider.Slider
-            android:id="@+id/participantsSlider"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:valueFrom="2"
-            android:valueTo="10"
-            android:stepSize="1"
-            android:value="2"
-            android:layout_marginBottom="24dp" />
+                <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                    android:id="@+id/languagesDropdown"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/roamly_black"
+                    android:textSize="16sp" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Bottone per creare l’evento -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/createEventButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Create Event"
-            android:textSize="18sp"
-            android:textColor="@android:color/white"
-            android:backgroundTint="@color/roamly_red"
-            app:cornerRadius="15dp"
-            android:layout_marginBottom="140dp"/>
-    </LinearLayout>
-</ScrollView>
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/languagesChipGroup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                app:chipSpacingHorizontal="8dp"
+                app:chipSpacingVertical="8dp"
+                app:singleLine="false" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/event_age_title"
+                android:textColor="@color/roamly_black"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/ageRangeText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_event_value_pill"
+                android:text="@string/event_age_value"
+                android:textColor="@color/roamly_red"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.slider.RangeSlider
+                android:id="@+id/ageRangeSlider"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="4dp"
+                android:stepSize="1"
+                android:valueFrom="18"
+                android:valueTo="99"
+                app:haloColor="#22EF3E36"
+                app:labelBehavior="gone"
+                app:thumbColor="@color/roamly_red"
+                app:tickVisible="false"
+                app:trackColorActive="@color/roamly_red"
+                app:trackColorInactive="@color/light_gray"
+                app:trackHeight="8dp"
+                app:values="@array/default_age_range" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="18"
+                    android:textColor="@color/gray"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="end"
+                    android:text="99"
+                    android:textColor="@color/gray"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/dateInputLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="14dp"
+                android:hint="@string/event_date_hint"
+                app:boxBackgroundMode="outline"
+                app:boxCornerRadiusBottomEnd="14dp"
+                app:boxCornerRadiusBottomStart="14dp"
+                app:boxCornerRadiusTopEnd="14dp"
+                app:boxCornerRadiusTopStart="14dp"
+                app:boxStrokeColor="@color/roamly_black"
+                app:hintTextColor="@color/gray"
+                app:startIconDrawable="@drawable/ic_calendar"
+                app:startIconTint="@color/roamly_black">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/dateInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:focusable="false"
+                    android:inputType="none"
+                    android:textColor="@color/roamly_black"
+                    android:textSize="16sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/timeInputLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                android:hint="@string/event_time_hint"
+                app:boxBackgroundMode="outline"
+                app:boxCornerRadiusBottomEnd="14dp"
+                app:boxCornerRadiusBottomStart="14dp"
+                app:boxCornerRadiusTopEnd="14dp"
+                app:boxCornerRadiusTopStart="14dp"
+                app:boxStrokeColor="@color/roamly_black"
+                app:hintTextColor="@color/gray"
+                app:startIconDrawable="@drawable/ic_clock"
+                app:startIconTint="@color/roamly_black">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/timeInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:focusable="false"
+                    android:inputType="time"
+                    android:textColor="@color/roamly_black"
+                    android:textSize="16sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/event_participants_title"
+                android:textColor="@color/roamly_black"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/participantsValueText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_event_value_pill"
+                android:text="@string/event_participants_value"
+                android:textColor="@color/roamly_red"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.slider.Slider
+                android:id="@+id/participantsSlider"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="4dp"
+                android:stepSize="1"
+                android:value="2"
+                android:valueFrom="2"
+                android:valueTo="20"
+                app:haloColor="#22EF3E36"
+                app:labelBehavior="gone"
+                app:thumbColor="@color/roamly_red"
+                app:tickVisible="false"
+                app:trackColorActive="@color/roamly_red"
+                app:trackColorInactive="@color/light_gray"
+                app:trackHeight="8dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="22dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="2"
+                    android:textColor="@color/gray"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="end"
+                    android:text="20"
+                    android:textColor="@color/gray"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/createEventButton"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:backgroundTint="@color/roamly_red"
+                android:text="@string/event_create_button"
+                android:textAllCaps="false"
+                android:textColor="@android:color/white"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                app:cornerRadius="18dp" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+</androidx.core.widget.NestedScrollView>

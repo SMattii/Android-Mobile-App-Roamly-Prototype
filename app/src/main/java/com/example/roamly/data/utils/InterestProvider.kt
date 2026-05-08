@@ -26,7 +26,9 @@ object InterestProvider {
      * @return ID della risorsa drawable, oppure `null` se non trovato.
      */
     fun getIconResIdFor(interestName: String): Int? {
-        return interestNameToResId[interestName]
+        return interestNameToResId.entries
+            .firstOrNull { it.key.equals(interestName, ignoreCase = true) }
+            ?.value
     }
 
     /**

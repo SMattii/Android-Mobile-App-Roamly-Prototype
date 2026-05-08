@@ -69,19 +69,29 @@ object EventTooltipManager {
         val view: View = inflater.inflate(R.layout.event_tooltip, tooltipContainer, false)
 
         // Mostra tipo di evento con data e orario
-        view.findViewById<TextView>(R.id.txtEventType).text =
-            "${event.event_type} - ${event.date} ${event.time}"
+        view.findViewById<TextView>(R.id.txtEventType).text = context.getString(
+            R.string.event_tooltip_title,
+            EventTypeProvider.displayName(context, event.event_type),
+            event.date,
+            event.time
+        )
 
         // Descrizione testuale dell'evento
         view.findViewById<TextView>(R.id.txtDescription).text = event.desc
 
         // Mostra numero partecipanti attuali su massimo consentito
-        view.findViewById<TextView>(R.id.txtParticipants).text =
-            "${participants.size}/${event.max_participants ?: "?"} partecipanti"
+        view.findViewById<TextView>(R.id.txtParticipants).text = context.getString(
+            R.string.event_tooltip_participants,
+            participants.size,
+            event.max_participants?.toString() ?: "?"
+        )
 
         // Mostra range di età richiesto per partecipare
-        view.findViewById<TextView>(R.id.txtAgeRange).text =
-            "Età: ${event.min_age ?: "-"} - ${event.max_age ?: "-"}"
+        view.findViewById<TextView>(R.id.txtAgeRange).text = context.getString(
+            R.string.event_tooltip_age,
+            event.min_age?.toString() ?: "-",
+            event.max_age?.toString() ?: "-"
+        )
 
         // Aggiunge le bandiere delle lingue selezionate per l’evento
         val langContainer = view.findViewById<LinearLayout>(R.id.languagesContainer)

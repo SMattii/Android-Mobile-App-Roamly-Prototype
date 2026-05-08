@@ -6,7 +6,7 @@
     android:background="@color/app_background"
     android:clipToPadding="false"
     android:fillViewport="true"
-    android:paddingTop="14dp"
+    android:paddingTop="48dp"
     android:paddingBottom="136dp">
 
     <com.google.android.material.card.MaterialCardView
@@ -97,7 +97,12 @@
                     android:id="@+id/eventTypeDropdown"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:cursorVisible="false"
+                    android:dropDownHeight="312dp"
+                    android:dropDownVerticalOffset="4dp"
                     android:inputType="none"
+                    android:popupBackground="@drawable/bg_dropdown_popup"
                     android:textColor="@color/roamly_black"
                     android:textSize="16sp" />
             </com.google.android.material.textfield.TextInputLayout>
@@ -124,6 +129,12 @@
                     android:id="@+id/interestsDropdown"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:cursorVisible="false"
+                    android:dropDownHeight="312dp"
+                    android:dropDownVerticalOffset="4dp"
+                    android:inputType="none"
+                    android:popupBackground="@drawable/bg_dropdown_popup"
                     android:textColor="@color/roamly_black"
                     android:textSize="16sp" />
             </com.google.android.material.textfield.TextInputLayout>
@@ -159,6 +170,12 @@
                     android:id="@+id/languagesDropdown"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:cursorVisible="false"
+                    android:dropDownHeight="312dp"
+                    android:dropDownVerticalOffset="4dp"
+                    android:inputType="none"
+                    android:popupBackground="@drawable/bg_dropdown_popup"
                     android:textColor="@color/roamly_black"
                     android:textSize="16sp" />
             </com.google.android.material.textfield.TextInputLayout>

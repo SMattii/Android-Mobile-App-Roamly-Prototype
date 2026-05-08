@@ -1,11 +1,14 @@
 package com.example.roamly.fragment
 
+import android.content.Context
 import android.content.res.ColorStateList
 import android.os.Bundle
+import android.text.InputType
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -94,6 +97,7 @@ class EventCreationFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         bindViews(view)
+        configureSelectionFields()
         setupDropdowns()
         setupChipSelections()
         setupSliders()
@@ -129,15 +133,51 @@ class EventCreationFragment : Fragment() {
         createEventButton = view.findViewById(R.id.createEventButton)
     }
 
+    private fun configureSelectionFields() {
+        configureDropdown(eventTypeDropdown)
+        configureDropdown(interestsDropdown)
+        configureDropdown(languagesDropdown)
+    }
+
+    private fun configureDropdown(dropdown: MaterialAutoCompleteTextView) {
+        dropdown.inputType = InputType.TYPE_NULL
+        dropdown.keyListener = null
+        dropdown.showSoftInputOnFocus = false
+        dropdown.isCursorVisible = false
+        dropdown.isClickable = true
+        dropdown.threshold = 0
+        dropdown.dropDownHeight = dp(312)
+        dropdown.setDropDownBackgroundDrawable(
+            ContextCompat.getDrawable(requireContext(), R.drawable.bg_dropdown_popup)
+        )
+        dropdown.setOnFocusChangeListener { view, hasFocus ->
+            if (hasFocus) hideKeyboard(view)
+        }
+    }
+
+    private fun hideKeyboard(view: View) {
+        val inputManager =
+            requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        inputManager.hideSoftInputFromWindow(view.windowToken, 0)
+    }
+
+    private fun dp(value: Int): Int {
+        return (value * resources.displayMetrics.density).toInt()
+    }
+
     private fun setupDropdowns() {
         val eventTypes = EventTypeProvider.commonTypes()
         eventTypeDropdown.setAdapter(EventTypeAdapter(requireContext(), eventTypes))
-        eventTypeDropdown.setOnClickListener { eventTypeDropdown.showDropDown() }
+        eventTypeDropdown.setOnClickListener {
+            hideKeyboard(it)
+            eventTypeDropdown.showDropDown()
+        }
 
         eventTypeDropdown.setOnItemClickListener { parent, _, position, _ ->
             val selected = parent.getItemAtPosition(position) as EventTypeOption
             selectedEventType = selected
             eventTypeDropdown.setText(getString(selected.labelResId), false)
+            eventTypeDropdown.clearFocus()
             eventTypeLayout.error = null
         }
 
@@ -151,12 +191,18 @@ class EventCreationFragment : Fragment() {
 
                 interestAdapter = InterestAdapter(requireContext(), interestPairs.toMutableList())
                 interestsDropdown.setAdapter(interestAdapter)
-                interestsDropdown.setOnClickListener { interestsDropdown.showDropDown() }
+                interestsDropdown.setOnClickListener {
+                    hideKeyboard(it)
+                    interestsDropdown.showDropDown()
+                }
 
                 val allLanguages = LanguageProvider.loadLanguagesFromAssets(requireContext())
                 languageAdapter = LanguageAdapter(requireContext(), allLanguages.toMutableList())
                 languagesDropdown.setAdapter(languageAdapter)
-                languagesDropdown.setOnClickListener { languagesDropdown.showDropDown() }
+                languagesDropdown.setOnClickListener {
+                    hideKeyboard(it)
+                    languagesDropdown.showDropDown()
+                }
             } catch (e: Exception) {
                 Log.e(tag, "Failed to load interests or languages", e)
                 Toast.makeText(
@@ -182,6 +228,7 @@ class EventCreationFragment : Fragment() {
                 }
             }
             languagesDropdown.setText("", false)
+            languagesDropdown.clearFocus()
         }
 
         interestsDropdown.setOnItemClickListener { parent, _, position, _ ->
@@ -198,6 +245,7 @@ class EventCreationFragment : Fragment() {
                 }
             }
             interestsDropdown.setText("", false)
+            interestsDropdown.clearFocus()
         }
     }
 

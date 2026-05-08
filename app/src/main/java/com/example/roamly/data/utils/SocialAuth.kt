@@ -13,7 +13,7 @@ enum class SocialAuthProvider(
     Google(
         buttonTextRes = R.string.auth_google_button,
         supabaseProvider = SupabaseGoogle,
-        scopes = listOf("email", "profile")
+        scopes = listOf("openid", "email", "profile")
     ),
     Facebook(
         buttonTextRes = R.string.auth_facebook_button,

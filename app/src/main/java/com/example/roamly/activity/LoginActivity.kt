@@ -1,6 +1,5 @@
 package com.example.roamly.activity
 
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.util.Patterns
@@ -11,34 +10,26 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
-import com.example.roamly.data.models.Profile
 import com.example.roamly.R
+import com.example.roamly.data.utils.SocialAuth
+import com.example.roamly.data.utils.SocialAuthProvider
 import com.example.roamly.data.utils.SupabaseClientProvider
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.google.android.material.textfield.TextInputEditText
-import kotlinx.coroutines.launch
 import io.github.jan.supabase.auth.providers.builtin.Email
-import kotlin.jvm.java
+import kotlinx.coroutines.launch
 
-
-/**
- * Activity responsabile della gestione del login utente tramite email e password.
- * In caso di primo login, reindirizza alla creazione del profilo.
- */
 class LoginActivity : AppCompatActivity() {
 
     private lateinit var emailField: TextInputEditText
     private lateinit var passwordField: TextInputEditText
     private lateinit var loginBtn: MaterialButton
+    private lateinit var googleLoginBtn: MaterialButton
     private lateinit var loginProgress: CircularProgressIndicator
     private var isLoginInProgress = false
 
-    /**
-     * Inizializza la UI e imposta il listener per il bottone di login.
-     */
     override fun onCreate(savedInstanceState: Bundle?) {
-
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_login)
@@ -51,6 +42,7 @@ class LoginActivity : AppCompatActivity() {
         emailField = findViewById(R.id.loginEmail)
         passwordField = findViewById(R.id.loginPassword)
         loginBtn = findViewById(R.id.loginBtn)
+        googleLoginBtn = findViewById(R.id.btnGoogleLogin)
         loginProgress = findViewById(R.id.loginProgress)
 
         loginBtn.setOnClickListener {
@@ -58,13 +50,14 @@ class LoginActivity : AppCompatActivity() {
                 performLogin()
             }
         }
+
+        googleLoginBtn.setOnClickListener {
+            if (!isLoginInProgress) {
+                performSocialLogin(SocialAuthProvider.Google)
+            }
+        }
     }
 
-    /**
-     * Valida i campi di input per email e password.
-     *
-     * @return true se entrambi i campi sono validi, false altrimenti.
-     */
     private fun validateForm(): Boolean {
         var valid = true
         val email = emailField.text.toString().trim()
@@ -87,12 +80,6 @@ class LoginActivity : AppCompatActivity() {
         return valid
     }
 
-// Modifica performLogin in LoginActivity
-
-    /**
-     * Esegue il login tramite Supabase. Se l'utente è nuovo, crea un profilo base.
-     * Altrimenti, reindirizza alla schermata appropriata in base al flag `has_logged_before`.
-     */
     private fun performLogin() {
         val email = emailField.text.toString().trim()
         val password = passwordField.text.toString()
@@ -106,66 +93,7 @@ class LoginActivity : AppCompatActivity() {
                     this.password = password
                 }
 
-                val userId = SupabaseClientProvider.auth.currentUserOrNull()?.id
-
-                if (userId != null) {
-                    val profile = try {
-                        SupabaseClientProvider.db["profiles"]
-                            .select {
-                                filter { eq("id", userId) }
-                            }
-                            .decodeSingleOrNull<Profile>()
-                    } catch (e: Exception) {
-                        null
-                    }
-
-                    if (profile == null) {
-                        // Nessuna riga: crea nuovo profilo base
-                        try {
-                            val newProfile = Profile(
-                                id = userId,
-                                full_name = "",
-                                first_name = "",
-                                last_name = "",
-                                profile_image_url = null,
-                                has_logged_before = false,
-                                age = null,
-                                country = null,
-                                category = null,
-                                vibe = null,
-                                visible = true
-                            )
-
-                            val result = SupabaseClientProvider.db["profiles"]
-                                .insert(newProfile)
-
-                            Log.d("Supabase", "Insert result: $result")
-                        } catch (e: Exception) {
-                            Log.e("Supabase", "Errore creazione profilo", e)
-                            Toast.makeText(this@LoginActivity, "Errore creazione profilo", Toast.LENGTH_SHORT).show()
-                        }
-
-                        startActivity(Intent(this@LoginActivity, MakeProfile1Activity::class.java))
-                        finish()
-
-                    } else {
-                        // Aggiungi flag per indicare che è un nuovo login
-                        val intent = if (!profile.has_logged_before) {
-                            Intent(this@LoginActivity, MakeProfile1Activity::class.java)
-                        } else {
-                            Intent(this@LoginActivity, HomeActivity::class.java).apply {
-                                // Aggiungi flag per indicare che è un fresh login
-                                putExtra("is_fresh_login", true)
-                            }
-                        }
-                        startActivity(intent)
-                        finish()
-                    }
-
-                } else {
-                    Toast.makeText(this@LoginActivity, "Credenziali errate", Toast.LENGTH_SHORT).show()
-                }
-
+                navigateAfterAuthenticated()
             } catch (e: Exception) {
                 Log.e("Login", "Login failed", e)
                 val message = if (e.message.orEmpty().contains("email not confirmed", ignoreCase = true)) {
@@ -182,11 +110,40 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
+    private fun performSocialLogin(provider: SocialAuthProvider) {
+        setLoginLoading(true)
+
+        lifecycleScope.launch {
+            try {
+                SocialAuth.signInWith(provider)
+            } catch (e: Exception) {
+                Log.e("Login", "Social login failed for ${provider.name}", e)
+                Toast.makeText(this@LoginActivity, "Accesso con Google non riuscito", Toast.LENGTH_LONG).show()
+            } finally {
+                if (!isFinishing) {
+                    setLoginLoading(false)
+                }
+            }
+        }
+    }
+
+    private suspend fun navigateAfterAuthenticated() {
+        val nextIntent = AuthSessionNavigator.nextIntent(this)
+        if (nextIntent == null) {
+            Toast.makeText(this, "Credenziali errate", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        startActivity(nextIntent)
+        finish()
+    }
+
     private fun setLoginLoading(isLoading: Boolean) {
         isLoginInProgress = isLoading
         loginBtn.isClickable = !isLoading
         loginBtn.isFocusable = !isLoading
+        googleLoginBtn.isClickable = !isLoading
+        googleLoginBtn.isFocusable = !isLoading
         loginProgress.visibility = if (isLoading) View.VISIBLE else View.GONE
     }
-
 }

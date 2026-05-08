@@ -10,22 +10,22 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.roamly.R
 import com.example.roamly.data.utils.AuthValidation
+import com.example.roamly.data.utils.SocialAuth
+import com.example.roamly.data.utils.SocialAuthProvider
 import com.example.roamly.data.utils.SupabaseClientProvider
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import io.github.jan.supabase.auth.providers.builtin.Email
 import kotlinx.coroutines.launch
 
-/**
- * Activity responsabile della registrazione utente.
- * Gestisce input email/password, validazione e invio dati a Supabase.
- */
 class SignupActivity : AppCompatActivity() {
 
     private lateinit var emailField: TextInputEditText
     private lateinit var passwordField: TextInputEditText
     private lateinit var confirmPasswordField: TextInputEditText
     private lateinit var registerButton: MaterialButton
+    private lateinit var googleSignupButton: MaterialButton
+    private var isAuthInProgress = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,10 +35,17 @@ class SignupActivity : AppCompatActivity() {
         passwordField = findViewById(R.id.registerPassword)
         confirmPasswordField = findViewById(R.id.registerConfirmPassword)
         registerButton = findViewById(R.id.btnRegister)
+        googleSignupButton = findViewById(R.id.btnGoogleSignup)
 
         registerButton.setOnClickListener {
-            if (validateForm()) {
+            if (!isAuthInProgress && validateForm()) {
                 performSignup()
+            }
+        }
+
+        googleSignupButton.setOnClickListener {
+            if (!isAuthInProgress) {
+                performSocialSignup(SocialAuthProvider.Google)
             }
         }
     }
@@ -81,7 +88,7 @@ class SignupActivity : AppCompatActivity() {
             val password = passwordField.text.toString()
 
             try {
-                registerButton.isEnabled = false
+                setAuthButtonsEnabled(false)
 
                 SupabaseClientProvider.auth.currentUserOrNull()?.let {
                     Log.d("Signup", "Utente gia loggato (${it.id}), eseguo logout.")
@@ -98,7 +105,6 @@ class SignupActivity : AppCompatActivity() {
                 }
 
                 showVerificationDialog()
-
             } catch (e: Exception) {
                 Log.e("Signup", "Errore durante signup", e)
                 val message = if (isEmailAlreadyInUse(e)) {
@@ -108,7 +114,21 @@ class SignupActivity : AppCompatActivity() {
                 }
                 Toast.makeText(this@SignupActivity, message, Toast.LENGTH_LONG).show()
             } finally {
-                registerButton.isEnabled = true
+                setAuthButtonsEnabled(true)
+            }
+        }
+    }
+
+    private fun performSocialSignup(provider: SocialAuthProvider) {
+        lifecycleScope.launch {
+            try {
+                setAuthButtonsEnabled(false)
+                SocialAuth.signInWith(provider)
+            } catch (e: Exception) {
+                Log.e("Signup", "Social signup failed for ${provider.name}", e)
+                Toast.makeText(this@SignupActivity, "Accesso con Google non riuscito", Toast.LENGTH_LONG).show()
+            } finally {
+                setAuthButtonsEnabled(true)
             }
         }
     }
@@ -123,6 +143,12 @@ class SignupActivity : AppCompatActivity() {
             }
             .setCancelable(false)
             .show()
+    }
+
+    private fun setAuthButtonsEnabled(enabled: Boolean) {
+        isAuthInProgress = !enabled
+        registerButton.isEnabled = enabled
+        googleSignupButton.isEnabled = enabled
     }
 
     private fun isEmailAlreadyInUse(error: Exception): Boolean {

@@ -22,6 +22,21 @@
             android:name=".activity.HomeActivity"
             android:exported="false" />
         <activity
+            android:name=".activity.AuthCallbackActivity"
+            android:exported="true"
+            android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="auth-callback"
+                    android:scheme="roamly" />
+            </intent-filter>
+        </activity>
+        <activity
             android:name=".activity.MakeProfile4Activity"
             android:exported="false" />
         <activity

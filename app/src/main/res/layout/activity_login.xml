@@ -108,6 +108,21 @@
                     app:indicatorSize="28dp"
                     app:trackThickness="3dp" />
             </FrameLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnGoogleLogin"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="14dp"
+                android:backgroundTint="@color/white"
+                android:fontFamily="@font/roboto_variablefont"
+                android:text="@string/auth_google_button"
+                android:textColor="@color/roamly_black"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:cornerRadius="15dp"
+                app:strokeColor="@color/light_gray"
+                app:strokeWidth="1dp" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 

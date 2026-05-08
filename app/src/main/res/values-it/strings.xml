@@ -1,4 +1,7 @@
 <resources>
     <string name="password_requirements">Almeno 8 caratteri, con maiuscola, minuscola, numero e simbolo.</string>
     <string name="profile_languages_helper">Scegli le lingue con cui comunichi di più.</string>
+    <string name="auth_google_button">GOOGLE</string>
+    <string name="auth_facebook_button">FACEBOOK</string>
+    <string name="auth_callback_loading">Accesso in corso...</string>
 </resources>

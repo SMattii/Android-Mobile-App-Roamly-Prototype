@@ -12,6 +12,7 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
 import android.util.Log
+import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
@@ -57,6 +58,7 @@ import com.mapbox.common.MapboxOptions
 import com.mapbox.geojson.Point
 import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.MapView
+import com.mapbox.maps.ScreenCoordinate
 import com.mapbox.maps.Style
 import com.mapbox.maps.extension.style.style
 import com.mapbox.maps.plugin.animation.flyTo
@@ -159,6 +161,7 @@ class HomeActivity : AppCompatActivity() {
 
         mapView = findViewById(R.id.mapView)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        setupMapDoubleTapEventCreation()
 
         mapView.mapboxMap.loadStyle(
             style(
@@ -274,25 +277,8 @@ class HomeActivity : AppCompatActivity() {
                                 // Al rilascio, nascondi l'icona e mostra le coordinate
                                 draggableEventIcon.visibility = View.GONE
 
-                                val screenPoint = com.mapbox.maps.ScreenCoordinate(
-                                    event.rawX.toDouble(),
-                                    event.rawY.toDouble()
-                                )
-                                val geoCoords = mapView.mapboxMap.coordinateForPixel(screenPoint)
-
-                                eventFragmentContainer.visibility = View.VISIBLE
-
-                                supportFragmentManager.beginTransaction()
-                                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
-                                    .add(
-                                        R.id.eventFragmentContainer,
-                                        EventCreationFragment.newInstance(
-                                            geoCoords.latitude(),
-                                            geoCoords.longitude()
-                                        )
-                                    )
-                                    .addToBackStack("EventCreationFragment")
-                                    .commit()
+                                val geoCoords = coordinateForRawScreenPosition(event.rawX, event.rawY)
+                                showEventCreationFragment(geoCoords.latitude(), geoCoords.longitude())
 
                                 true
                             }
@@ -310,6 +296,64 @@ class HomeActivity : AppCompatActivity() {
      * Verifica se il GPS è attivo e i permessi sono stati concessi.
      * In caso positivo, avvia l’aggiornamento della posizione.
      */
+    @SuppressLint("ClickableViewAccessibility")
+    private fun setupMapDoubleTapEventCreation() {
+        val doubleTapDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onDown(e: MotionEvent): Boolean = true
+
+            override fun onDoubleTap(e: MotionEvent): Boolean {
+                val geoCoords = coordinateForMapPixel(e.x.toDouble(), e.y.toDouble())
+                showEventCreationFragment(geoCoords.latitude(), geoCoords.longitude())
+                return true
+            }
+        })
+
+        mapView.setOnTouchListener { _, event ->
+            doubleTapDetector.onTouchEvent(event)
+            false
+        }
+    }
+
+    private fun coordinateForMapPixel(x: Double, y: Double): Point {
+        return mapView.mapboxMap.coordinateForPixel(ScreenCoordinate(x, y))
+    }
+
+    private fun coordinateForRawScreenPosition(rawX: Float, rawY: Float): Point {
+        val mapLocation = IntArray(2)
+        mapView.getLocationOnScreen(mapLocation)
+        return coordinateForMapPixel(
+            x = (rawX - mapLocation[0]).toDouble(),
+            y = (rawY - mapLocation[1]).toDouble()
+        )
+    }
+
+    private fun showEventCreationFragment(latitude: Double, longitude: Double) {
+        val profileFragmentContainer = findViewById<FrameLayout>(R.id.profileFragmentContainer)
+        val eventFragmentContainer = findViewById<FrameLayout>(R.id.eventFragmentContainer)
+        val chatFragmentContainer = findViewById<FrameLayout>(R.id.chatFragmentContainer)
+
+        supportFragmentManager.popBackStackImmediate(
+            "EventCreationFragment",
+            FragmentManager.POP_BACK_STACK_INCLUSIVE
+        )
+
+        chatFragmentContainer.visibility = View.GONE
+        profileFragmentContainer.visibility = View.GONE
+        eventFragmentContainer.visibility = View.VISIBLE
+
+        removeUserCallout()
+        removeEventCallout()
+
+        supportFragmentManager.beginTransaction()
+            .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
+            .replace(
+                R.id.eventFragmentContainer,
+                EventCreationFragment.newInstance(latitude, longitude)
+            )
+            .addToBackStack("EventCreationFragment")
+            .commit()
+    }
+
     private fun checkLocationAndRequest() {
         Log.d("MapDebug", "checkLocationAndRequest: start")
 

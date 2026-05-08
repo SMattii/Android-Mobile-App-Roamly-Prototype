@@ -11,7 +11,9 @@
         android:layout_height="match_parent"
         app:mapbox_cameraTargetLat="0"
         app:mapbox_cameraTargetLng="0"
-        app:mapbox_cameraZoom="17.0" />
+        app:mapbox_cameraZoom="17.0"
+        app:mapbox_gesturesDoubleTapToZoomInEnabled="false"
+        app:mapbox_gesturesDoubleTouchToZoomOutEnabled="false" />
 
     <!-- Contenitore per i tooltip dinamici (es. profili, eventi) -->
     <FrameLayout

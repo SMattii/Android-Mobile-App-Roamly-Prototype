@@ -11,8 +11,6 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.roamly.R
-import com.example.roamly.data.utils.SocialAuth
-import com.example.roamly.data.utils.SocialAuthProvider
 import com.example.roamly.data.utils.SupabaseClientProvider
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.progressindicator.CircularProgressIndicator
@@ -25,7 +23,6 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var emailField: TextInputEditText
     private lateinit var passwordField: TextInputEditText
     private lateinit var loginBtn: MaterialButton
-    private lateinit var googleLoginBtn: MaterialButton
     private lateinit var loginProgress: CircularProgressIndicator
     private var isLoginInProgress = false
 
@@ -42,18 +39,11 @@ class LoginActivity : AppCompatActivity() {
         emailField = findViewById(R.id.loginEmail)
         passwordField = findViewById(R.id.loginPassword)
         loginBtn = findViewById(R.id.loginBtn)
-        googleLoginBtn = findViewById(R.id.btnGoogleLogin)
         loginProgress = findViewById(R.id.loginProgress)
 
         loginBtn.setOnClickListener {
             if (!isLoginInProgress && validateForm()) {
                 performLogin()
-            }
-        }
-
-        googleLoginBtn.setOnClickListener {
-            if (!isLoginInProgress) {
-                performSocialLogin(SocialAuthProvider.Google)
             }
         }
     }
@@ -110,23 +100,6 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    private fun performSocialLogin(provider: SocialAuthProvider) {
-        setLoginLoading(true)
-
-        lifecycleScope.launch {
-            try {
-                SocialAuth.signInWith(provider)
-            } catch (e: Exception) {
-                Log.e("Login", "Social login failed for ${provider.name}", e)
-                Toast.makeText(this@LoginActivity, "Accesso con Google non riuscito", Toast.LENGTH_LONG).show()
-            } finally {
-                if (!isFinishing) {
-                    setLoginLoading(false)
-                }
-            }
-        }
-    }
-
     private suspend fun navigateAfterAuthenticated() {
         val nextIntent = AuthSessionNavigator.nextIntent(this)
         if (nextIntent == null) {
@@ -142,8 +115,6 @@ class LoginActivity : AppCompatActivity() {
         isLoginInProgress = isLoading
         loginBtn.isClickable = !isLoading
         loginBtn.isFocusable = !isLoading
-        googleLoginBtn.isClickable = !isLoading
-        googleLoginBtn.isFocusable = !isLoading
         loginProgress.visibility = if (isLoading) View.VISIBLE else View.GONE
     }
 }

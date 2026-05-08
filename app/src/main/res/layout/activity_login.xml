@@ -121,6 +121,11 @@
                 android:textSize="16sp"
                 android:textStyle="bold"
                 app:cornerRadius="15dp"
+                app:icon="@drawable/ic_google"
+                app:iconGravity="textStart"
+                app:iconPadding="10dp"
+                app:iconSize="22dp"
+                app:iconTint="@null"
                 app:strokeColor="@color/light_gray"
                 app:strokeWidth="1dp" />
         </LinearLayout>

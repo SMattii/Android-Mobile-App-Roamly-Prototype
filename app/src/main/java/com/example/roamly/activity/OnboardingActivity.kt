@@ -2,12 +2,19 @@ package com.example.roamly.activity
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import com.example.roamly.R
+import com.example.roamly.data.utils.SocialAuth
+import com.example.roamly.data.utils.SocialAuthProvider
+import com.google.android.material.button.MaterialButton
+import kotlinx.coroutines.launch
 import kotlin.jvm.java
 
 /**
@@ -17,6 +24,8 @@ import kotlin.jvm.java
  * gestisce la navigazione verso le activity di Login e Signup.
  */
 class OnboardingActivity : AppCompatActivity() {
+
+    private var isAuthInProgress = false
 
     /**
      * Callback invocato alla creazione dell'activity.
@@ -36,6 +45,7 @@ class OnboardingActivity : AppCompatActivity() {
 
         val btnLogin = findViewById<Button>(R.id.btnLogin)
         val btnRegister = findViewById<Button>(R.id.btnRegister)
+        val btnGoogle = findViewById<MaterialButton>(R.id.btnGoogleOnboarding)
 
         // Navigazione alla LoginActivity
         btnLogin.setOnClickListener {
@@ -50,5 +60,26 @@ class OnboardingActivity : AppCompatActivity() {
             startActivity(intent)
             finish()
         }
+
+        btnGoogle.setOnClickListener {
+            if (!isAuthInProgress) {
+                lifecycleScope.launch {
+                    try {
+                        setAuthButtonsEnabled(false, btnLogin, btnRegister, btnGoogle)
+                        SocialAuth.signInWith(SocialAuthProvider.Google)
+                    } catch (e: Exception) {
+                        Log.e("Onboarding", "Google auth failed", e)
+                        Toast.makeText(this@OnboardingActivity, "Accesso con Google non riuscito", Toast.LENGTH_LONG).show()
+                    } finally {
+                        setAuthButtonsEnabled(true, btnLogin, btnRegister, btnGoogle)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun setAuthButtonsEnabled(enabled: Boolean, vararg buttons: Button) {
+        isAuthInProgress = !enabled
+        buttons.forEach { it.isEnabled = enabled }
     }
 }

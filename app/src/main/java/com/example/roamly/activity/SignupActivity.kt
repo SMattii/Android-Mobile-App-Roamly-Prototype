@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.roamly.R
+import com.example.roamly.data.utils.AuthSessionCache
 import com.example.roamly.data.utils.AuthValidation
 import com.example.roamly.data.utils.SocialAuth
 import com.example.roamly.data.utils.SocialAuthProvider
@@ -93,6 +94,7 @@ class SignupActivity : AppCompatActivity() {
                 SupabaseClientProvider.auth.currentUserOrNull()?.let {
                     Log.d("Signup", "Utente gia loggato (${it.id}), eseguo logout.")
                     SupabaseClientProvider.auth.signOut()
+                    AuthSessionCache.clear(this@SignupActivity)
                 }
 
                 SupabaseClientProvider.auth.signUpWith(Email) {
@@ -102,6 +104,7 @@ class SignupActivity : AppCompatActivity() {
 
                 SupabaseClientProvider.auth.currentUserOrNull()?.let {
                     SupabaseClientProvider.auth.signOut()
+                    AuthSessionCache.clear(this@SignupActivity)
                 }
 
                 showVerificationDialog()

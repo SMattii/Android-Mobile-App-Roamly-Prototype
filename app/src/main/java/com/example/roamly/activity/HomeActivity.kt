@@ -36,6 +36,7 @@ import com.example.roamly.data.models.NearbyUser
 import com.example.roamly.data.models.Profile
 import com.example.roamly.R
 import com.example.roamly.BuildConfig
+import com.example.roamly.data.utils.AuthSessionCache
 import com.example.roamly.data.utils.SupabaseClientProvider
 import com.example.roamly.data.repository.ProfileRepository
 import com.example.roamly.data.utils.EventAnnotationManager
@@ -136,8 +137,20 @@ class HomeActivity : AppCompatActivity() {
 
         if (currentUser == null) {
             Log.d("MapDebug", "onCreate: No authenticated user, redirecting to login")
+            AuthSessionCache.clear(this)
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
+            return
+        }
+
+        if (AuthSessionCache.isExpired(this, currentUser.id)) {
+            lifecycleScope.launch {
+                runCatching { SupabaseClientProvider.auth.signOut() }
+                    .onFailure { Log.e("HomeActivity", "Expired session sign out failed", it) }
+                AuthSessionCache.clear(this@HomeActivity)
+                startActivity(Intent(this@HomeActivity, OnboardingActivity::class.java))
+                finish()
+            }
             return
         }
 
@@ -842,7 +855,18 @@ class HomeActivity : AppCompatActivity() {
 
         if (currentUser == null) {
             Log.d("MapDebug", "onResume: No authenticated user, resetting map state")
+            AuthSessionCache.clear(this)
             resetMapState()
+        } else if (AuthSessionCache.isExpired(this, currentUser.id)) {
+            Log.d("MapDebug", "onResume: Cached session expired, signing out")
+            lifecycleScope.launch {
+                runCatching { SupabaseClientProvider.auth.signOut() }
+                    .onFailure { Log.e("HomeActivity", "Expired session sign out failed", it) }
+                AuthSessionCache.clear(this@HomeActivity)
+                resetMapState()
+                startActivity(Intent(this@HomeActivity, OnboardingActivity::class.java))
+                finish()
+            }
         } else {
             Log.d("MapDebug", "onResume: User authenticated, checking location")
 

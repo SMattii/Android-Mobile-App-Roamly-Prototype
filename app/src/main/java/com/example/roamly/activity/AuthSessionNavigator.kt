@@ -4,19 +4,60 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import com.example.roamly.data.models.Profile
+import com.example.roamly.data.utils.AuthSessionCache
 import com.example.roamly.data.utils.SupabaseClientProvider
 
 internal object AuthSessionNavigator {
 
-    suspend fun nextIntent(context: Context): Intent? {
+    suspend fun nextIntent(context: Context, isFreshLogin: Boolean = true): Intent? {
         val userId = SupabaseClientProvider.auth.currentUserOrNull()?.id ?: return null
         val profile = loadOrCreateProfile(userId)
+        AuthSessionCache.rememberProfile(context, profile)
+        return intentForProfile(context, profile, isFreshLogin)
+    }
 
+    suspend fun startupIntent(context: Context): Intent? {
+        val userId = SupabaseClientProvider.auth.currentUserOrNull()?.id ?: run {
+            AuthSessionCache.clear(context)
+            return null
+        }
+
+        if (AuthSessionCache.isExpired(context, userId)) {
+            runCatching { SupabaseClientProvider.auth.signOut() }
+                .onFailure { Log.e("AuthSessionNavigator", "Expired session sign out failed", it) }
+            AuthSessionCache.clear(context)
+            return null
+        }
+
+        AuthSessionCache.cachedHasLoggedBefore(context, userId)?.let { hasLoggedBefore ->
+            return intentForProfileState(context, hasLoggedBefore, isFreshLogin = false)
+        }
+
+        val profile = loadOrCreateProfile(userId)
+        AuthSessionCache.rememberProfile(context, profile)
+        return intentForProfile(context, profile, isFreshLogin = false)
+    }
+
+    private fun intentForProfile(context: Context, profile: Profile, isFreshLogin: Boolean): Intent {
         return if (!profile.has_logged_before) {
             Intent(context, MakeProfile1Activity::class.java)
         } else {
             Intent(context, HomeActivity::class.java).apply {
-                putExtra("is_fresh_login", true)
+                putExtra("is_fresh_login", isFreshLogin)
+            }
+        }
+    }
+
+    private fun intentForProfileState(
+        context: Context,
+        hasLoggedBefore: Boolean,
+        isFreshLogin: Boolean
+    ): Intent {
+        return if (!hasLoggedBefore) {
+            Intent(context, MakeProfile1Activity::class.java)
+        } else {
+            Intent(context, HomeActivity::class.java).apply {
+                putExtra("is_fresh_login", isFreshLogin)
             }
         }
     }

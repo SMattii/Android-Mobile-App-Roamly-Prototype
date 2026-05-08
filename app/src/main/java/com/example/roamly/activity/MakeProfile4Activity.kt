@@ -10,6 +10,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.roamly.data.models.Profile
 import com.example.roamly.R
+import com.example.roamly.data.utils.AuthSessionCache
 import com.example.roamly.data.utils.SupabaseClientProvider
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.materialswitch.MaterialSwitch
@@ -136,6 +137,7 @@ class MakeProfile4Activity : AppCompatActivity() {
             }
 
             Log.d("SupabaseUpdate", "Update result: $result")
+            AuthSessionCache.rememberProfile(this, updatedProfile)
             Toast.makeText(this, "Profilo aggiornato!", Toast.LENGTH_SHORT).show()
 
             val intent = Intent(this@MakeProfile4Activity, HomeActivity::class.java)

@@ -20,6 +20,7 @@ import com.example.roamly.adapter.LanguageAdapter
 import com.example.roamly.data.models.*
 import com.example.roamly.data.repository.InterestRepository
 import com.example.roamly.data.repository.ProfileRepository
+import com.example.roamly.data.utils.AuthSessionCache
 import com.example.roamly.data.utils.AuthValidation
 import com.example.roamly.data.utils.LanguageProvider
 import com.example.roamly.data.utils.SupabaseClientProvider
@@ -144,6 +145,7 @@ class ProfileEditFragment : Fragment() {
 
                     // Fai logout
                     SupabaseClientProvider.auth.signOut()
+                    AuthSessionCache.clear(requireContext())
 
                     // Redirect a OnboardingActivity
                     val intent = Intent(requireContext(), OnboardingActivity::class.java)

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="128dp"
+    android:height="128dp"
+    android:viewportWidth="128"
+    android:viewportHeight="128">
+    <path
+        android:fillColor="@color/roamly_blush"
+        android:pathData="M64,64m-64,0a64,64 0,1 1,128 0a64,64 0,1 1,-128 0" />
+    <path
+        android:fillColor="@color/roamly_red"
+        android:pathData="M64,68c-13.8,0 -25,-11.2 -25,-25s11.2,-25 25,-25 25,11.2 25,25 -11.2,25 -25,25zM20,112c2.7,-22.6 21.4,-36 44,-36s41.3,13.4 44,36H20z" />
+</vector>

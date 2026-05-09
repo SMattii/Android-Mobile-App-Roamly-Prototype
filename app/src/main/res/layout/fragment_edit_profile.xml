@@ -1,290 +1,583 @@
-<!-- Layout scrollabile per la schermata profilo -->
+<?xml version="1.0" encoding="utf-8"?>
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/profileScrollView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/app_background"
+    android:clipToPadding="false"
     android:fillViewport="true"
-    android:background="@color/white">
+    android:paddingTop="40dp"
+    android:paddingBottom="136dp">
 
-    <!-- Contenitore verticale dei contenuti del profilo -->
     <LinearLayout
         android:id="@+id/profileContentLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:padding="24dp"
-        android:gravity="center_horizontal">
+        android:paddingStart="18dp"
+        android:paddingEnd="18dp">
 
-        <!-- Titolo schermata -->
-        <TextView
-            android:id="@+id/profileTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Your Profile"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/black"
-            android:layout_marginBottom="16dp" />
-
-        <!-- Immagine del profilo (cliccabile) -->
-        <com.google.android.material.imageview.ShapeableImageView
-            android:id="@+id/profileImageView"
-            android:layout_width="120dp"
-            android:layout_height="120dp"
-            android:src="@drawable/ic_add_photo"
-            android:scaleType="centerCrop"
-            android:layout_marginBottom="24dp"
-            android:clickable="true"
-            android:focusable="true"
-            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.Circle"
-            app:strokeWidth="2dp"
-            app:strokeColor="@color/roamly_peach" />
-
-        <!-- Campo: nome -->
-        <com.google.android.material.textfield.TextInputLayout
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="First Name"
-            android:layout_marginBottom="12dp">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/firstNameField"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-        </com.google.android.material.textfield.TextInputLayout>
+            android:layout_marginBottom="14dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-        <!-- Campo: cognome -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Last Name"
-            android:layout_marginBottom="12dp">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/lastNameField"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <!-- Età utente (testo + slider) -->
-        <TextView
-            android:id="@+id/ageValueText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Age: 18"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
-
-        <com.google.android.material.slider.Slider
-            android:id="@+id/ageSlider"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:valueFrom="18"
-            android:valueTo="99"
-            android:stepSize="1"
-            android:value="18"
-            android:layout_marginBottom="24dp" />
-
-        <!-- Campo: paese (non modificabile) -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Country"
-            android:layout_marginBottom="12dp"
-            app:endIconMode="dropdown_menu">
-            <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                android:id="@+id/countryDropdown"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="12dp"
-                android:inputType="none"
-                android:focusable="false"
-                android:enabled="false" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <!-- Campo: categoria (non modificabile) -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Category"
-            android:layout_marginBottom="12dp"
-            app:endIconMode="dropdown_menu">
-            <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                android:id="@+id/categoryDropdown"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="12dp"
-                android:inputType="none"
-                android:focusable="false"
-                android:enabled="false" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <!-- Toggle per selezionare il tipo di vibe -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Vibe"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
-
-        <com.google.android.material.button.MaterialButtonToggleGroup
-            android:id="@+id/vibeToggleGroup"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            app:singleSelection="true">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/vibeChill"
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Chill"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/profileTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/profile_title"
+                    android:textColor="@color/roamly_black"
+                    android:textSize="30sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/profile_subtitle"
+                    android:textColor="@color/gray"
+                    android:textSize="15sp" />
+            </LinearLayout>
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/vibeParty"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Party"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
-        </com.google.android.material.button.MaterialButtonToggleGroup>
+                android:id="@+id/btnCloseProfile"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:minWidth="0dp"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:text="@string/profile_close"
+                android:textAllCaps="false"
+                android:textColor="@color/roamly_black" />
+        </LinearLayout>
 
-        <!-- Sezione: lingue preferite -->
-        <TextView
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Languages"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
+            android:layout_marginBottom="14dp"
+            app:cardBackgroundColor="@color/white"
+            app:cardCornerRadius="22dp"
+            app:cardElevation="6dp"
+            app:strokeColor="#1F2E282A"
+            app:strokeWidth="1dp">
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/languagesDropdownLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:hint="Add Language"
-            app:endIconMode="dropdown_menu">
-            <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                android:id="@+id/languagesDropdown"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="none"
-                android:focusable="false"
-                android:padding="12dp" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:padding="22dp">
 
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/selectedLanguagesChipGroup"
+                <FrameLayout
+                    android:layout_width="136dp"
+                    android:layout_height="136dp"
+                    android:layout_marginBottom="14dp">
+
+                    <com.google.android.material.imageview.ShapeableImageView
+                        android:id="@+id/profileImageView"
+                        android:layout_width="128dp"
+                        android:layout_height="128dp"
+                        android:layout_gravity="center"
+                        android:clickable="true"
+                        android:contentDescription="@string/profile_photo_content_description"
+                        android:focusable="true"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_profile_photo_placeholder"
+                        app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.Circle"
+                        app:strokeColor="@color/roamly_red"
+                        app:strokeWidth="3dp" />
+
+                    <TextView
+                        android:id="@+id/profilePhotoHint"
+                        android:layout_width="wrap_content"
+                        android:layout_height="32dp"
+                        android:layout_gravity="bottom|center_horizontal"
+                        android:background="@drawable/bg_profile_photo_badge"
+                        android:gravity="center"
+                        android:minWidth="92dp"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:text="@string/profile_photo_edit"
+                        android:textColor="@color/white"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/profileDisplayName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="@string/profile_display_name_empty"
+                    android:textColor="@color/roamly_black"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/profileDetailsText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:gravity="center"
+                    android:text="@string/profile_details_empty"
+                    android:textColor="@color/gray"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            app:chipSpacingHorizontal="8dp"
-            app:chipSpacingVertical="8dp"
-            app:singleLine="false" />
+            android:layout_marginBottom="14dp"
+            app:cardBackgroundColor="@color/white"
+            app:cardCornerRadius="18dp"
+            app:cardElevation="0dp"
+            app:strokeColor="#1F2E282A"
+            app:strokeWidth="1dp">
 
-        <!-- Sezione: interessi -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Interests"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/interestsDropdownLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:hint="Add Interest"
-            app:endIconMode="dropdown_menu">
-            <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                android:id="@+id/interestsDropdown"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="none"
-                android:focusable="false"
-                android:padding="12dp" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:orientation="vertical"
+                android:padding="18dp">
 
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/selectedInterestsChipGroup"
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="14dp"
+                    android:text="@string/profile_section_identity"
+                    android:textColor="@color/roamly_black"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:hint="@string/profile_first_name_hint"
+                    app:boxBackgroundColor="@color/white"
+                    app:boxBackgroundMode="outline"
+                    app:boxCornerRadiusBottomEnd="14dp"
+                    app:boxCornerRadiusBottomStart="14dp"
+                    app:boxCornerRadiusTopEnd="14dp"
+                    app:boxCornerRadiusTopStart="14dp"
+                    app:boxStrokeColor="@color/roamly_black"
+                    app:hintTextColor="@color/gray"
+                    app:startIconDrawable="@drawable/ic_user"
+                    app:startIconTint="@color/text_input_icon_tint">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/firstNameField"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textCapWords"
+                        android:maxLines="1"
+                        android:textColor="@color/roamly_black"
+                        android:textSize="16sp" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:hint="@string/profile_last_name_hint"
+                    app:boxBackgroundColor="@color/white"
+                    app:boxBackgroundMode="outline"
+                    app:boxCornerRadiusBottomEnd="14dp"
+                    app:boxCornerRadiusBottomStart="14dp"
+                    app:boxCornerRadiusTopEnd="14dp"
+                    app:boxCornerRadiusTopStart="14dp"
+                    app:boxStrokeColor="@color/roamly_black"
+                    app:hintTextColor="@color/gray"
+                    app:startIconDrawable="@drawable/ic_user"
+                    app:startIconTint="@color/text_input_icon_tint">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/lastNameField"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textCapWords"
+                        android:maxLines="1"
+                        android:textColor="@color/roamly_black"
+                        android:textSize="16sp" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <TextView
+                    android:id="@+id/ageValueText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginBottom="8dp"
+                    android:background="@drawable/bg_age_value_pill"
+                    android:gravity="center"
+                    android:minWidth="112dp"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:text="@string/profile_age_initial"
+                    android:textColor="@color/roamly_black"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/ageSlider"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="14dp"
+                    android:stepSize="1"
+                    android:value="18"
+                    android:valueFrom="18"
+                    android:valueTo="99"
+                    app:haloColor="#26EF3E36"
+                    app:thumbColor="@color/roamly_red"
+                    app:tickColor="#1F2E282A"
+                    app:trackColorActive="@color/roamly_black"
+                    app:trackColorInactive="@color/light_gray" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:hint="@string/profile_country_hint"
+                    app:boxBackgroundColor="@color/white"
+                    app:boxBackgroundMode="outline"
+                    app:boxCornerRadiusBottomEnd="14dp"
+                    app:boxCornerRadiusBottomStart="14dp"
+                    app:boxCornerRadiusTopEnd="14dp"
+                    app:boxCornerRadiusTopStart="14dp"
+                    app:boxStrokeColor="@color/roamly_black"
+                    app:endIconMode="none"
+                    app:hintTextColor="@color/gray"
+                    app:startIconDrawable="@drawable/ic_flag_default"
+                    app:startIconTint="@color/text_input_icon_tint">
+
+                    <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                        android:id="@+id/countryDropdown"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:enabled="false"
+                        android:inputType="none"
+                        android:textColor="@color/roamly_black"
+                        android:textSize="16sp" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/profile_category_hint"
+                    app:boxBackgroundColor="@color/white"
+                    app:boxBackgroundMode="outline"
+                    app:boxCornerRadiusBottomEnd="14dp"
+                    app:boxCornerRadiusBottomStart="14dp"
+                    app:boxCornerRadiusTopEnd="14dp"
+                    app:boxCornerRadiusTopStart="14dp"
+                    app:boxStrokeColor="@color/roamly_black"
+                    app:endIconMode="none"
+                    app:hintTextColor="@color/gray"
+                    app:startIconDrawable="@drawable/ic_category_other"
+                    app:startIconTint="@color/text_input_icon_tint">
+
+                    <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                        android:id="@+id/categoryDropdown"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:enabled="false"
+                        android:inputType="none"
+                        android:textColor="@color/roamly_black"
+                        android:textSize="16sp" />
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            app:chipSpacingHorizontal="8dp"
-            app:chipSpacingVertical="8dp"
-            app:singleLine="false" />
+            android:layout_marginBottom="14dp"
+            app:cardBackgroundColor="@color/white"
+            app:cardCornerRadius="18dp"
+            app:cardElevation="0dp"
+            app:strokeColor="#1F2E282A"
+            app:strokeWidth="1dp">
 
-        <!-- Switch visibilità profilo -->
-        <com.google.android.material.materialswitch.MaterialSwitch
-            android:id="@+id/visibleSwitch"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Visible to others"
-            android:layout_marginBottom="32dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="18dp">
 
-        <!-- Bottone salva modifiche -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/saveButton"
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="14dp"
+                    android:text="@string/profile_section_social"
+                    android:textColor="@color/roamly_black"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/profile_vibe_label"
+                    android:textColor="@color/gray"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.button.MaterialButtonToggleGroup
+                    android:id="@+id/vibeToggleGroup"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="18dp"
+                    app:selectionRequired="false"
+                    app:singleSelection="true">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/vibeChill"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="46dp"
+                        android:layout_weight="1"
+                        android:text="@string/profile_vibe_chill"
+                        android:textAllCaps="false"
+                        android:textColor="@color/roamly_black"
+                        app:cornerRadius="14dp"
+                        app:icon="@drawable/ic_event_chill"
+                        app:iconGravity="textStart"
+                        app:iconTint="@color/text_input_icon_tint"
+                        app:strokeColor="@color/roamly_black" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/vibeParty"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="46dp"
+                        android:layout_weight="1"
+                        android:text="@string/profile_vibe_party"
+                        android:textAllCaps="false"
+                        android:textColor="@color/roamly_black"
+                        app:cornerRadius="14dp"
+                        app:icon="@drawable/ic_event_party"
+                        app:iconGravity="textStart"
+                        app:iconTint="@color/text_input_icon_tint"
+                        app:strokeColor="@color/roamly_black" />
+                </com.google.android.material.button.MaterialButtonToggleGroup>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/languagesDropdownLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:hint="@string/profile_languages_hint_field"
+                    app:boxBackgroundColor="@color/white"
+                    app:boxBackgroundMode="outline"
+                    app:boxCornerRadiusBottomEnd="14dp"
+                    app:boxCornerRadiusBottomStart="14dp"
+                    app:boxCornerRadiusTopEnd="14dp"
+                    app:boxCornerRadiusTopStart="14dp"
+                    app:boxStrokeColor="@color/roamly_black"
+                    app:endIconMode="dropdown_menu"
+                    app:endIconTint="@color/text_input_icon_tint"
+                    app:helperText="@string/profile_languages_helper"
+                    app:hintTextColor="@color/gray"
+                    app:startIconDrawable="@drawable/ic_flag_default"
+                    app:startIconTint="@color/text_input_icon_tint">
+
+                    <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                        android:id="@+id/languagesDropdown"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clickable="true"
+                        android:cursorVisible="false"
+                        android:dropDownHeight="312dp"
+                        android:dropDownVerticalOffset="4dp"
+                        android:inputType="none"
+                        android:popupBackground="@drawable/bg_dropdown_popup"
+                        android:textColor="@color/roamly_black"
+                        android:textSize="16sp" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <TextView
+                    android:id="@+id/selectedLanguagesEmptyText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:text="@string/profile_languages_empty"
+                    android:textColor="@color/dark_gray"
+                    android:textSize="13sp" />
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/selectedLanguagesChipGroup"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="18dp"
+                    app:chipSpacingHorizontal="8dp"
+                    app:chipSpacingVertical="8dp"
+                    app:singleLine="false" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/interestsDropdownLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:hint="@string/profile_interests_hint_field"
+                    app:boxBackgroundColor="@color/white"
+                    app:boxBackgroundMode="outline"
+                    app:boxCornerRadiusBottomEnd="14dp"
+                    app:boxCornerRadiusBottomStart="14dp"
+                    app:boxCornerRadiusTopEnd="14dp"
+                    app:boxCornerRadiusTopStart="14dp"
+                    app:boxStrokeColor="@color/roamly_black"
+                    app:endIconMode="dropdown_menu"
+                    app:endIconTint="@color/text_input_icon_tint"
+                    app:helperText="@string/profile_interests_helper"
+                    app:hintTextColor="@color/gray"
+                    app:startIconDrawable="@drawable/ic_interest_default"
+                    app:startIconTint="@color/text_input_icon_tint">
+
+                    <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                        android:id="@+id/interestsDropdown"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clickable="true"
+                        android:cursorVisible="false"
+                        android:dropDownHeight="312dp"
+                        android:dropDownVerticalOffset="4dp"
+                        android:inputType="none"
+                        android:popupBackground="@drawable/bg_dropdown_popup"
+                        android:textColor="@color/roamly_black"
+                        android:textSize="16sp" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <TextView
+                    android:id="@+id/selectedInterestsEmptyText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:text="@string/profile_interests_empty"
+                    android:textColor="@color/dark_gray"
+                    android:textSize="13sp" />
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/selectedInterestsChipGroup"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:chipSpacingHorizontal="8dp"
+                    app:chipSpacingVertical="8dp"
+                    app:singleLine="false" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Save"
-            android:textSize="16sp"
-            android:textColor="@android:color/white"
-            android:backgroundTint="@color/roamly_red"
-            app:cornerRadius="12dp"
-            android:layout_marginBottom="12dp" />
+            android:layout_marginBottom="14dp"
+            app:cardBackgroundColor="@color/white"
+            app:cardCornerRadius="18dp"
+            app:cardElevation="0dp"
+            app:strokeColor="#1F2E282A"
+            app:strokeWidth="1dp">
 
-        <!-- Bottone chiudi profilo -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnCloseProfile"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/visibleSwitch"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/profile_visible"
+                    android:textColor="@color/roamly_black"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:thumbTint="@color/roamly_red"
+                    app:trackTint="@color/light_gray" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/saveButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="54dp"
+                    android:layout_marginTop="18dp"
+                    android:backgroundTint="@color/roamly_red"
+                    android:text="@string/profile_save"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="16dp"
+                    app:icon="@drawable/ic_profile"
+                    app:iconGravity="textStart"
+                    app:iconTint="@color/white" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Close"
-            android:textColor="@android:color/white"
-            android:backgroundTint="@color/black"
-            app:cornerRadius="12dp"
-            android:layout_marginBottom="32dp" />
+            android:layout_marginBottom="22dp"
+            app:cardBackgroundColor="@color/white"
+            app:cardCornerRadius="18dp"
+            app:cardElevation="0dp"
+            app:strokeColor="#1F2E282A"
+            app:strokeWidth="1dp">
 
-        <!-- Linea divisoria -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@android:color/darker_gray"
-            android:layout_marginTop="24dp"
-            android:layout_marginBottom="16dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="18dp">
 
-        <!-- Titolo sezione gestione account -->
-        <TextView
-            android:id="@+id/accountSettingsTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Account Settings"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/black"
-            android:layout_marginBottom="12dp" />
+                <TextView
+                    android:id="@+id/accountSettingsTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:text="@string/profile_account_title"
+                    android:textColor="@color/roamly_black"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
 
-        <!-- Bottone cambio password -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnChangePassword"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Change Password"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_marginBottom="8dp" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnChangePassword"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:layout_marginBottom="10dp"
+                    android:text="@string/profile_change_password"
+                    android:textAllCaps="false"
+                    android:textColor="@color/roamly_black"
+                    app:cornerRadius="14dp"
+                    app:icon="@drawable/ic_lock"
+                    app:iconGravity="textStart"
+                    app:iconTint="@color/text_input_icon_tint"
+                    app:strokeColor="@color/roamly_black" />
 
-        <!-- Bottone logout -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnLogout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Logout"
-            android:textColor="@android:color/white"
-            android:backgroundTint="@color/black"
-            app:cornerRadius="12dp"
-            android:layout_marginBottom="150dp" />
-
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnLogout"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:text="@string/profile_logout"
+                    android:textAllCaps="false"
+                    android:textColor="@color/roamly_red"
+                    app:cornerRadius="14dp"
+                    app:icon="@drawable/ic_profile"
+                    app:iconGravity="textStart"
+                    app:iconTint="@color/roamly_red"
+                    app:strokeColor="@color/roamly_red" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

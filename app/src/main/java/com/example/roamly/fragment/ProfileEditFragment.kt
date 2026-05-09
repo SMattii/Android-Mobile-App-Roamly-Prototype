@@ -1,14 +1,19 @@
 package com.example.roamly.fragment
 
 import android.app.AlertDialog
+import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.net.Uri
 import android.os.Bundle
+import android.text.InputType
 import android.util.Log
 import android.view.*
+import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
@@ -53,6 +58,9 @@ class ProfileEditFragment : Fragment() {
     private val interestRepository = InterestRepository
 
     private lateinit var profileImageView: ShapeableImageView
+    private lateinit var profilePhotoHint: TextView
+    private lateinit var profileDisplayName: TextView
+    private lateinit var profileDetailsText: TextView
     private lateinit var firstNameField: TextInputEditText
     private lateinit var lastNameField: TextInputEditText
     private lateinit var ageSlider: Slider
@@ -64,6 +72,8 @@ class ProfileEditFragment : Fragment() {
     private lateinit var interestsDropdown: MaterialAutoCompleteTextView
     private lateinit var selectedLanguagesChipGroup: ChipGroup
     private lateinit var selectedInterestsChipGroup: ChipGroup
+    private lateinit var selectedLanguagesEmptyText: TextView
+    private lateinit var selectedInterestsEmptyText: TextView
     private lateinit var visibleSwitch: MaterialSwitch
     private lateinit var saveButton: Button
     private lateinit var btnClose: Button
@@ -81,6 +91,7 @@ class ProfileEditFragment : Fragment() {
     private var currentProfile: Profile? = null
 
     private var selectedImageUri: Uri? = null
+    private var isSaving = false
 
     private val imagePickerLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
@@ -104,6 +115,9 @@ class ProfileEditFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         bindViews(view)
+        configureSelectionFields()
+        setupHeaderLiveUpdates()
+        updateSelectionEmptyStates()
 
         // Permette selezione immagine e avvia upload
         profileImageView.setOnClickListener {
@@ -207,6 +221,9 @@ class ProfileEditFragment : Fragment() {
      */
     private fun bindViews(view: View) {
         profileImageView = view.findViewById(R.id.profileImageView)
+        profilePhotoHint = view.findViewById(R.id.profilePhotoHint)
+        profileDisplayName = view.findViewById(R.id.profileDisplayName)
+        profileDetailsText = view.findViewById(R.id.profileDetailsText)
         firstNameField = view.findViewById(R.id.firstNameField)
         lastNameField = view.findViewById(R.id.lastNameField)
         ageSlider = view.findViewById(R.id.ageSlider)
@@ -218,11 +235,56 @@ class ProfileEditFragment : Fragment() {
         interestsDropdown = view.findViewById(R.id.interestsDropdown)
         selectedLanguagesChipGroup = view.findViewById(R.id.selectedLanguagesChipGroup)
         selectedInterestsChipGroup = view.findViewById(R.id.selectedInterestsChipGroup)
+        selectedLanguagesEmptyText = view.findViewById(R.id.selectedLanguagesEmptyText)
+        selectedInterestsEmptyText = view.findViewById(R.id.selectedInterestsEmptyText)
         visibleSwitch = view.findViewById(R.id.visibleSwitch)
         saveButton = view.findViewById(R.id.saveButton)
         btnClose = view.findViewById(R.id.btnCloseProfile)
         btnChangePassword = view.findViewById(R.id.btnChangePassword)
         btnLogout = view.findViewById(R.id.btnLogout)
+    }
+
+    private fun configureSelectionFields() {
+        configureDropdown(languagesDropdown)
+        configureDropdown(interestsDropdown)
+
+        ageSlider.addOnChangeListener { _, value, _ ->
+            ageValueText.text = getString(R.string.profile_age_value, value.toInt())
+            updateProfileSummary()
+        }
+    }
+
+    private fun configureDropdown(dropdown: MaterialAutoCompleteTextView) {
+        dropdown.inputType = InputType.TYPE_NULL
+        dropdown.keyListener = null
+        dropdown.showSoftInputOnFocus = false
+        dropdown.isCursorVisible = false
+        dropdown.isClickable = true
+        dropdown.threshold = 0
+        dropdown.dropDownHeight = dp(312)
+        dropdown.setDropDownBackgroundDrawable(
+            ContextCompat.getDrawable(requireContext(), R.drawable.bg_dropdown_popup)
+        )
+        dropdown.setOnClickListener {
+            hideKeyboard(it)
+            dropdown.showDropDown()
+        }
+    }
+
+    private fun setupHeaderLiveUpdates() {
+        firstNameField.doAfterTextChanged { updateProfileSummary() }
+        lastNameField.doAfterTextChanged { updateProfileSummary() }
+        vibeToggleGroup.addOnButtonCheckedListener { _, _, _ -> updateProfileSummary() }
+    }
+
+    private fun hideKeyboard(view: View) {
+        val inputManager =
+            requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        inputManager.hideSoftInputFromWindow(view.windowToken, 0)
+    }
+
+    private fun dp(value: Int): Int {
+        return (value * resources.displayMetrics.density).toInt()
     }
 
     /**
@@ -242,6 +304,7 @@ class ProfileEditFragment : Fragment() {
             }
             languagesDropdown.setText("", false)
             languagesDropdown.clearFocus()
+            updateSelectionEmptyStates()
         }
     }
 
@@ -268,13 +331,16 @@ class ProfileEditFragment : Fragment() {
             isCloseIconVisible = true
             isClickable = true
             isCheckable = false
+            applySelectionChipStyle(tintIcon = false)
             setOnCloseIconClickListener {
                 selectedLanguages.remove(language)
                 selectedLanguagesChipGroup.removeView(this)
                 updateLanguageDropdown()
+                updateSelectionEmptyStates()
             }
         }
         selectedLanguagesChipGroup.addView(chip)
+        updateSelectionEmptyStates()
     }
 
     /**
@@ -285,12 +351,16 @@ class ProfileEditFragment : Fragment() {
         val interestAdapter = InterestAdapter(requireContext(), interestPairs.toMutableList())
         interestsDropdown.setAdapter(interestAdapter)
 
-        interestsDropdown.setOnItemClickListener { _, _, position, _ ->
-            val (interest, _) = interestPairs[position]
+        interestsDropdown.setOnItemClickListener { parent, _, position, _ ->
+            @Suppress("UNCHECKED_CAST")
+            val selectedPair = parent.getItemAtPosition(position) as Pair<Interest, Int>
+            val interest = selectedPair.first
             if (selectedInterests.add(interest)) {
                 addInterestChip(interest)
             }
             interestsDropdown.setText("", false)
+            interestsDropdown.clearFocus()
+            updateSelectionEmptyStates()
         }
     }
 
@@ -306,12 +376,35 @@ class ProfileEditFragment : Fragment() {
             isCloseIconVisible = true
             isClickable = true
             isCheckable = false
+            applySelectionChipStyle(tintIcon = true)
             setOnCloseIconClickListener {
                 selectedInterests.remove(interest)
                 selectedInterestsChipGroup.removeView(this)
+                updateSelectionEmptyStates()
             }
         }
         selectedInterestsChipGroup.addView(chip)
+        updateSelectionEmptyStates()
+    }
+
+    private fun Chip.applySelectionChipStyle(tintIcon: Boolean) {
+        chipBackgroundColor = ColorStateList.valueOf(
+            ContextCompat.getColor(context, R.color.roamly_blush)
+        )
+        setTextColor(ContextCompat.getColor(context, R.color.roamly_black))
+        closeIconTint = ColorStateList.valueOf(ContextCompat.getColor(context, R.color.roamly_black))
+        chipIconTint = if (tintIcon) {
+            ColorStateList.valueOf(ContextCompat.getColor(context, R.color.roamly_black))
+        } else {
+            null
+        }
+    }
+
+    private fun updateSelectionEmptyStates() {
+        selectedLanguagesEmptyText.visibility =
+            if (selectedLanguages.isEmpty()) View.VISIBLE else View.GONE
+        selectedInterestsEmptyText.visibility =
+            if (selectedInterests.isEmpty()) View.VISIBLE else View.GONE
     }
 
     /**
@@ -330,8 +423,7 @@ class ProfileEditFragment : Fragment() {
         val clampedAge = ageInt?.coerceIn(18, 99) ?: 18
 
         ageSlider.value = clampedAge.toFloat()
-        ageSlider.isEnabled = false
-        ageValueText.text = "Age: $clampedAge"
+        ageValueText.text = getString(R.string.profile_age_value, clampedAge)
 
         countryDropdown.setText(profile.country ?: "")
         categoryDropdown.setText(profile.category ?: "")
@@ -369,15 +461,26 @@ class ProfileEditFragment : Fragment() {
         }
 
         updateLanguageDropdown()
+        updateProfileSummary()
+        updateSelectionEmptyStates()
     }
 
     /**
      * Salva le modifiche effettuate al profilo su Supabase.
      */
     private fun saveProfileChanges() {
+        if (isSaving) return
+
+        val firstName = firstNameField.text?.toString()?.trim().orEmpty()
+        val lastName = lastNameField.text?.toString()?.trim().orEmpty()
+        val fullName = listOf(firstName, lastName)
+            .filter { it.isNotBlank() }
+            .joinToString(" ")
+
         val profile = currentProfile?.copy(
-            first_name = firstNameField.text?.toString(),
-            last_name = lastNameField.text?.toString(),
+            full_name = fullName.ifBlank { null },
+            first_name = firstName.ifBlank { null },
+            last_name = lastName.ifBlank { null },
             age = ageSlider.value.toInt().toString(),
             vibe = when (vibeToggleGroup.checkedButtonId) {
                 R.id.vibeChill -> "chill"
@@ -391,17 +494,70 @@ class ProfileEditFragment : Fragment() {
         val interestIds = selectedInterests.map { it.id }
 
         lifecycleScope.launch {
-            val success = profileRepository.saveCompleteProfile(
-                profile = profile,
-                languageIds = languageCodes,
-                interestIds = interestIds
-            )
+            setSaveLoading(true)
+            try {
+                val success = profileRepository.saveCompleteProfile(
+                    profile = profile,
+                    languageIds = languageCodes,
+                    interestIds = interestIds
+                )
 
-            Toast.makeText(
-                requireContext(),
-                if (success) "Profilo aggiornato con successo" else "Errore nel salvataggio",
-                Toast.LENGTH_SHORT
-            ).show()
+                if (success) {
+                    currentProfile = profile
+                    AuthSessionCache.rememberProfile(requireContext(), profile)
+                    updateProfileSummary()
+                }
+
+                Toast.makeText(
+                    requireContext(),
+                    if (success) "Profilo aggiornato con successo" else "Errore nel salvataggio",
+                    Toast.LENGTH_SHORT
+                ).show()
+            } finally {
+                setSaveLoading(false)
+            }
+        }
+    }
+
+    private fun setSaveLoading(isLoading: Boolean) {
+        isSaving = isLoading
+        saveButton.isEnabled = !isLoading
+        saveButton.text = getString(
+            if (isLoading) R.string.profile_save_loading else R.string.profile_save
+        )
+    }
+
+    private fun updateProfileSummary() {
+        val firstName = firstNameField.text?.toString()?.trim().orEmpty()
+        val lastName = lastNameField.text?.toString()?.trim().orEmpty()
+        val typedName = listOf(firstName, lastName)
+            .filter { it.isNotBlank() }
+            .joinToString(" ")
+        val displayName = typedName.ifBlank {
+            currentProfile?.full_name?.takeIf { it.isNotBlank() }
+        } ?: getString(R.string.profile_display_name_empty)
+
+        profileDisplayName.text = displayName
+
+        val details = buildList {
+            currentProfile?.category?.takeIf { it.isNotBlank() }?.let(::add)
+            currentProfile?.country?.takeIf { it.isNotBlank() }?.let(::add)
+            add(getString(R.string.profile_age_value, ageSlider.value.toInt()))
+            currentVibeLabel()?.let(::add)
+        }
+
+        profileDetailsText.text = if (details.isEmpty()) {
+            getString(R.string.profile_details_empty)
+        } else {
+            details.joinToString(" | ")
+        }
+    }
+
+    private fun currentVibeLabel(): String? {
+        return when (vibeToggleGroup.checkedButtonId) {
+            R.id.vibeChill -> getString(R.string.profile_vibe_chill)
+            R.id.vibeParty -> getString(R.string.profile_vibe_party)
+            else -> null
         }
     }
 
@@ -416,6 +572,9 @@ class ProfileEditFragment : Fragment() {
             val imageBytes = requireContext().contentResolver.openInputStream(uri)?.readBytes() ?: return@launch
             val userId = SupabaseClientProvider.auth.currentUserOrNull()?.id ?: return@launch
             val fileName = "${userId}/profile_${System.currentTimeMillis()}.jpg"
+
+            profileImageView.isEnabled = false
+            profilePhotoHint.text = getString(R.string.profile_photo_uploading)
 
             try {
                 val bucket = SupabaseClientProvider.storage["avatars"]
@@ -457,6 +616,9 @@ class ProfileEditFragment : Fragment() {
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), "Errore durante l'upload", Toast.LENGTH_SHORT).show()
                 Log.e("ProfileImageUpload", "Errore upload: ${e.localizedMessage}", e)
+            } finally {
+                profileImageView.isEnabled = true
+                profilePhotoHint.text = getString(R.string.profile_photo_edit)
             }
         }
     }

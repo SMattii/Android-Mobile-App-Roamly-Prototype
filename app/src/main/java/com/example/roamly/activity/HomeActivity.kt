@@ -531,11 +531,11 @@ class HomeActivity : AppCompatActivity() {
             puckBearingEnabled = true
             puckBearing = PuckBearing.HEADING
             pulsingEnabled = true
-            pulsingColor = getColor(R.color.roamly_red)
+            pulsingColor = Color.rgb(30, 136, 229)
             pulsingMaxRadius = 36f
             showAccuracyRing = true
-            accuracyRingColor = Color.argb(34, 239, 62, 54)
-            accuracyRingBorderColor = Color.argb(96, 239, 62, 54)
+            accuracyRingColor = Color.argb(38, 30, 136, 229)
+            accuracyRingBorderColor = Color.argb(110, 30, 136, 229)
         }
     }
 

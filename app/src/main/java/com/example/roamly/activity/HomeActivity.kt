@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.location.LocationManager
 import android.os.Bundle
@@ -62,7 +63,7 @@ import com.mapbox.maps.MapView
 import com.mapbox.maps.ScreenCoordinate
 import com.mapbox.maps.Style
 import com.mapbox.maps.extension.style.style
-import com.mapbox.maps.plugin.LocationPuck2D
+import com.mapbox.maps.plugin.PuckBearing
 import com.mapbox.maps.plugin.animation.flyTo
 import com.mapbox.maps.plugin.annotation.annotations
 import com.mapbox.maps.plugin.annotation.generated.PointAnnotation
@@ -71,6 +72,7 @@ import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions
 import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
 import com.mapbox.maps.plugin.gestures.OnMoveListener
 import com.mapbox.maps.plugin.gestures.gestures
+import com.mapbox.maps.plugin.locationcomponent.createDefault2DPuck
 import com.mapbox.maps.plugin.locationcomponent.location
 import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.Job
@@ -184,7 +186,7 @@ class HomeActivity : AppCompatActivity() {
 
         mapView.mapboxMap.loadStyle(
             style(
-                Style.Companion.MAPBOX_STREETS,
+                Style.Companion.OUTDOORS,
                 block = {} // blocco vuoto, richiesto dalla firma della funzione
             )
         ) {
@@ -525,10 +527,15 @@ class HomeActivity : AppCompatActivity() {
     private fun enableCurrentLocationPuck() {
         mapView.location.updateSettings {
             enabled = true
-            locationPuck = LocationPuck2D()
+            locationPuck = createDefault2DPuck(withBearing = true)
+            puckBearingEnabled = true
+            puckBearing = PuckBearing.HEADING
             pulsingEnabled = true
+            pulsingColor = getColor(R.color.roamly_red)
             pulsingMaxRadius = 36f
-            showAccuracyRing = false
+            showAccuracyRing = true
+            accuracyRingColor = Color.argb(34, 239, 62, 54)
+            accuracyRingBorderColor = Color.argb(96, 239, 62, 54)
         }
     }
 

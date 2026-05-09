@@ -62,6 +62,7 @@ import com.mapbox.maps.MapView
 import com.mapbox.maps.ScreenCoordinate
 import com.mapbox.maps.Style
 import com.mapbox.maps.extension.style.style
+import com.mapbox.maps.plugin.LocationPuck2D
 import com.mapbox.maps.plugin.animation.flyTo
 import com.mapbox.maps.plugin.annotation.annotations
 import com.mapbox.maps.plugin.annotation.generated.PointAnnotation
@@ -70,6 +71,7 @@ import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions
 import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
 import com.mapbox.maps.plugin.gestures.OnMoveListener
 import com.mapbox.maps.plugin.gestures.gestures
+import com.mapbox.maps.plugin.locationcomponent.location
 import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -427,6 +429,7 @@ class HomeActivity : AppCompatActivity() {
             ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) return
 
         stopLocationUpdates()
+        enableCurrentLocationPuck()
         Log.d("MapDebug", "startLocationUpdates: permessi concessi")
 
         val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 20_000L)
@@ -516,6 +519,16 @@ class HomeActivity : AppCompatActivity() {
                 cameraCenteredOnce = true
                 Log.d("MapDebug", "Camera centrata immediatamente su lastLocation")
             }
+        }
+    }
+
+    private fun enableCurrentLocationPuck() {
+        mapView.location.updateSettings {
+            enabled = true
+            locationPuck = LocationPuck2D()
+            pulsingEnabled = true
+            pulsingMaxRadius = 36f
+            showAccuracyRing = false
         }
     }
 

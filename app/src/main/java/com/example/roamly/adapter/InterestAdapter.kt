@@ -1,6 +1,7 @@
 package com.example.roamly.adapter
 
 import android.content.Context
+import androidx.core.content.ContextCompat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -27,6 +28,7 @@ class InterestAdapter(
 ) : ArrayAdapter<Pair<Interest, Int>>(context, 0, interests) {
 
     private val inflater = LayoutInflater.from(context)
+    private val iconTint = ContextCompat.getColorStateList(context, R.color.text_input_icon_tint)
 
     /**
      * Restituisce la vista dell’elemento selezionato.
@@ -55,7 +57,10 @@ class InterestAdapter(
         val view = convertView ?: inflater.inflate(R.layout.dropdown_item_icon_text, parent, false)
 
         view.findViewById<TextView>(R.id.itemTextView).text = interest.name
-        view.findViewById<ImageView>(R.id.itemIconView).setImageResource(iconResId)
+        view.findViewById<ImageView>(R.id.itemIconView).apply {
+            setImageResource(iconResId)
+            imageTintList = iconTint
+        }
 
         return view
     }

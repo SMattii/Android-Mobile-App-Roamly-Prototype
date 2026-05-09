@@ -1,6 +1,7 @@
 package com.example.roamly.adapter
 
 import android.content.Context
+import androidx.core.content.ContextCompat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,6 +17,7 @@ class EventTypeAdapter(
 ) : ArrayAdapter<EventTypeOption>(context, 0, items) {
 
     private val inflater = LayoutInflater.from(context)
+    private val iconTint = ContextCompat.getColorStateList(context, R.color.text_input_icon_tint)
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
         return createItemView(position, convertView, parent)
@@ -30,7 +32,10 @@ class EventTypeAdapter(
         val view = convertView ?: inflater.inflate(R.layout.dropdown_item_icon_text, parent, false)
 
         view.findViewById<TextView>(R.id.itemTextView).text = context.getString(item.labelResId)
-        view.findViewById<ImageView>(R.id.itemIconView).setImageResource(item.iconResId)
+        view.findViewById<ImageView>(R.id.itemIconView).apply {
+            setImageResource(item.iconResId)
+            imageTintList = iconTint
+        }
 
         return view
     }

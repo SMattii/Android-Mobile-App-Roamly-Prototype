@@ -10,6 +10,7 @@ import com.example.roamly.data.utils.SupabaseClientProvider
 internal object AuthSessionNavigator {
 
     suspend fun nextIntent(context: Context, isFreshLogin: Boolean = true): Intent? {
+        SupabaseClientProvider.auth.awaitInitialization()
         val userId = SupabaseClientProvider.auth.currentUserOrNull()?.id ?: return null
         val profile = loadOrCreateProfile(userId)
         AuthSessionCache.rememberProfile(context, profile)
@@ -17,6 +18,7 @@ internal object AuthSessionNavigator {
     }
 
     suspend fun startupIntent(context: Context): Intent? {
+        SupabaseClientProvider.auth.awaitInitialization()
         val userId = SupabaseClientProvider.auth.currentUserOrNull()?.id ?: run {
             AuthSessionCache.clear(context)
             return null

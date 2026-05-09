@@ -122,6 +122,7 @@ class HomeActivity : AppCompatActivity() {
     private var cameraCenteredOnce = false
 
     private lateinit var bottomNav: BottomNavigationView
+    private var isAuthTransitionInProgress = false
 
     /**
      * Inizializza l'activity, configura la mappa, gestisce la navigazione e avvia il tracciamento posizione.
@@ -136,21 +137,24 @@ class HomeActivity : AppCompatActivity() {
         val currentUser = SupabaseClientProvider.auth.currentUserOrNull()
 
         if (currentUser == null) {
-            Log.d("MapDebug", "onCreate: No authenticated user, redirecting to login")
-            AuthSessionCache.clear(this)
-            startActivity(Intent(this, LoginActivity::class.java))
-            finish()
+            lifecycleScope.launch {
+                SupabaseClientProvider.auth.awaitInitialization()
+                val restoredUser = SupabaseClientProvider.auth.currentUserOrNull()
+
+                if (restoredUser == null) {
+                    Log.d("MapDebug", "onCreate: No authenticated user, redirecting to login")
+                    redirectToLogin()
+                } else if (AuthSessionCache.isExpired(this@HomeActivity, restoredUser.id)) {
+                    signOutExpiredSession()
+                } else if (!isFinishing) {
+                    recreate()
+                }
+            }
             return
         }
 
         if (AuthSessionCache.isExpired(this, currentUser.id)) {
-            lifecycleScope.launch {
-                runCatching { SupabaseClientProvider.auth.signOut() }
-                    .onFailure { Log.e("HomeActivity", "Expired session sign out failed", it) }
-                AuthSessionCache.clear(this@HomeActivity)
-                startActivity(Intent(this@HomeActivity, OnboardingActivity::class.java))
-                finish()
-            }
+            signOutExpiredSession()
             return
         }
 
@@ -851,22 +855,21 @@ class HomeActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
+        lifecycleScope.launch {
+            SupabaseClientProvider.auth.awaitInitialization()
+            handleAuthenticatedResume()
+        }
+    }
+
+    private fun handleAuthenticatedResume() {
         val currentUser = SupabaseClientProvider.auth.currentUserOrNull()
 
         if (currentUser == null) {
             Log.d("MapDebug", "onResume: No authenticated user, resetting map state")
-            AuthSessionCache.clear(this)
-            resetMapState()
+            redirectToLogin()
         } else if (AuthSessionCache.isExpired(this, currentUser.id)) {
             Log.d("MapDebug", "onResume: Cached session expired, signing out")
-            lifecycleScope.launch {
-                runCatching { SupabaseClientProvider.auth.signOut() }
-                    .onFailure { Log.e("HomeActivity", "Expired session sign out failed", it) }
-                AuthSessionCache.clear(this@HomeActivity)
-                resetMapState()
-                startActivity(Intent(this@HomeActivity, OnboardingActivity::class.java))
-                finish()
-            }
+            signOutExpiredSession(resetMap = true)
         } else {
             Log.d("MapDebug", "onResume: User authenticated, checking location")
 
@@ -877,6 +880,34 @@ class HomeActivity : AppCompatActivity() {
                 checkLocationAndRequest()
             }
         }
+    }
+
+    private fun signOutExpiredSession(resetMap: Boolean = false) {
+        if (isAuthTransitionInProgress) return
+        isAuthTransitionInProgress = true
+
+        lifecycleScope.launch {
+            runCatching { SupabaseClientProvider.auth.signOut() }
+                .onFailure { Log.e("HomeActivity", "Expired session sign out failed", it) }
+            AuthSessionCache.clear(this@HomeActivity)
+            if (resetMap && ::mapView.isInitialized) {
+                resetMapState()
+            }
+            startActivity(Intent(this@HomeActivity, OnboardingActivity::class.java))
+            finish()
+        }
+    }
+
+    private fun redirectToLogin() {
+        if (isAuthTransitionInProgress) return
+        isAuthTransitionInProgress = true
+
+        AuthSessionCache.clear(this)
+        if (::mapView.isInitialized) {
+            resetMapState()
+        }
+        startActivity(Intent(this, LoginActivity::class.java))
+        finish()
     }
 
     /**

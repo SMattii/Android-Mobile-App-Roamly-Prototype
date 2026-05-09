@@ -86,12 +86,14 @@
                 app:boxCornerRadiusBottomStart="14dp"
                 app:boxCornerRadiusTopEnd="14dp"
                 app:boxCornerRadiusTopStart="14dp"
+                app:boxBackgroundColor="@color/white"
                 app:boxStrokeColor="@color/roamly_black"
                 app:endIconMode="dropdown_menu"
+                app:endIconTint="@color/text_input_icon_tint"
                 app:helperText="@string/event_type_helper"
                 app:hintTextColor="@color/gray"
                 app:startIconDrawable="@drawable/ic_event_generic"
-                app:startIconTint="@color/roamly_black">
+                app:startIconTint="@color/text_input_icon_tint">
 
                 <com.google.android.material.textfield.MaterialAutoCompleteTextView
                     android:id="@+id/eventTypeDropdown"
@@ -118,12 +120,14 @@
                 app:boxCornerRadiusBottomStart="14dp"
                 app:boxCornerRadiusTopEnd="14dp"
                 app:boxCornerRadiusTopStart="14dp"
+                app:boxBackgroundColor="@color/white"
                 app:boxStrokeColor="@color/roamly_black"
                 app:endIconMode="dropdown_menu"
+                app:endIconTint="@color/text_input_icon_tint"
                 app:helperText="@string/event_interests_helper"
                 app:hintTextColor="@color/gray"
                 app:startIconDrawable="@drawable/ic_interest_default"
-                app:startIconTint="@color/roamly_black">
+                app:startIconTint="@color/text_input_icon_tint">
 
                 <com.google.android.material.textfield.MaterialAutoCompleteTextView
                     android:id="@+id/interestsDropdown"
